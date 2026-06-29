@@ -1,0 +1,560 @@
+
+      * COBOL UT HELPER FUNCTIONS 
+       
+       DUT-END-TEST SECTION.
+           MOVE "DUT-END-TEST"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           EVALUATE TRUE 
+           WHEN DUT-TEST-PASS
+              ADD 1 TO DUT-TEST-PASS-COUNT
+              PERFORM DUT-PASS
+           WHEN DUT-TEST-FAIL
+              ADD 1 TO DUT-TEST-FAIL-COUNT
+              PERFORM DUT-FAIL 
+           WHEN DUT-TEST-SKIP
+              ADD 1 TO DUT-TEST-SKIP-COUNT
+              PERFORM DUT-SKIP
+           END-EVALUATE 
+           PERFORM DUT-CLEAR-TRACE 
+           DISPLAY ' '
+       .
+       
+       DUT-END-TEST-SUITE SECTION.
+           MOVE "DUT-END-TEST-SUITE"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           DISPLAY ' '
+           DISPLAY 'TEST EXECUTION RESULTS'
+           MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
+           MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
+           MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
+           DISPLAY '==================================================='
+           DISPLAY 'PASS: ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
+           DISPLAY 'FAIL: ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
+           DISPLAY 'SKIP: ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+           DISPLAY '==================================================='
+           PERFORM DUT-STOP-RUN     
+       .
+
+       DUT-STOP-RUN SECTION.
+           MOVE "DUT-STOP-RUN"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+
+           DISPLAY 'WE MOCKED THE EXIT!'
+           EXIT SECTION 
+           DISPLAY 'WE DIDNT EXIT'
+       .
+
+
+
+      * FIXTURES
+
+           STOP RUN
+       .
+
+       DUT-ASSERT-TRACE SECTION.
+           MOVE "DUT-ASSERT-TRACE"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           MOVE 1 TO DUT-TRACE-POINTER
+           MOVE 0 TO DUT-TRACE-WORD-COUNT
+           MOVE 1 TO DUT-TRACE-SECTION-INDEX
+           
+           PERFORM UNTIL DUT-TRACE-POINTER > LENGTH OF DUT-TRACE
+                         OR DUT-TRACE-WORD-COUNT >= 20
+              PERFORM DUT-ASSERT-TRACE-REGSTR-WORDS 
+           END-PERFORM
+
+           *> FIRST ITEM WILL ALWAYS BE A SECTION NAME
+
+           MOVE DUT-EXEC-TRACE-WORD(1) TO DUT-TEMP-SECTION-NAME
+           *> NEED TO SCAN THROUGH TRACE TO FIND FIRST SECTION NAME
+           *> AND GO FROM THERE
+           PERFORM DUT-FIND-FOLLOWED-BY 
+           PERFORM VARYING DUT-EXEC-TRACE-INDEX FROM 2 BY 1 UNTIL 
+                        DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) = ' '
+                        OR DUT-TEST-FAIL
+              PERFORM DUT-ASSERT-TRACE-HANDLE-VERBS 
+           END-PERFORM
+           MOVE SPACES TO DUT-EXEC-TRACE-OCCURS
+           .
+
+       DUT-ASSERT-TRACE-REGSTR-WORDS SECTION.
+           MOVE "DUT-ASSERT-TRACE-REGSTR-WORDS"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           UNSTRING DUT-TRACE 
+               DELIMITED BY ALL SPACE
+               INTO DUT-TRACE-TEMP-WORD
+               WITH POINTER DUT-TRACE-POINTER
+           END-UNSTRING
+           *>DISPLAY 'TRACE REGISTER ' DUT-TRACE-TEMP-WORD 
+           IF DUT-TRACE-TEMP-WORD NOT = SPACES
+               ADD 1 TO DUT-TRACE-WORD-COUNT
+               MOVE DUT-TRACE-TEMP-WORD TO 
+                           DUT-EXEC-TRACE-WORD(DUT-TRACE-WORD-COUNT)
+           END-IF
+
+           .
+
+       DUT-ASSERT-TRACE-HANDLE-VERBS SECTION.
+           MOVE "DUT-ASSERT-TRACE-HANDLE-VERBS"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+              *>DISPLAY 'TRACE ACTION ' 
+              *>DISPLAY 'SECTION COUNT ' DUT-RT-SECTION-COUNT
+              *>DISPLAY 'TRACE-INDEX ' DUT-EXEC-TRACE-INDEX
+               *>DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
+           *> FOR EACH COMMAND IN DUT-EXEC-TRACE-WORD
+              *> IF IT'S A FOLLOWED-BY COMMAND
+
+              EVALUATE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
+              WHEN 'FOLLOWED-BY'
+                 ADD 1 TO DUT-EXEC-TRACE-INDEX
+                 MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                         DUT-TEMP-SECTION-NAME
+                 *>DISPLAY 'SEARCHING FOR  ' DUT-TEMP-SECTION-NAME
+                 PERFORM DUT-FIND-FOLLOWED-BY
+              *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
+              WHEN 'DIRECTLY-FOLLOWED-BY'
+                 ADD 1 TO DUT-EXEC-TRACE-INDEX
+                 MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                         DUT-TEMP-SECTION-NAME
+                 PERFORM DUT-FIND-DIRECTLY-FOLLOWED-BY
+              *> IF IT'S A WITH COMMAND
+              WHEN 'WITH'
+                 PERFORM DUT-ASSERT-TRACE-HANDLE-WITH
+              *> ELSE
+              WHEN OTHER
+                    *> MUST BE A NEW SECTION
+                    MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
+                                            TO DUT-TEMP-SECTION-NAME
+              END-EVALUATE
+
+           . 
+
+       DUT-ASSERT-EXPECT SECTION.
+           MOVE "DUT-ASSERT-EXPECT"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           MOVE 1 TO DUT-EXPECT-POINTER
+           MOVE 0 TO DUT-EXPECT-WORD-COUNT
+           
+           PERFORM UNTIL DUT-EXPECT-POINTER > LENGTH OF 
+                         DUT-EXPECT 
+                         OR DUT-TRACE-WORD-COUNT >= 20
+           
+               UNSTRING DUT-EXPECT 
+                   DELIMITED BY ALL SPACE
+                   INTO DUT-EXPECT-TEMP-WORD
+                   WITH POINTER DUT-EXPECT-POINTER
+               END-UNSTRING
+               *>DISPLAY 'EXPECT REGISTER: ' DUT-EXPECT-TEMP-WORD 
+               IF DUT-EXPECT-TEMP-WORD NOT = SPACES
+                   ADD 1 TO DUT-EXPECT-WORD-COUNT
+                   MOVE DUT-EXPECT-TEMP-WORD TO 
+                           DUT-EXPECT-WORD(DUT-EXPECT-WORD-COUNT)
+               END-IF
+           END-PERFORM
+       .
+
+       DUT-ASSERT-TRACE-HANDLE-WITH SECTION.
+           MOVE "DUT-ASSERT-TRACE-HANDLE-WITH"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
+           *> UNTIL END-WITH
+           ADD 1 TO DUT-EXEC-TRACE-INDEX
+           *>DISPLAY 'EXEC INDEX' DUT-EXEC-TRACE-INDEX
+           *> SHOULD ALWAYS BE IN ORDER
+           *> WS-FIELD
+           *> <OPERATOR>
+           *> VALUE
+           PERFORM VARYING DUT-EXEC-TRACE-INDEX FROM 
+                           DUT-EXEC-TRACE-INDEX BY 1
+              UNTIL DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX)
+               = 'END-WITH'
+              *>DISPLAY 'EXEC INDEX' DUT-EXEC-TRACE-INDEX
+              MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                      DUT-TEMP-FIELD-NAME
+              ADD 1 TO DUT-EXEC-TRACE-INDEX
+              MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                      DUT-TEMP-FIELD-OPERATOR
+              ADD 1 TO DUT-EXEC-TRACE-INDEX
+              MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                      DUT-TEMP-FIELD-EXPECTED
+              PERFORM DUT-FIND-WITH-IN-TRACE
+           END-PERFORM 
+              *> UNTIL END-WITH IS FOUND IN COMMAND
+       .
+          
+       DUT-ASSERT-EQUALS SECTION.
+           MOVE "DUT-ASSERT-EQUALS"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           
+           IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL 
+               PERFORM DUT-PASS
+           ELSE
+               SET DUT-TEST-FAIL TO TRUE
+               STRING FUNCTION TRIM(DUT-ASSERT-TARGET)
+                   ' =/= '
+                   FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM DUT-FAIL 
+           END-IF 
+       .
+
+       DUT-REGISTER-FIELD SECTION.
+           MOVE "DUT-REGISTER-FIELD"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           MOVE DUT-RT-SECTION-COUNT TO DUT-TRACE-SECTION-INDEX
+           MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO
+                                                DUT-TRACE-FIELD-INDEX
+           MOVE DUT-TEMP-FIELD-NAME TO 
+           DUT-RT-SECTION-FIELD-NAME(DUT-TRACE-SECTION-INDEX
+           DUT-TRACE-FIELD-INDEX)
+           MOVE DUT-TEMP-FIELD-VALUE TO
+           DUT-RT-SECTION-FIELD-VALUE(DUT-TRACE-SECTION-INDEX
+           DUT-TRACE-FIELD-INDEX)
+
+           *> Advance the index
+           ADD 1 TO DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+           MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO 
+              DUT-TRACE-FIELD-INDEX
+
+       .
+
+
+       DUT-FIND-FOLLOWED-BY SECTION.
+           MOVE "DUT-FIND-FOLLOWED-BY"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           *> DUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
+           *> DUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
+           *> DUT-TRACE-SECTION-INDEX <-- INDEX OF THE SECTION TRACE
+
+           SET DUT-SECTION-NOT-FOUND TO TRUE
+           PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM
+                                    DUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
+                           DUT-SECTION-FOUND OR 
+                         DUT-TRACE-SECTION-INDEX > DUT-RT-SECTION-COUNT
+              *>DISPLAY 'FOUND SECTION: ' 
+              *>DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+              IF DUT-TEMP-SECTION-NAME = 
+                 DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+                 SET DUT-SECTION-FOUND TO TRUE
+                 *> WE FOUND THE SECTION, LEAVE THE PERFORM  
+                 *> PRE-EMTIVELY SUBTRACT 1 FROM THE INDEX TO COUNTER
+                 *> THE ADD AT THE END OF THE PERFORM
+                 *> SUBTRACT 1 FROM DUT-TRACE-SECTION-INDEX
+                 EXIT PERFORM 
+              END-IF
+           END-PERFORM
+           
+           *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
+           IF DUT-SECTION-NOT-FOUND
+              SET DUT-TEST-FAIL TO TRUE 
+              STRING 'UNABLE TO FIND '
+                     FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                     ' IN EXECUTION TRACE'
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-FAIL
+           ELSE
+              STRING 'FOUND SECTION ' 
+              FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+              ' IN EXECUTION TRACE'
+              DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+           END-IF
+       .
+
+       DUT-FIND-DIRECTLY-FOLLOWED-BY SECTION.
+           MOVE "DUT-FIND-DIRECTLY-FOLLOWED-BY"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           *> DUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
+           *> DUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
+           *> DUT-TRACE-SECTION-INDEX <-- INDEX OF THE SECTION TRACE
+
+           SET DUT-SECTION-NOT-FOUND TO TRUE
+           *>DISPLAY 'FOUND SECTION: ' 
+           *>DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+           ADD 1 TO DUT-TRACE-SECTION-INDEX 
+           IF DUT-TEMP-SECTION-NAME = 
+              DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+              SET DUT-SECTION-FOUND TO TRUE
+              *> WE FOUND THE SECTION, LEAVE THE PERFORM  
+              *> PRE-EMTIVELY SUBTRACT 1 FROM THE INDEX TO COUNTER
+              *> THE ADD AT THE END OF THE PERFORM
+              *> SUBTRACT 1 FROM DUT-TRACE-SECTION-INDEX
+           END-IF
+           
+           *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
+           IF DUT-SECTION-NOT-FOUND
+              SET DUT-TEST-FAIL TO TRUE 
+              STRING 'UNABLE TO FIND '
+                     FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                     ' DIRECTLY AFTER '
+                     FUNCTION TRIM(DUT-RT-SECTION-NAME(
+                                         DUT-TRACE-SECTION-INDEX))
+                     ' IN EXECUTION TRACE'
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-FAIL
+           ELSE
+              STRING 'FOUND SECTION ' 
+              FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+              ' IN EXECUTION TRACE'
+              DELIMITED BY SIZE INTO DUT-DISPLAY-PASS-MSG 
+              END-STRING
+           END-IF
+       .
+
+       DUT-FIND-WITH-IN-TRACE SECTION.
+           MOVE "DUT-FIND-WITH-IN-TRACE"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           *> USED TO SEARCH
+           *> DUT-TRACE-SECTION-INDEX <-- INDEX OF THE TARGET SECTION
+           *> v FIELD NAME(S) AT THIS SECTION
+           *> DUT-RT-SECTION-FIELD-NAME(DUT-TRACE-SECTION-INDEX index)
+           *> v FIELD VALUE(S) AT THIS SECTION (CAST TO CHARACTER)
+           *> DUT-RT-SECTION-FIELD-VALUE(DUT-TRACE-SECTION-INDEX index)
+           
+           *> KNOWNS
+           *> DUT-TEMP-FIELD-VALUE <-- ACTUAL VALUE (NEED TO FIND)
+           *> DUT-TEMP-FIELD-EXPECTED <-- EXPECTED VALUE
+           *> DUT-TEMP-FIELD-NAME <-- FIELD NAME TO FIND
+           *> DUT-TEMP-FIELD-OPERATOR <-- THE OPERATOR
+
+           *> LOOP THROUGH THE TRACKED FIELDS UNTIL 
+           *> A NAME MATCHES THE TARGET TO FIND THE ACTUAL VALUE
+           SET DUT-FIELD-NOT-FOUND TO TRUE
+           PERFORM VARYING DUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL 
+                             DUT-TRACE-FIELD-INDEX >
+                     DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+                
+                *>DISPLAY 'SECTION INDEX ' DUT-TRACE-SECTION-INDEX
+                *>DISPLAY 'FIELD INDEX ' DUT-TRACE-FIELD-INDEX
+                *>DISPLAY 'SECTION TARGET ' DUT-TEMP-SECTION-NAME
+                *>DISPLAY 'FOUND FIELD ' DUT-RT-SECTION-FIELD-NAME(
+                *>       DUT-TRACE-SECTION-INDEX DUT-TRACE-FIELD-INDEX)
+
+                *>DISPLAY 'FIELD-NAME ' DUT-TEMP-FIELD-NAME
+                *>DISPLAY 'FIELD EXPECTED ' DUT-TEMP-FIELD-EXPECTED
+                *>DISPLAY 'DUT-FIELD-COUNT '
+                *>   DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+                
+                
+                IF DUT-TEMP-FIELD-NAME = DUT-RT-SECTION-FIELD-NAME(
+                       DUT-TRACE-SECTION-INDEX DUT-TRACE-FIELD-INDEX)
+                    MOVE DUT-RT-SECTION-FIELD-VALUE(
+                                               DUT-TRACE-SECTION-INDEX 
+                                               DUT-TRACE-FIELD-INDEX) 
+                    TO DUT-TEMP-FIELD-VALUE
+                    SET DUT-FIELD-FOUND TO TRUE 
+                    PERFORM DUT-EVALUATE-OPERATION
+                    EXIT PERFORM 
+
+                END-IF 
+           END-PERFORM
+           IF NOT DUT-FIELD-FOUND
+              STRING 'FATAL ERROR: '
+                     'UNABLE TO FIND FIELD NAME '
+                     FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
+                     'FOR SECTION '
+                     FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-FAIL 
+           END-IF
+       .
+
+       DUT-CLEAR-TRACE SECTION.
+           MOVE "DUT-CLEAR-TRACE"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
+                          DUT-TRACE-SECTION-INDEX > DUT-RT-SECTION-COUNT
+              
+              MOVE 1 TO DUT-RT-SECTION-FIELD-COUNT(
+               DUT-TRACE-SECTION-INDEX)
+              MOVE SPACES TO
+                           DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+               PERFORM VARYING DUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL 
+               DUT-TRACE-FIELD-INDEX > 
+               DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+                   MOVE SPACES TO DUT-RT-SECTION-FIELDS(
+                     DUT-TRACE-SECTION-INDEX 
+                     DUT-TRACE-FIELD-INDEX 
+                   )
+               END-PERFORM
+               MOVE 1 TO DUT-RT-SECTION-FIELD-COUNT(
+                  DUT-TRACE-SECTION-INDEX)
+           END-PERFORM
+           MOVE 1 TO DUT-RT-SECTION-COUNT                       
+           MOVE SPACES TO DUT-TRACE
+       .
+
+
+
+      * TODO: LESS THAN AND GREATER THAN?
+      * TODO: HANDLE FIELD NAMES VS LITERALS? e.g WS-NUM-1 = WS-NUM-2
+       DUT-EVALUATE-OPERATION SECTION.
+           MOVE "DUT-EVALUATE-OPERATION"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           EVALUATE DUT-TEMP-FIELD-OPERATOR
+           WHEN '='
+              IF DUT-TEMP-FIELD-VALUE = DUT-TEMP-FIELD-EXPECTED
+                 CONTINUE
+              ELSE
+                 SET DUT-TEST-FAIL TO TRUE 
+              END-IF 
+           WHEN '!='
+              IF DUT-TEMP-FIELD-VALUE NOT = DUT-TEMP-FIELD-EXPECTED
+                 CONTINUE
+              ELSE
+                 SET DUT-TEST-FAIL TO TRUE 
+              END-IF 
+           END-EVALUATE 
+
+
+           IF DUT-TEST-FAIL
+              STRING 'OPERATION EVALUATION FAILED FOR ' 
+                     FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
+                     ' ON SECTION '
+                     DUT-TEMP-SECTION-NAME
+              DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              PERFORM DUT-FAIL 
+      
+              STRING 'EXPECTED ' 
+                      FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
+                      ' '
+                      DUT-TEMP-FIELD-OPERATOR
+                      ' '
+                      FUNCTION TRIM(DUT-TEMP-FIELD-EXPECTED)
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-FAIL 
+      
+              STRING 'BUT GOT '
+                     FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
+                     ' = '
+                     FUNCTION TRIM(DUT-TEMP-FIELD-VALUE)
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-FAIL
+           ELSE 
+              CONTINUE 
+           END-IF 
+       .
+
+      *****************************************************************
+      * ADD CURRENT SECTION TO THE TRACE STACK
+      * THIS SECTION SHOULD BE INSTANTIATED AT THE TOP OF EACH SECTION
+      * BY THE TEST PRECOMPILER
+      *****************************************************************
+       DUT-ADD-TRACE-SECTION SECTION.
+           MOVE "DUT-ADD-TRACE-SECTION"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           MOVE DUT-TEMP-SECTION-NAME TO 
+                             DUT-RT-SECTION-NAME(DUT-RT-SECTION-COUNT)
+           PERFORM DUT-TRACE-FIELDS
+           ADD 1 TO DUT-RT-SECTION-COUNT
+       .
+
+       DUT-DEBUG-DISPLAY-TRACE SECTION.
+           MOVE "DUT-DEBUG-DISPLAY-TRACE"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           DISPLAY 'DISPLAYING TRACE'
+           *>DISPLAY 'SECTION INDEX ' DUT-TRACE-SECTION-INDEX
+           PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
+                         DUT-TRACE-SECTION-INDEX >= DUT-RT-SECTION-COUNT
+              DISPLAY 'SECTION NAME: ' DUT-RT-SECTION-NAME(
+                       DUT-TRACE-SECTION-INDEX)
+
+              
+              PERFORM VARYING DUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
+                          DUT-TRACE-FIELD-INDEX >= 
+                     DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+
+                 DISPLAY 'FIELD: ' DUT-RT-SECTION-FIELD-NAME(
+                                            DUT-TRACE-SECTION-INDEX
+                                            DUT-TRACE-FIELD-INDEX)
+                 DISPLAY 'VALUE: ' DUT-RT-SECTION-FIELD-VALUE(
+                           DUT-TRACE-SECTION-INDEX
+                           DUT-TRACE-FIELD-INDEX)
+
+              END-PERFORM
+           END-PERFORM
+       .
+
+       DUT-FAIL SECTION.
+           MOVE "DUT-FAIL"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           SET DUT-TEST-FAIL TO TRUE 
+           DISPLAY  DUT-DISPLAY-ERROR
+           MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
+       .
+
+       DUT-PASS SECTION.
+           MOVE "DUT-PASS"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           DISPLAY  DUT-DISPLAY-PASS
+           MOVE SPACES TO DUT-DISPLAY-PASS-MSG
+       .
+
+       DUT-SKIP SECTION.
+           MOVE "DUT-SKIP"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           SET DUT-TEST-SKIP TO TRUE
+           MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
+           MOVE SPACES TO DUT-DISPLAY-PASS-MSG
+           MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
+           PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+           DISPLAY  DUT-DISPLAY-SKIP
+           MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
+           ADD 1 TO DUT-TEST-SKIP-COUNT
+
+       .
+
+       DUT-TEST-INIT SECTION.
+           MOVE "DUT-TEST-INIT"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           PERFORM DUT-CLEAR-TRACE
+           SET DUT-TEST-PASS TO TRUE
+           MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
+           MOVE SPACES TO DUT-DISPLAY-PASS-MSG
+           MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
+           PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+       .
+
+       DUT-DISPLAY-TEST-CASE-NAME SECTION.
+           MOVE "DUT-DISPLAY-TEST-CASE-NAME"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           DISPLAY 'TEST CASE - ' DUT-TEST-NAME
+       .
+
+       *> Will need to be mocked in the test program as that
+       *> is where this section is actually used
+       DUT-TRACE-FIELDS SECTION.
+           MOVE "DUT-TRACE-FIELDS"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           CONTINUE 
+       .
+

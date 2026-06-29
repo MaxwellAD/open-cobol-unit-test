@@ -1,0 +1,127 @@
+# Open COBOL Unit Test
+
+An open source COBOL Unit Test library
+
+Designed to be as xUnit compatible as possible
+
+Allows the user to execute COBOL sections inside of a business program in a unit test environment
+
+# Why
+All any test needs to do is:
+1. What your program did
+2. How it did it
+
+The first is pretty easy, checking output files or API responses is easy
+
+But knowing how it was done is a bit more challenging
+
+# How
+In xUnit style you would need a test program, and a business program
+
+## 1. What your program did
+A test program needs access to all of the fields and procedures of the business program
+
+`harness.sh` extracts the business programs DATA DIVISION, ENVIRONMENT DIVISION, WORKING STORAGE and PROCEDURE DIVISION as various copybooks which you include in your test program
+
+This puts your sections and paragraphs of your business program into a test program "sandbox"
+
+In this sandbox you need to write some COBOL code to test conditions:
+```
+MOVE A TO B
+PERFORM A-SECTION
+IF C
+    DISPLAY 'THE TEST PASSED'
+ELSE
+    DISPLAY 'THE TEST FAILED'
+END-IF
+```
+
+## 2. How it did it
+Or more precisely "which sections did you run, and what did working storage look like at each point"
+
+As far as I can see, there's no easy way to expose this information in a way that's useful for this context
+
+So `harness.sh` will also instrument a breadcrumb at the top of each section and paragraph of the business program to log which section or paragraph has been run
+```COBOL
+       READ-NEXT-RECORD SECTION .
+           MOVE "READ-NEXT-RECORD"
+           TO CUT-TEMP-SECTION-NAME
+           PERFORM CUT-ADD-TRACE-SECTION
+           ... 
+           business logic 
+           ...
+```
+
+This breadcrumb also takes a snapshot of various working storage fields, defined in the test program
+```COBOL
+       CUT-TRACE-FIELDS SECTION.
+           MOVE 'FIELD-A' TO CUT-TEMP-FIELD-NAME 
+           MOVE FIELD-A TO CUT-TEMP-FIELD-VALUE
+           PERFORM CUT-REGISTER-FIELD 
+
+           MOVE 'FIELD-B' TO CUT-TEMP-FIELD-NAME 
+           MOVE FIELD-B TO CUT-TEMP-FIELD-VALUE
+           PERFORM CUT-REGISTER-FIELD 
+           CONTINUE
+       .
+```
+
+This should encourage smaller sections and paragraphs as unit tests will be simpler with less data setup 
+
+## Making This Data Accessible
+Capturing this data is fine, but it needs to be queryable in a reasonably easy way which is where the CUTSTOR and CUTPROC come in
+
+CUTSTOR and CUTPROC are a collection of helper fields and procedures that make querying and managing a unit test program easy and familiar to a COBOL programmer
+
+TODO - Add friendly example of a typical TEST section
+
+# Is This Effective?
+In my experience, yes
+
+## It's Testing Itself
+The framework is already in a state where it can test itself
+
+Everything inside CUTSTOR and CUTPROC is prefix with "CUT-" (COBOL Unit Test) e.g `01  CUT-DATA.`. To avoid obvious naming conflicts, the framework is testing an imaginary program with "CUT-" replaced with "DUT-", for "Dummy Unit Test" e.g `01  DUT-DATA.`
+
+Seen in Examples/Example01
+
+New features can be implemented into DUT and have their behaviours observed before being added to CUT. Making for a much easier development process
+
+Having the inner working of each section documented by a unit test program makes expanding the capabilities and understanding the logic after some time away much easier
+
+
+# The Output
+When run against Examples/Example01/test-pgm.cbl
+```
+...
+TEST CASE - TEST-FIND-WITH-IN-TRACE-FATAL                                                                       
+[FAIL] FATAL ERROR: UNABLE TO FIND FIELD NAME DOESNT-EXISTFOR SECTION BB000-PROCESS-HEADER-RECORD                                                            
+[PASS]                                                                                                                                                       
+ 
+TEST CASE - TEST-CLEAR-TRACE-CLEARS-TRACE                                                                       
+[PASS]                                                                                                                                                       
+ 
+TEST CASE - TEST-ADD-TRACE-ADDS-TRACE                                                                           
+[PASS]                                                                                                                                                       
+ 
+TEST CASE - TEST-END-TEST-SUIT-RUNS                                                                             
+ 
+TEST EXECUTION RESULTS
+===================================================
+PASS: 0
+FAIL: 0
+SKIP: 0
+===================================================
+WE MOCKED THE EXIT!
+ 
+TEST EXECUTION RESULTS
+===================================================
+PASS: 22
+FAIL: 0
+SKIP: 0
+===================================================
+```
+
+In this commit you can compile with `cobc -x test-pgm-out.cbl -o testpgm -I "tmp" -I "CUT"`
+
+The test-pgm-out.cbl was generated with `./harness.sh Examples/Example01/pgm-to-test.cbl Examples/Example01/test-pgm.cbl`
