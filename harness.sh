@@ -19,7 +19,22 @@ awk -v p="MOCK-" '
 ' $TEST_PGM $BUSINESS_PGM > tmp/mocked.cbl 
 
 # Get all working storage lines - output to STORAGE.cpy
-grep -oPz "(?ms)^.{7}.{0,3}WORKING-STORAGE SECTION\.\r?\n(.*?)^.*(?:^.{7}.{0,3}PROCEDURE DIVISION|^.{7}.{0,3}LINKAGE SECTION)" tmp/mocked.cbl | tr '\0' '\n' | tail -n +2 | head -n -1 > tmp/STORAGE.cpy
+awk '
+  # 1. Match the starting line: Column 8-11 contains WORKING-STORAGE SECTION.
+  # Substr checks from character 8 (length 23 matches "WORKING-STORAGE SECTION.")
+  substr($0, 8, 24) ~ /^WORKING-STORAGE SECTION\./ {
+    inside = 1;
+    next; # Skip printing the header line itself
+  }
+
+  # 2. Match the stopping line: PROCEDURE DIVISION or LINKAGE SECTION starting at column 8
+  inside && (substr($0, 8, 18) ~ /^PROCEDURE DIVISION/ || substr($0, 8, 15) ~ /^LINKAGE SECTION/) {
+    inside = 0;
+  }
+
+  # 3. Print lines while inside the block
+  inside
+' tmp/mocked.cbl > tmp/STORAGE.cpy
 
 # Get all procedure division lines, then add the section tracing to the sections and paragraphs - output to PROGRAM.cpy
 awk '
@@ -36,11 +51,45 @@ awk '
 ' tmp/mocked.cbl | tail -n +2 | sed -E 's/(^.{6}[^*] {0,3}([A-Z-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
 
 # Environment division and data division need to be incorporated to make the compiler happy, even if the files are never accessed at runtime
+
 # Get all data division lines - output to DATADIV.cpy
-grep -oPz "(?ms)^.{7}.{0,3}DATA DIVISION\.\r?\n(.*?)^.*(?:^.{7}.{0,3}WORKING-STORAGE SECTION)" tmp/mocked.cbl | tr '\0' '\n' | tail -n +2 | head -n -1 > tmp/DATADIV.cpy
+awk '
+  # 1. Match the starting line: Column 8 starts with DATA DIVISION.
+  substr($0, 8, 14) ~ /^DATA DIVISION\./ {
+    inside = 1;
+    next; # Skip printing the header line itself
+  }
+
+  # 2. Match the stopping lines starting at column 8
+  inside && (substr($0, 8, 23) ~ /^WORKING-STORAGE SECTION/ || 
+             substr($0, 8, 15) ~ /^LINKAGE SECTION/         || 
+             substr($0, 8, 18) ~ /^PROCEDURE DIVISION/) {
+    inside = 0;
+  }
+
+  # 3. Print lines while inside the block
+  inside
+' tmp/mocked.cbl > tmp/DATADIV.cpy
 
 # Get all environment division lines - output to ENVDIV.cpy
-grep -oPz "(?ms)^.{7}.{0,3}ENVIRONMENT DIVISION\.\r?\n(.*?)^.*(?:^.{7}.{0,3}DATA DIVISION)" tmp/mocked.cbl | tr '\0' '\n' | tail -n +2 | head -n -1 > tmp/ENVDIV.cpy
+awk '
+  # 1. Match the starting line: Column 8 starts with ENVIRONMENT DIVISION.
+  substr($0, 8, 21) ~ /^ENVIRONMENT DIVISION\./ {
+    inside = 1;
+    next; # Skip printing the header line itself
+  }
+
+  # 2. Match the stopping lines starting at column 8
+  inside && (substr($0, 8, 14) ~ /^DATA DIVISION/            || 
+             substr($0, 8, 23) ~ /^WORKING-STORAGE SECTION/ || 
+             substr($0, 8, 15) ~ /^LINKAGE SECTION/         || 
+             substr($0, 8, 18) ~ /^PROCEDURE DIVISION/) {
+    inside = 0;
+  }
+
+  # 3. Print lines while inside the block
+  inside
+' tmp/mocked.cbl > tmp/ENVDIV.cpy
 
 
 
