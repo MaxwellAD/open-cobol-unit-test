@@ -22,7 +22,18 @@ awk -v p="MOCK-" '
 grep -oPz "(?ms)^.{7}.{0,3}WORKING-STORAGE SECTION\.\r?\n(.*?)^.*(?:^.{7}.{0,3}PROCEDURE DIVISION|^.{7}.{0,3}LINKAGE SECTION)" tmp/mocked.cbl | tr '\0' '\n' | tail -n +2 | head -n -1 > tmp/STORAGE.cpy
 
 # Get all procedure division lines, then add the section tracing to the sections and paragraphs - output to PROGRAM.cpy
-sed -n '/^[[:space:]]\{0,10\}PROCEDURE DIVISION\./,$p' tmp/mocked.cbl | tail -n +2 | sed -E 's/(^.{6}[^*] {0,3}([A-Z-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
+awk '
+  !found && /PROCEDURE DIVISION/ { 
+    found=1; 
+    if ($0 ~ /\./) { print_now=1; next } 
+    next 
+  }
+  found && !print_now { 
+    if ($0 ~ /\./) { print_now=1 } 
+    next 
+  }
+  print_now
+' tmp/mocked.cbl | tail -n +2 | sed -E 's/(^.{6}[^*] {0,3}([A-Z-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
 
 # Environment division and data division need to be incorporated to make the compiler happy, even if the files are never accessed at runtime
 # Get all data division lines - output to DATADIV.cpy
