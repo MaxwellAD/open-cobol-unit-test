@@ -1,9 +1,5 @@
       * COBOL UT WORKING STORAGE
          01  CUT-DATA.
-           05 CUT-NUM-ACTUAL   PIC 9(18).
-           05 CUT-NUM-EXPECTED PIC 9(18).
-           05 CUT-CHAR-ACTUAL  PIC X(100).
-           05 CUT-CHAR-EXPECTED PIC X(100).
            05 CUT-MESSAGE      PIC X(100).
            05 CUT-TEST-NAME    PIC X(100).
            05 CUT-TEST-PASS-COUNT PIC 9(9).
@@ -72,5 +68,26 @@
 
 
        01  CUT-ASSERT-FIELDS.
-           05 CUT-ASSERT-TARGET PIC X(30) VALUE SPACES. 
-           05 CUT-ASSERT-ACTUAL PIC X(30) VALUE SPACES.
+           05 CUT-ASSERT-TARGET-C PIC A(256) VALUE SPACES. 
+           05 CUT-ASSERT-ACTUAL-C PIC A(256) VALUE SPACES.
+           05 CUT-ASSERT-TARGET-N PIC 9(18)v9(18).
+           05 CUT-ASSERT-ACTUAL-N PIC 9(18)v9(18).
+           *> Before displaying the TARGET and ACTUALS are moved to 
+           *> THE DISPLAY-OUT mirrors
+
+           *> Z(35).99 is probably "good enough"
+           *> COBOL doesn't handle trailing zeros very well (or at all)
+           *> This captures a lot of currency
+           *> The test fail is done on the COMP-2 fields which have high
+           *> precision, so the dev still knows something is up, even
+           *> if the display can't show it
+           *> And it's more than likely, if there's some issue with the 
+           *> result then it'll be wrong by more than 2 decimal places
+
+           05 CUT-ASSERT-TARGET-DISPLAY-OUT-N PIC Z(35).99.
+           05 CUT-ASSERT-ACTUAL-DISPLAY-OUT-N PIC Z(35).99.
+
+           *> If the above gets a rounding error then fallback to these
+           *> fields which are less pretty but provide the full context
+           05 CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG PIC Z(17)9.9(18).
+           05 CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG PIC Z(17)9.9(18).

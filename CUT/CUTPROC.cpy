@@ -5,6 +5,7 @@
            EVALUATE TRUE 
            WHEN CUT-TEST-PASS
               ADD 1 TO CUT-TEST-PASS-COUNT
+              DISPLAY CUT-DISPLAY-PASS
               PERFORM CUT-PASS
            WHEN CUT-TEST-FAIL
               ADD 1 TO CUT-TEST-FAIL-COUNT
@@ -154,17 +155,50 @@
           
        CUT-ASSERT-EQUALS SECTION.
            
-           IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL 
+           IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
                PERFORM CUT-PASS
            ELSE
                SET CUT-TEST-FAIL TO TRUE
-               STRING FUNCTION TRIM(CUT-ASSERT-TARGET)
-                   ' =/= '
-                   FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-               END-STRING
+               PERFORM CUT-ASSERT-EQUALS-FAIL
                PERFORM CUT-FAIL 
            END-IF 
+           MOVE ZEROS TO CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG
+                         CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG
+                         CUT-ASSERT-TARGET-N
+                         CUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO CUT-ASSERT-TARGET-C
+                          CUT-ASSERT-ACTUAL-C
+       .      
+
+       CUT-ASSERT-EQUALS-FAIL SECTION.
+           MOVE CUT-ASSERT-TARGET-N TO 
+                                  CUT-ASSERT-TARGET-DISPLAY-OUT-N
+           MOVE CUT-ASSERT-ACTUAL-N TO 
+                                  CUT-ASSERT-ACTUAL-DISPLAY-OUT-N
+           IF CUT-ASSERT-ACTUAL-DISPLAY-OUT-N =
+                      CUT-ASSERT-TARGET-DISPLAY-OUT-N
+               *> This means a rounding error has happened
+               *> Fallback to long number display
+               MOVE CUT-ASSERT-TARGET-N TO 
+                                CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG
+               MOVE CUT-ASSERT-ACTUAL-N TO 
+                                CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG
+               STRING
+                   'Expected ' 
+                 FUNCTION TRIM(CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG)
+                   ' but got '
+                FUNCTION TRIM (CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG) 
+                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+           ELSE 
+               STRING
+                   'Expected ' 
+                   FUNCTION TRIM(CUT-ASSERT-TARGET-DISPLAY-OUT-N)
+                   ' but got '
+                   FUNCTION TRIM (CUT-ASSERT-ACTUAL-DISPLAY-OUT-N) 
+                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+           END-IF
        .
 
        CUT-REGISTER-FIELD SECTION.
@@ -440,7 +474,7 @@
        .
 
        CUT-PASS SECTION.
-           DISPLAY  CUT-DISPLAY-PASS
+           *> No display on CUT-PASS 
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
        .
 
@@ -463,8 +497,10 @@
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
            MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
            PERFORM CUT-DISPLAY-TEST-CASE-NAME 
+           PERFORM BEFORE-EACH
        .
 
        CUT-DISPLAY-TEST-CASE-NAME SECTION.
            DISPLAY 'TEST CASE - ' CUT-TEST-NAME
+           EXIT SECTION
        .
