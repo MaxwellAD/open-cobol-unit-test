@@ -12,11 +12,46 @@ PREFIX="MOCK-"
 # For any section in the TEST_PGM that starts with MOCK-XXX
 # Search for a corresponding XXX section in the BUSINESS_PGM
 # Output all to tmp/mocked.cbl <-- should make this a variable and configurable to go to /tmp/
-awk -v p="MOCK-" '
-  NR==FNR { if ($0 ~ "^[[:space:]]*" p) { sec=substr($1, length(p)+1); next } if ($0 ~ "SECTION\\.") sec="" ; if (sec) code[sec] = code[sec] $0 "\n"; next }
-  { print }
-  $0 ~ "SECTION\\." { name=$1; if (code[name]) printf "%s", code[name] }
-' $TEST_PGM $BUSINESS_PGM > tmp/mocked.cbl 
+awk -v p="$PREFIX" '
+  # === PHASE 1: Parse the NEW_CODE file ===
+  NR==FNR { 
+    # Match the prefix starting anywhere in columns 8-11 (Area A)
+    if (substr($0, 8, length(p)) == p) {
+      # Extract the name from column 8 onwards, removing the prefix
+      match(substr($0, 8), /^[A-Za-z0-9#-]+/)
+      sec = substr($0, 8 + length(p), RLENGTH - length(p))
+      next
+    } 
+    # Stop capturing if we hit another Area A element (starts at column 8, ends with a period)
+    if (sec && substr($0, 8) ~ /^[A-Za-z0-9#-]+.*\.(\s|$)/) { 
+      sec = "" 
+    } 
+    # Accumulate the replacement code lines
+    if (sec) { 
+      code[sec] = code[sec] $0 "\n" 
+    }
+    next 
+  }
+
+  # === PHASE 2: Process and Update the OLD_CODE file ===
+  {
+    # Print the current line of OLD_CODE first
+    print 
+  }
+
+  # Check if this line defines a Paragraph or Section in Area A (Column 8)
+  # It must start with an alphanumeric character in column 8 and eventually contain a period
+  substr($0, 8, 1) ~ /[A-Za-z0-9#-]/ && substr($0, 8) ~ /^[A-Za-z0-9#-]+.*\.(\s|$)/ {
+    # Extract the clean paragraph/section name from column 8
+    match(substr($0, 8), /^[A-Za-z0-9#-]+/)
+    name = substr($0, 8, RLENGTH)
+    
+    # If we captured replacement code for this specific name, inject it
+    if (code[name]) { 
+      printf "%s", code[name] 
+    }
+  }
+' $TEST_PGM $BUSINESS_PGM > tmp/mocked.cbl
 
 # Get all working storage lines - output to STORAGE.cpy
 awk '
@@ -48,7 +83,7 @@ awk '
     next 
   }
   print_now
-' tmp/mocked.cbl | tail -n +2 | sed -E 's/(^.{6}[^*] {0,3}([A-Z-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
+' tmp/mocked.cbl | sed -E 's/(^.{6}[^*] {0,3}([A-Z|0-9|\-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
 
 # Environment division and data division need to be incorporated to make the compiler happy, even if the files are never accessed at runtime
 
