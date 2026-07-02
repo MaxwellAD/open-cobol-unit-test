@@ -749,7 +749,25 @@
 
        .
 
-
+       TEST-ASSERT-EQ-NUM-HANLE SECTION.
+           *> TEST THAT ASSERT-EQUALS CAN HANDLE INCORRECT USAGE
+           *> WHEN THE USER MEANT TO USE ASSERT-EQUALS-NUM
+       
+           *> GIVEN
+           MOVE 1 TO DUT-ASSERT-TARGET-N 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS
+           
+           *> THEN
+           STRING 'DUT-ASSERT-EQUALS '
+               'FOLLOWED-BY DUT-ERROR'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+       
+           PERFORM CUT-END-TEST 
+       .
        
       
 

@@ -13,6 +13,9 @@
            WHEN CUT-TEST-SKIP
               ADD 1 TO CUT-TEST-SKIP-COUNT
               PERFORM CUT-SKIP
+           WHEN CUT-TEST-ERROR
+              ADD 1 TO CUT-TEST-ERROR-COUNT
+              PERFORM CUT-ERROR
            END-EVALUATE 
            PERFORM CUT-CLEAR-TRACE 
            DISPLAY ' '
@@ -24,10 +27,15 @@
            MOVE CUT-TEST-PASS-COUNT TO CUT-TEST-PASS-COUNT-DISPLAY
            MOVE CUT-TEST-FAIL-COUNT TO CUT-TEST-FAIL-COUNT-DISPLAY
            MOVE CUT-TEST-SKIP-COUNT TO CUT-TEST-SKIP-COUNT-DISPLAY
+           MOVE CUT-TEST-ERROR-COUNT TO CUT-TEST-ERROR-COUNT-DISPLAY
            DISPLAY '==================================================='
-           DISPLAY 'PASS: ' FUNCTION TRIM(CUT-TEST-PASS-COUNT-DISPLAY)
-           DISPLAY 'FAIL: ' FUNCTION TRIM(CUT-TEST-FAIL-COUNT-DISPLAY)
-           DISPLAY 'SKIP: ' FUNCTION TRIM(CUT-TEST-SKIP-COUNT-DISPLAY)
+           DISPLAY 'PASS : ' FUNCTION TRIM(CUT-TEST-PASS-COUNT-DISPLAY)
+           DISPLAY 'FAIL : ' FUNCTION TRIM(CUT-TEST-FAIL-COUNT-DISPLAY)
+           DISPLAY 'SKIP : ' FUNCTION TRIM(CUT-TEST-SKIP-COUNT-DISPLAY)
+           IF CUT-TEST-ERROR-COUNT NOT = 0
+               DISPLAY 'ERROR: ' 
+                             FUNCTION TRIM(CUT-TEST-ERROR-COUNT-DISPLAY)
+           END-IF
            DISPLAY '==================================================='
            STOP RUN
        .
@@ -154,23 +162,32 @@
        .
           
        *> General assertion statement
+       *> A check is done to see if the numeric fields were populated
+       *> before invoking this section. if they were, then throw an
+       *> error on the test case as this is likely incorrect
+       *> TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
        CUT-ASSERT-EQUALS SECTION.
-           
-           IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL
-               PERFORM CUT-PASS 
+           IF CUT-ASSERT-TARGET-N NOT = 0
+              STRING 'USE CUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
+                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM CUT-ERROR
            ELSE
-               SET CUT-TEST-FAIL TO TRUE 
-               STRING
-                   'Expected "' 
-                 FUNCTION TRIM(CUT-ASSERT-TARGET)
-                   '" but got "'
-                FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
-                   '"'
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-               END-STRING
-               PERFORM CUT-FAIL
-           END-IF
-
+               IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL
+                   PERFORM CUT-PASS 
+               ELSE
+                   SET CUT-TEST-FAIL TO TRUE 
+                   STRING
+                       'Expected "' 
+                     FUNCTION TRIM(CUT-ASSERT-TARGET)
+                       '" but got "'
+                    FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
+                       '"'
+                       DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL
+               END-IF
+           END-IF 
            MOVE SPACES TO CUT-ASSERT-TARGET
                           CUT-ASSERT-ACTUAL
        .      
@@ -212,7 +229,7 @@
                    FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N)
                    ' but got '
                    FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N) 
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                   DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                END-STRING
            END-IF
        .
@@ -228,7 +245,7 @@
              FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
                ' but got '
             FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N-LONG) 
-               DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
            END-STRING
        .
 
@@ -280,14 +297,14 @@
               STRING 'UNABLE TO FIND '
                      FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
                      ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL
            ELSE
               STRING 'FOUND SECTION ' 
               FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
               ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
            END-IF
        .
@@ -319,7 +336,7 @@
                      FUNCTION TRIM(CUT-RT-SECTION-NAME(
                                          CUT-TRACE-SECTION-INDEX))
                      ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL
            ELSE
@@ -384,7 +401,7 @@
                      FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
               END-STRING
-              PERFORM CUT-FAIL 
+              PERFORM CUT-ERROR
            END-IF
        .
 
@@ -437,7 +454,7 @@
                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
                      ' ON SECTION '
                      CUT-TEMP-SECTION-NAME
-              DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               PERFORM CUT-FAIL 
       
               STRING 'EXPECTED ' 
@@ -446,7 +463,7 @@
                       CUT-TEMP-FIELD-OPERATOR
                       ' '
                       FUNCTION TRIM(CUT-TEMP-FIELD-EXPECTED)
-                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL 
       
@@ -454,7 +471,7 @@
                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
                      ' = '
                      FUNCTION TRIM(CUT-TEMP-FIELD-VALUE)
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL
            ELSE 
@@ -498,10 +515,16 @@
            END-PERFORM
        .
 
+       CUT-ERROR SECTION.
+           SET CUT-TEST-ERROR TO TRUE
+           DISPLAY CUT-DISPLAY-ERROR
+           MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
+       .
+
        CUT-FAIL SECTION.
            SET CUT-TEST-FAIL TO TRUE 
-           DISPLAY  CUT-DISPLAY-ERROR
-           MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
+           DISPLAY  CUT-DISPLAY-FAIL
+           MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
        .
 
        CUT-PASS SECTION.
@@ -513,7 +536,7 @@
            SET CUT-TEST-SKIP TO TRUE
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG 
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
-           MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
+           MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
            PERFORM CUT-DISPLAY-TEST-CASE-NAME 
            DISPLAY  CUT-DISPLAY-SKIP
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG
@@ -526,7 +549,7 @@
            SET CUT-TEST-PASS TO TRUE
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG 
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
-           MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
+           MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
            PERFORM CUT-DISPLAY-TEST-CASE-NAME 
            PERFORM BEFORE-EACH
        .

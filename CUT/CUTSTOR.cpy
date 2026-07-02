@@ -5,13 +5,16 @@
            05 CUT-TEST-PASS-COUNT PIC 9(9).
            05 CUT-TEST-PASS-COUNT-DISPLAY PIC Z(8)9.
            05 CUT-TEST-FAIL-COUNT PIC 9(9).
+           05 CUT-TEST-ERROR-COUNT PIC 9(9).
            05 CUT-TEST-FAIL-COUNT-DISPLAY PIC Z(8)9.
            05 CUT-TEST-SKIP-COUNT-DISPLAY PIC Z(8)9.
+           05 CUT-TEST-ERROR-COUNT-DISPLAY PIC Z(8)9.
            05 CUT-TEST-SKIP-COUNT PIC 9(9).
            05 CUT-TEST-STATUS  PIC X(1) VALUE 'F'.
               88 CUT-TEST-FAIL VALUE 'F'.
               88 CUT-TEST-PASS VALUE 'P'.
               88 CUT-TEST-SKIP VALUE 'S'.
+              88 CUT-TEST-ERROR VALUE 'E'.
            05 CUT-SECTION-SEARCH-STATUS PIC X.
               88 CUT-SECTION-FOUND VALUE 'Y'.
               88 CUT-SECTION-NOT-FOUND VALUE 'N'.
@@ -20,15 +23,24 @@
               88 CUT-FIELD-NOT-FOUND VALUE 'N'.
 
        01  CUT-DISPLAYS.
-           05 CUT-DISPLAY-ERROR.
+           05 CUT-DISPLAY-FAIL.
               10 FILLER PIC X(7) VALUE '[FAIL] '.
-              10 CUT-DISPLAY-ERROR-MSG PIC X(150).
+              10 CUT-DISPLAY-FAIL-MSG PIC X(150).
            05 CUT-DISPLAY-PASS.
               10 FILLER PIC X(7) VALUE '[PASS] '.
               10 CUT-DISPLAY-PASS-MSG PIC X(150).
            05 CUT-DISPLAY-SKIP.
               10 FILLER PIC X(7) VALUE '[SKIP] '.
               10 CUT-DISPLAY-SKIP-MSG PIC X(150).
+           05 CUT-DISPLAY-INFO.
+              10 FILLER PIC X(7) VALUE '[INFO] '.
+              10 CUT-DISPLAY-INFO-MSG PIC X(150).
+           05 CUT-DISPLAY-WARN.
+              10 FILLER PIC X(7) VALUE '[WARN] '.
+              10 CUT-DISPLAY-WARN-MSG PIC X(150).
+           05 CUT-DISPLAY-ERROR.
+              10 FILLER PIC X(8) VALUE '[ERROR] '.
+              10 CUT-DISPLAY-ERROR-MSG PIC X(150).
 
 
        01  CUT-EXEC-TRACE.
@@ -84,8 +96,8 @@
            *> And it's more than likely, if there's some issue with the 
            *> result then it'll be wrong by more than 2 decimal places
 
-           05 CUT-ASSERT-TARGET-DIS-N PIC Z(35).99.
-           05 CUT-ASSERT-ACTUAL-DIS-N PIC Z(35).99.
+           05 CUT-ASSERT-TARGET-DIS-N PIC Z(34)9.99.
+           05 CUT-ASSERT-ACTUAL-DIS-N PIC Z(34)9.99.
 
            *> If the above gets a rounding error then fallback to these
            *> fields which are less pretty but provide the full context
