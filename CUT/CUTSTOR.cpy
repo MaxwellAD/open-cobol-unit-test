@@ -68,8 +68,8 @@
 
 
        01  CUT-ASSERT-FIELDS.
-           05 CUT-ASSERT-TARGET-C PIC A(256) VALUE SPACES. 
-           05 CUT-ASSERT-ACTUAL-C PIC A(256) VALUE SPACES.
+           05 CUT-ASSERT-TARGET PIC X(256) VALUE SPACES. 
+           05 CUT-ASSERT-ACTUAL PIC X(256) VALUE SPACES.
            05 CUT-ASSERT-TARGET-N PIC 9(18)v9(18).
            05 CUT-ASSERT-ACTUAL-N PIC 9(18)v9(18).
            *> Before displaying the TARGET and ACTUALS are moved to 
@@ -84,10 +84,10 @@
            *> And it's more than likely, if there's some issue with the 
            *> result then it'll be wrong by more than 2 decimal places
 
-           05 CUT-ASSERT-TARGET-DISPLAY-OUT-N PIC Z(35).99.
-           05 CUT-ASSERT-ACTUAL-DISPLAY-OUT-N PIC Z(35).99.
+           05 CUT-ASSERT-TARGET-DIS-N PIC Z(35).99.
+           05 CUT-ASSERT-ACTUAL-DIS-N PIC Z(35).99.
 
            *> If the above gets a rounding error then fallback to these
            *> fields which are less pretty but provide the full context
-           05 CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG PIC Z(17)9.9(18).
-           05 CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG PIC Z(17)9.9(18).
+           05 CUT-ASSERT-TARGET-DIS-N-LONG PIC Z(17)9.9(18).
+           05 CUT-ASSERT-ACTUAL-DIS-N-LONG PIC Z(17)9.9(18).

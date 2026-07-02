@@ -5,10 +5,6 @@
        WORKING-STORAGE SECTION.
       * COBOL UT WORKING STORAGE
          01  DUT-DATA.
-           05 DUT-NUM-ACTUAL   PIC 9(18).
-           05 DUT-NUM-EXPECTED PIC 9(18).
-           05 DUT-CHAR-ACTUAL  PIC X(100).
-           05 DUT-CHAR-EXPECTED PIC X(100).
            05 DUT-MESSAGE      PIC X(100).
            05 DUT-TEST-NAME    PIC X(100).
            05 DUT-TEST-PASS-COUNT PIC 9(9).
@@ -77,9 +73,29 @@
 
 
        01  DUT-ASSERT-FIELDS.
-           05 DUT-ASSERT-TARGET PIC X(30) VALUE SPACES. 
-           05 DUT-ASSERT-ACTUAL PIC X(30) VALUE SPACES.
+           05 DUT-ASSERT-TARGET PIC X(256) VALUE SPACES. 
+           05 DUT-ASSERT-ACTUAL PIC X(256) VALUE SPACES.
+           05 DUT-ASSERT-TARGET-N PIC 9(18)v9(18).
+           05 DUT-ASSERT-ACTUAL-N PIC 9(18)v9(18).
+           *> Before displaying the TARGET and ACTUALS are moved to 
+           *> THE DISPLAY-OUT mirrors
 
+           *> Z(35).99 is probably "good enough"
+           *> COBOL doesn't handle trailing zeros very well (or at all)
+           *> This captures a lot of currency
+           *> The test fail is done on the COMP-2 fields which have high
+           *> precision, so the dev still knows something is up, even
+           *> if the display can't show it
+           *> And it's more than likely, if there's some issue with the 
+           *> result then it'll be wrong by more than 2 decimal places
+
+           05 DUT-ASSERT-TARGET-DIS-N PIC Z(35).99.
+           05 DUT-ASSERT-ACTUAL-DIS-N PIC Z(35).99.
+
+           *> If the above gets a rounding error then fallback to these
+           *> fields which are less pretty but provide the full context
+           05 DUT-ASSERT-TARGET-DIS-N-LONG PIC Z(17)9.9(18).
+           05 DUT-ASSERT-ACTUAL-DIS-N-LONG PIC Z(17)9.9(18).
 
        PROCEDURE DIVISION.
 
@@ -89,6 +105,7 @@
            EVALUATE TRUE 
            WHEN DUT-TEST-PASS
               ADD 1 TO DUT-TEST-PASS-COUNT
+              DISPLAY DUT-DISPLAY-PASS
               PERFORM DUT-PASS
            WHEN DUT-TEST-FAIL
               ADD 1 TO DUT-TEST-FAIL-COUNT
@@ -112,10 +129,6 @@
            DISPLAY 'FAIL: ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
            DISPLAY 'SKIP: ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
            DISPLAY '==================================================='
-           PERFORM DUT-STOP-RUN     
-       .
-
-       DUT-STOP-RUN SECTION.
            STOP RUN
        .
 
@@ -240,19 +253,73 @@
               *> UNTIL END-WITH IS FOUND IN COMMAND
        .
           
+       *> General assertion statement
        DUT-ASSERT-EQUALS SECTION.
            
-           IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL 
+           IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL
+               PERFORM DUT-PASS 
+           ELSE
+               SET DUT-TEST-FAIL TO TRUE 
+               STRING
+                   'Expected "' 
+                 FUNCTION TRIM(DUT-ASSERT-TARGET)
+                   '" but got "'
+                FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
+                   '"'
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM DUT-FAIL
+           END-IF
+
+           MOVE SPACES TO DUT-ASSERT-TARGET
+                          DUT-ASSERT-ACTUAL
+       .      
+
+       
+       *> Use this when working with numerics of high precision
+       DUT-ASSERT-EQUALS-NUM SECTION.
+           IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
                PERFORM DUT-PASS
            ELSE
                SET DUT-TEST-FAIL TO TRUE
-               STRING FUNCTION TRIM(DUT-ASSERT-TARGET)
-                   ' =/= '
-                   FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
-                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
-               END-STRING
+               PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
                PERFORM DUT-FAIL 
            END-IF 
+           MOVE ZEROS TO DUT-ASSERT-TARGET-DIS-N-LONG
+                         DUT-ASSERT-ACTUAL-DIS-N-LONG
+                         DUT-ASSERT-TARGET-N
+                         DUT-ASSERT-ACTUAL-N
+       .
+
+       DUT-ASSERT-EQUALS-NUM-FAIL SECTION.
+           MOVE DUT-ASSERT-TARGET-N TO 
+                                  DUT-ASSERT-TARGET-DIS-N
+           MOVE DUT-ASSERT-ACTUAL-N TO 
+                                  DUT-ASSERT-ACTUAL-DIS-N
+           IF DUT-ASSERT-ACTUAL-DIS-N =
+                      DUT-ASSERT-TARGET-DIS-N
+               *> This means a rounding error has happened
+               *> Fallback to long number display
+               MOVE DUT-ASSERT-TARGET-N TO 
+                                DUT-ASSERT-TARGET-DIS-N-LONG
+               MOVE DUT-ASSERT-ACTUAL-N TO 
+                                DUT-ASSERT-ACTUAL-DIS-N-LONG
+               STRING
+                   'Expected ' 
+                 FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N-LONG)
+                   ' but got '
+                FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N-LONG) 
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+           ELSE 
+               STRING
+                   'Expected ' 
+                   FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N)
+                   ' but got '
+                   FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N) 
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+           END-IF
        .
 
        DUT-REGISTER-FIELD SECTION.
@@ -528,7 +595,7 @@
        .
 
        DUT-PASS SECTION.
-           DISPLAY  DUT-DISPLAY-PASS
+           *> No display on DUT-PASS 
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
        .
 
@@ -551,14 +618,14 @@
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
            MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+           PERFORM BEFORE-EACH
        .
 
        DUT-DISPLAY-TEST-CASE-NAME SECTION.
            DISPLAY 'TEST CASE - ' DUT-TEST-NAME
+           EXIT SECTION
        .
 
-       *> Will need to be mocked in the test program as that
-       *> is where this section is actually used
        DUT-TRACE-FIELDS SECTION.
            CONTINUE 
        .

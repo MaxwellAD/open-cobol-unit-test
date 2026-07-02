@@ -153,49 +153,70 @@
               *> UNTIL END-WITH IS FOUND IN COMMAND
        .
           
+       *> General assertion statement
        CUT-ASSERT-EQUALS SECTION.
            
+           IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL
+               PERFORM CUT-PASS 
+           ELSE
+               SET CUT-TEST-FAIL TO TRUE 
+               STRING
+                   'Expected "' 
+                 FUNCTION TRIM(CUT-ASSERT-TARGET)
+                   '" but got "'
+                FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
+                   '"'
+                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF
+
+           MOVE SPACES TO CUT-ASSERT-TARGET
+                          CUT-ASSERT-ACTUAL
+       .      
+
+       
+       *> Use this when working with numerics of high precision
+       CUT-ASSERT-EQUALS-NUM SECTION.
            IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
                PERFORM CUT-PASS
            ELSE
                SET CUT-TEST-FAIL TO TRUE
-               PERFORM CUT-ASSERT-EQUALS-FAIL
+               PERFORM CUT-ASSERT-EQUALS-NUM-FAIL
                PERFORM CUT-FAIL 
            END-IF 
-           MOVE ZEROS TO CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG
-                         CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG
+           MOVE ZEROS TO CUT-ASSERT-TARGET-DIS-N-LONG
+                         CUT-ASSERT-ACTUAL-DIS-N-LONG
                          CUT-ASSERT-TARGET-N
                          CUT-ASSERT-ACTUAL-N
-           MOVE SPACES TO CUT-ASSERT-TARGET-C
-                          CUT-ASSERT-ACTUAL-C
-       .      
+       .
 
-       CUT-ASSERT-EQUALS-FAIL SECTION.
+       CUT-ASSERT-EQUALS-NUM-FAIL SECTION.
            MOVE CUT-ASSERT-TARGET-N TO 
-                                  CUT-ASSERT-TARGET-DISPLAY-OUT-N
+                                  CUT-ASSERT-TARGET-DIS-N
            MOVE CUT-ASSERT-ACTUAL-N TO 
-                                  CUT-ASSERT-ACTUAL-DISPLAY-OUT-N
-           IF CUT-ASSERT-ACTUAL-DISPLAY-OUT-N =
-                      CUT-ASSERT-TARGET-DISPLAY-OUT-N
+                                  CUT-ASSERT-ACTUAL-DIS-N
+           IF CUT-ASSERT-ACTUAL-DIS-N =
+                      CUT-ASSERT-TARGET-DIS-N
                *> This means a rounding error has happened
                *> Fallback to long number display
                MOVE CUT-ASSERT-TARGET-N TO 
-                                CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG
+                                CUT-ASSERT-TARGET-DIS-N-LONG
                MOVE CUT-ASSERT-ACTUAL-N TO 
-                                CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG
+                                CUT-ASSERT-ACTUAL-DIS-N-LONG
                STRING
                    'Expected ' 
-                 FUNCTION TRIM(CUT-ASSERT-TARGET-DISPLAY-OUT-N-LONG)
+                 FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
                    ' but got '
-                FUNCTION TRIM (CUT-ASSERT-ACTUAL-DISPLAY-OUT-N-LONG) 
+                FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N-LONG) 
                    DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
            ELSE 
                STRING
                    'Expected ' 
-                   FUNCTION TRIM(CUT-ASSERT-TARGET-DISPLAY-OUT-N)
+                   FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N)
                    ' but got '
-                   FUNCTION TRIM (CUT-ASSERT-ACTUAL-DISPLAY-OUT-N) 
+                   FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N) 
                    DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
            END-IF

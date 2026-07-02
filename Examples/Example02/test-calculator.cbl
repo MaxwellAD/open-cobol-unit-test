@@ -76,7 +76,7 @@
            *> THEN
            MOVE 3.33 TO CUT-ASSERT-TARGET-N  
            MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
-           PERFORM CUT-ASSERT-EQUALS 
+           PERFORM CUT-ASSERT-EQUALS-NUM
        
            PERFORM CUT-END-TEST 
        .

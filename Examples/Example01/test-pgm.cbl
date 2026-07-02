@@ -117,7 +117,6 @@
                   INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE 
-           PERFORM CUT-DEBUG-DISPLAY-TRACE  
 
            PERFORM CUT-END-TEST 
        .
@@ -688,9 +687,9 @@
 
        .
 
-       TEST-END-TEST-SUIT-RUNS SECTION.
-           PERFORM DUT-END-TEST-SUITE 
-       .
+      
+
+
               
        END-TEST-SUITE SECTION.
            PERFORM CUT-END-TEST-SUITE
@@ -721,6 +720,17 @@
            DISPLAY 'WE DIDNT EXIT'
        .
 
+
+      *****************************************************************
+      * RUNS BEFORE EACH TEST CASE
+      * USE THIS SECTION TO SETUP AND TEARDOWN YOUR TEST DATA AND 
+      * RESULTS
+      * DO NOT REMOVE THE EXIT SECTION OTHERWISE YOU WILL FALL INTO
+      * THE BUSINESS PROGRAM
+      *****************************************************************
+       BEFORE-EACH SECTION.
+           EXIT SECTION  
+       .
 
 
       * FIXTURES
