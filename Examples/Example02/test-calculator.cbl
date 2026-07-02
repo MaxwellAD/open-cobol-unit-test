@@ -22,7 +22,7 @@
            *> THEN
            MOVE 60.00 TO CUT-ASSERT-TARGET-N 
            MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
-           PERFORM CUT-ASSERT-EQUALS 
+           PERFORM CUT-ASSERT-EQUALS-NUM
 
            PERFORM CUT-END-TEST 
        .
@@ -40,7 +40,7 @@
            *> THEN
            MOVE 80 TO CUT-ASSERT-TARGET-N 
            MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
-           PERFORM CUT-ASSERT-EQUALS 
+           PERFORM CUT-ASSERT-EQUALS-NUM
        
            PERFORM CUT-END-TEST 
        .
@@ -58,7 +58,7 @@
            *> THEN
            MOVE 20 TO CUT-ASSERT-TARGET-N 
            MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
-           PERFORM CUT-ASSERT-EQUALS
+           PERFORM CUT-ASSERT-EQUALS-NUM 
        
            PERFORM CUT-END-TEST 
        .
@@ -81,6 +81,62 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-DIV-BY-ZERO-HANDLE SECTION.
+           *> TEST THAT THE CALCULATOR CAN PROTECT 
+           *> AGAINST DIVIDE BY ZEROS
+       
+           *> GIVEN
+           MOVE 10 TO WS-NUM-1 
+           MOVE 0 TO WS-NUM-2 
+       
+           *> WHEN
+           PERFORM BC-DIV-NUMBERS
+           
+           *> THEN
+           STRING 'BC-DIV-NUMBERS '
+                  'FOLLOWED-BY CA-DISPLAY-ERROR'
+                  DELIMITED BY SIZE
+                  INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE 
+    
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-MUL-NUMBERS-POS SECTION.
+           *> TESTING THAT MULTIPLY NUMBERS WORKS
+       
+           *> GIVEN
+           MOVE 25 TO WS-NUM-1 
+           MOVE 5 TO WS-NUM-2 
+       
+           *> WHEN
+           PERFORM BD-MUL-NUMBERS
+           
+           *> THEN
+           MOVE 125 TO CUT-ASSERT-TARGET-N 
+           MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-SQUARE-NUMBERS-POS SECTION.
+           *> TEST THE ABILITY TO SQUARE WHOLE NUMBERS
+       
+           *> GIVEN
+           MOVE 3 TO WS-NUM-1 
+       
+           *> WHEN
+           PERFORM BE-SQUARE-NUMBERS
+           
+           *> THEN
+           MOVE 9 TO CUT-ASSERT-TARGET-N 
+           MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS
+       
+           PERFORM CUT-END-TEST 
+       .
        
 
 

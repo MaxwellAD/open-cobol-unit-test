@@ -36,8 +36,23 @@
        .
 
        BC-DIV-NUMBERS.
-           COMPUTE WS-RESULT  = WS-NUM-1 / WS-NUM-2 
+           IF WS-NUM-2 = 0
+               PERFORM CA-DISPLAY-ERROR 
+           ELSE
+              COMPUTE WS-RESULT  = WS-NUM-1 / WS-NUM-2 
+           END-IF 
+       .
+
+       BD-MUL-NUMBERS.
+           COMPUTE WS-RESULT = WS-NUM-1 * WS-NUM-2 
+       .
+
+       BE-SQUARE-NUMBERS.
            CONTINUE 
+       .
+
+       CA-DISPLAY-ERROR.
+           DISPLAY 'CANNOT DIVIDE BY ZERO!' 
        .
 
        ZA-EXIT SECTION.
