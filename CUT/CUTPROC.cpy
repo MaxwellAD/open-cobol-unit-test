@@ -176,7 +176,13 @@
        .      
 
        
-       *> Use this when working with numerics of high precision
+       *> Use this when working with numerics of high precision or with
+       *> Decimal places
+       *> Will default to 2 decimal places of precision unless 
+       *> that causes the output to display Expected X but got X where
+       *> X is identical
+       *> TODO revisit this, perhaps a better rounding / post decimal
+       *> point z supression would be better
        CUT-ASSERT-EQUALS-NUM SECTION.
            IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
                PERFORM CUT-PASS
