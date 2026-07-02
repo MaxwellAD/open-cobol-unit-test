@@ -170,6 +170,68 @@
 
        .
 
+       TEST-ASSERT-EQUALS-NUM-BASIC SECTION.
+           *> TEST THE ASSERT EQUALS NUM WITH A SIMPLE NUMBER
+       
+           *> GIVEN
+           MOVE 5 TO DUT-ASSERT-TARGET 
+           MOVE 5 TO DUT-ASSERT-ACTUAL 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM 
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
+               CUT-DISPLAY-ERROR-MSG 
+               PERFORM CUT-FAIL 
+           END-IF
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-F-LONG SECTION.
+           *> TEST WHAT HAPPENS WHEN THE NUMERIC ASSERTION FAILS A LONG
+           *> The "pretty" numeric display out only goes to 2 decimal
+           *> places, which isn't helpful if the output looks like this
+           *> "Expected 5.55 but got 5.55"
+           *> In this case DUT needs to detect that the display out
+           *> for either side are identical, and fall back to long 
+           *> display
+           *> Which in this case should look like
+           *> "Expected 5.554400000000000000 but got 5.555500000000000000"
+
+           *> GIVEN
+           MOVE 5.5555 TO DUT-ASSERT-ACTUAL-N 
+           MOVE 5.5544 TO DUT-ASSERT-TARGET-N
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM 
+           
+           *> THEN
+           IF DUT-TEST-PASS  
+               MOVE 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED' TO 
+               CUT-DISPLAY-ERROR-MSG 
+               PERFORM CUT-FAIL 
+           END-IF 
+
+           *> TODO FOLLOWED-BY DUT-FAIL WITH "Expected ..."
+           *> 'WITH DUT-DISPLAY-ERROR-MSG = '
+           *> '"Expected 5.554400000000000000 but got '
+           *> '5.555500000000000000"'
+           *> Currently this doesn't work because of the spaces
+           STRING 'DUT-ASSERT-EQUALS-NUM '
+                  'FOLLOWED-BY DUT-ASSERT-EQUALS-NUM-FAIL '
+                  'FOLLOWED-BY DUT-HANDLE-DIS-ROUND-ERROR '
+                  'FOLLOWED-BY DUT-FAIL '
+                  DELIMITED BY SIZE 
+                  INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE 
+       
+           PERFORM CUT-END-TEST 
+       .
+
        TEST-FIND-FOLLOWED-BY-POS SECTION.
            *> BASIC TEST CASE FOR THE FIND-FOLLOWED-BY SECTION TO FIND
            *> SOME TARGET SECTION IN THE MIDDLE OF A TRACE
@@ -687,6 +749,8 @@
 
        .
 
+
+       
       
 
 
@@ -729,6 +793,7 @@
       * THE BUSINESS PROGRAM
       *****************************************************************
        BEFORE-EACH SECTION.
+           SET DUT-TEST-PASS TO TRUE 
            EXIT SECTION  
        .
 

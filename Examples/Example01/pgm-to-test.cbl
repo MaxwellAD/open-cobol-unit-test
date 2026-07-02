@@ -296,21 +296,10 @@
                                   DUT-ASSERT-TARGET-DIS-N
            MOVE DUT-ASSERT-ACTUAL-N TO 
                                   DUT-ASSERT-ACTUAL-DIS-N
-           IF DUT-ASSERT-ACTUAL-DIS-N =
-                      DUT-ASSERT-TARGET-DIS-N
+           IF DUT-ASSERT-TARGET-DIS-N = DUT-ASSERT-ACTUAL-DIS-N
                *> This means a rounding error has happened
                *> Fallback to long number display
-               MOVE DUT-ASSERT-TARGET-N TO 
-                                DUT-ASSERT-TARGET-DIS-N-LONG
-               MOVE DUT-ASSERT-ACTUAL-N TO 
-                                DUT-ASSERT-ACTUAL-DIS-N-LONG
-               STRING
-                   'Expected ' 
-                 FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N-LONG)
-                   ' but got '
-                FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N-LONG) 
-                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
-               END-STRING
+               PERFORM DUT-HANDLE-DIS-ROUND-ERROR
            ELSE 
                STRING
                    'Expected ' 
@@ -320,6 +309,21 @@
                    DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
                END-STRING
            END-IF
+       .
+
+       DUT-HANDLE-DIS-ROUND-ERROR SECTION.
+
+           MOVE DUT-ASSERT-TARGET-N TO 
+                            DUT-ASSERT-TARGET-DIS-N-LONG
+           MOVE DUT-ASSERT-ACTUAL-N TO 
+                            DUT-ASSERT-ACTUAL-DIS-N-LONG
+           STRING
+               'Expected ' 
+             FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N-LONG)
+               ' but got '
+            FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N-LONG) 
+               DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+           END-STRING
        .
 
        DUT-REGISTER-FIELD SECTION.

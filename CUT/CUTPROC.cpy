@@ -168,7 +168,7 @@
                    '"'
                    DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
-               PERFORM CUT-FAIL 
+               PERFORM CUT-FAIL
            END-IF
 
            MOVE SPACES TO CUT-ASSERT-TARGET
@@ -196,21 +196,10 @@
                                   CUT-ASSERT-TARGET-DIS-N
            MOVE CUT-ASSERT-ACTUAL-N TO 
                                   CUT-ASSERT-ACTUAL-DIS-N
-           IF CUT-ASSERT-ACTUAL-DIS-N =
-                      CUT-ASSERT-TARGET-DIS-N
+           IF CUT-ASSERT-TARGET-DIS-N = CUT-ASSERT-ACTUAL-DIS-N
                *> This means a rounding error has happened
                *> Fallback to long number display
-               MOVE CUT-ASSERT-TARGET-N TO 
-                                CUT-ASSERT-TARGET-DIS-N-LONG
-               MOVE CUT-ASSERT-ACTUAL-N TO 
-                                CUT-ASSERT-ACTUAL-DIS-N-LONG
-               STRING
-                   'Expected ' 
-                 FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
-                   ' but got '
-                FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N-LONG) 
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-               END-STRING
+               PERFORM CUT-HANDLE-DIS-ROUND-ERROR
            ELSE 
                STRING
                    'Expected ' 
@@ -220,6 +209,21 @@
                    DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
            END-IF
+       .
+
+       CUT-HANDLE-DIS-ROUND-ERROR SECTION.
+
+           MOVE CUT-ASSERT-TARGET-N TO 
+                            CUT-ASSERT-TARGET-DIS-N-LONG
+           MOVE CUT-ASSERT-ACTUAL-N TO 
+                            CUT-ASSERT-ACTUAL-DIS-N-LONG
+           STRING
+               'Expected ' 
+             FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
+               ' but got '
+            FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N-LONG) 
+               DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+           END-STRING
        .
 
        CUT-REGISTER-FIELD SECTION.
