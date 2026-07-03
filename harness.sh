@@ -136,6 +136,9 @@ awk '
 # Add a move the test case name and perform the test case init routine
 sed -E '/PROCEDURE DIVISION/,$ { /^[[:space:]]{1,7}(TEST-)[A-Za-z0-9_-]*(\s+SECTION)?\./ { /PROCEDURE DIVISION/b; p; s/^[[:space:]]*([A-Za-z0-9_-]+).*/            MOVE "\1"\n           TO CUT-TEST-NAME \n           PERFORM CUT-TEST-INIT./ } }' $2 |
 
+# Add file output opening
+sed '/PROCEDURE DIVISION/a\       OPEN-OUTPUT SECTION.\n           OPEN OUTPUT UTOUT .\n           MOVE SPACES TO UTOUT-RECORD .' |
+
 # Remove SKIP- sections
 sed '/^[[:space:]]*SKIP-/,/^[[:space:]]*[A-Za-z0-9-]\+[[:space:]]\+SECTION\./ { /^[[:space:]]*SKIP-/b; /^[[:space:]]*[A-Za-z0-9-]\+[[:space:]]\+SECTION\./b; d }' | \
 sed '/^[[:space:]]*SKIP-/a\          .' |

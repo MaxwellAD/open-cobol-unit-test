@@ -1,7 +1,9 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. TESTCUT.
        ENVIRONMENT DIVISION.
+       COPY CUTENV.
        DATA DIVISION.
+       COPY CUTDATA.
        WORKING-STORAGE SECTION.
        
        
@@ -23,7 +25,6 @@
       
       
        PROCEDURE DIVISION.
-
        TEST-INIT-CLEARS-TRACE SECTION.
            
            *> WHEN
