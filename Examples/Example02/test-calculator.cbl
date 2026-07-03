@@ -121,7 +121,7 @@
            PERFORM CUT-END-TEST 
        .
 
-       TEST-SQUARE-NUMBERS-POS SECTION.
+       SKIP-SQUARE-NUMBERS-POS SECTION.
            *> TEST THE ABILITY TO SQUARE WHOLE NUMBERS
        
            *> GIVEN
@@ -133,7 +133,7 @@
            *> THEN
            MOVE 9 TO CUT-ASSERT-TARGET-N 
            MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
-           PERFORM CUT-ASSERT-EQUALS
+           PERFORM CUT-ASSERT-EQUALS-NUM 
        
            PERFORM CUT-END-TEST 
        .

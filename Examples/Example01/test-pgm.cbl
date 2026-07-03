@@ -458,55 +458,6 @@
            PERFORM CUT-END-TEST 
        .
 
-       TEST-EVALUATE-OP-EQ-POS SECTION.
-           *> TEST FOR DUT-ASSERT-EXPECT <- not sure if this is really
-           *>                               needed
-           *> TEST FOR THE DUT-EVALUATE-OPERATION
-           *> HAPPENS IN THE WITH BRANCH OF EXPECTED-EXEC
-           
-           *> GIVEN
-           MOVE 5 TO DUT-TEMP-FIELD-VALUE 
-           MOVE 5 TO DUT-TEMP-FIELD-EXPECTED 
-           MOVE '=' TO DUT-TEMP-FIELD-OPERATOR 
-           SET DUT-TEST-PASS TO TRUE
-
-           *> WHEN
-           PERFORM DUT-EVALUATE-OPERATION 
-           
-           *> THEN
-           
-           IF DUT-TEST-FAIL 
-               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
-               CUT-DISPLAY-ERROR-MSG 
-               PERFORM CUT-FAIL 
-           END-IF 
-           
-           PERFORM CUT-END-TEST 
-       .
-
-       TEST-EVALUATE-OP-NEQ-POS SECTION.
-           *> TEST FOR THE DUT-EVALUATE-OPERATION
-           *> HAPPENS IN THE WITH BRANCH OF EXPECTED-EXEC
-           
-           *> GIVEN
-           MOVE 5 TO DUT-TEMP-FIELD-VALUE 
-           MOVE 10 TO DUT-TEMP-FIELD-EXPECTED 
-           MOVE '!=' TO DUT-TEMP-FIELD-OPERATOR 
-           SET DUT-TEST-PASS TO TRUE
-
-           *> WHEN
-           PERFORM DUT-EVALUATE-OPERATION 
-           
-           *> THEN
-           
-           IF DUT-TEST-FAIL
-               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
-               CUT-DISPLAY-ERROR-MSG 
-               PERFORM CUT-FAIL 
-           END-IF 
-           
-           PERFORM CUT-END-TEST 
-       .
 
        TEST-EVALUATE-OP-EQ-NEG SECTION.
            *> TEST FOR THE DUT-EVALUATE-OPERATION
@@ -619,6 +570,26 @@
 
            PERFORM CUT-END-TEST 
            
+       .
+
+       TEST-ASSERT-EQ-NUM-HANLE SECTION.
+           *> TEST THAT ASSERT-EQUALS CAN HANDLE INCORRECT USAGE
+           *> WHEN THE USER MEANT TO USE ASSERT-EQUALS-NUM
+       
+           *> GIVEN
+           MOVE 1 TO DUT-ASSERT-TARGET-N 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS
+           
+           *> THEN
+           STRING 'DUT-ASSERT-EQUALS '
+               'FOLLOWED-BY DUT-ERROR'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+       
+           PERFORM CUT-END-TEST 
        .
 
        TEST-FIND-WITH-IN-TRACE-FATAL SECTION.
@@ -749,23 +720,53 @@
 
        .
 
-       TEST-ASSERT-EQ-NUM-HANLE SECTION.
-           *> TEST THAT ASSERT-EQUALS CAN HANDLE INCORRECT USAGE
-           *> WHEN THE USER MEANT TO USE ASSERT-EQUALS-NUM
-       
+       TEST-EVALUATE-OP-EQ-POS SECTION.
+           *> TEST FOR DUT-ASSERT-EXPECT <- not sure if this is really
+           *>                               needed
+           *> TEST FOR THE DUT-EVALUATE-OPERATION
+           *> HAPPENS IN THE WITH BRANCH OF EXPECTED-EXEC
+           
            *> GIVEN
-           MOVE 1 TO DUT-ASSERT-TARGET-N 
-       
+           MOVE 5 TO DUT-TEMP-FIELD-VALUE 
+           MOVE 5 TO DUT-TEMP-FIELD-EXPECTED 
+           MOVE '=' TO DUT-TEMP-FIELD-OPERATOR 
+           SET DUT-TEST-PASS TO TRUE
+
            *> WHEN
-           PERFORM DUT-ASSERT-EQUALS
+           PERFORM DUT-EVALUATE-OPERATION 
            
            *> THEN
-           STRING 'DUT-ASSERT-EQUALS '
-               'FOLLOWED-BY DUT-ERROR'
-               DELIMITED BY SIZE
-               INTO CUT-TRACE 
-           END-STRING
-       
+           
+           IF DUT-TEST-FAIL 
+               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
+               CUT-DISPLAY-ERROR-MSG 
+               PERFORM CUT-FAIL 
+           END-IF 
+           
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-EVALUATE-OP-NEQ-POS SECTION.
+           *> TEST FOR THE DUT-EVALUATE-OPERATION
+           *> HAPPENS IN THE WITH BRANCH OF EXPECTED-EXEC
+           
+           *> GIVEN
+           MOVE 5 TO DUT-TEMP-FIELD-VALUE 
+           MOVE 10 TO DUT-TEMP-FIELD-EXPECTED 
+           MOVE '!=' TO DUT-TEMP-FIELD-OPERATOR 
+           SET DUT-TEST-PASS TO TRUE
+
+           *> WHEN
+           PERFORM DUT-EVALUATE-OPERATION 
+           
+           *> THEN
+           
+           IF DUT-TEST-FAIL
+               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
+               CUT-DISPLAY-ERROR-MSG 
+               PERFORM CUT-FAIL 
+           END-IF 
+           
            PERFORM CUT-END-TEST 
        .
        
