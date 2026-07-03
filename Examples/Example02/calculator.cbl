@@ -48,7 +48,11 @@
        .
 
        BE-SQUARE-NUMBERS.
-           CONTINUE 
+           COMPUTE WS-RESULT = WS-NUM-1 * WS-NUM-1
+       .
+
+       BF-SQUARE-ROOT-NUMBERS.
+           COMPUTE WS-RESULT  = FUNCTION SQRT(WS-NUM-1) 
        .
 
        CA-DISPLAY-ERROR.

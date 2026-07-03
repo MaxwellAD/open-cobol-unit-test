@@ -137,6 +137,22 @@
            PERFORM CUT-END-TEST 
        .
        
+       TEST-SQUARE-ROOT-POS SECTION.
+           *> TEST CASE FOR SQUARE ROOTING A NUMBER
+       
+           *> GIVEN
+           MOVE 9 TO WS-NUM-1 
+       
+           *> WHEN
+           PERFORM BF-SQUARE-ROOT-NUMBERS
+           
+           *> THEN
+           MOVE 3 TO CUT-ASSERT-TARGET-N 
+           MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
 
 
        END-TEST-SUITE SECTION.
