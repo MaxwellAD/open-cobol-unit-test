@@ -200,7 +200,7 @@
            *> for either side are identical, and fall back to long 
            *> display
            *> Which in this case should look like
-           *> "Expected 5.554400000000000000 but got 5.555500000000000000"
+           *> Expected 5.554400000000000000 but got 5.555500000000000000
 
            *> GIVEN
            MOVE 5.5555 TO DUT-ASSERT-ACTUAL-N 
@@ -218,7 +218,7 @@
 
            *> TODO FOLLOWED-BY DUT-FAIL WITH "Expected ..."
            *> 'WITH DUT-DISPLAY-ERROR-MSG = '
-           *> '"Expected 5.554400000000000000 but got '
+           *> 'Expected 5.554400000000000000 but got '
            *> '5.555500000000000000"'
            *> Currently this doesn't work because of the spaces
            STRING 'DUT-ASSERT-EQUALS-NUM '
@@ -776,6 +776,7 @@
 
               
        END-TEST-SUITE SECTION.
+           PERFORM DISPLAY-COVERAGE 
            PERFORM CUT-END-TEST-SUITE
        .
       *****************************************************************
