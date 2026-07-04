@@ -8,10 +8,10 @@ Allows the user to execute COBOL sections inside of a business program in a unit
 
 # Why
 All any test needs to do is:
-1. What your program did
+1. What your code did
 2. How it did it
 
-The first is pretty easy, checking output files or API responses is easy
+The first is pretty easy, checking output files or API responses is simple, but you have to run the whole program
 
 But knowing how it was done is a bit more challenging
 
@@ -23,9 +23,9 @@ A test program needs access to all of the fields and procedures of the business 
 
 `harness.sh` extracts the business programs DATA DIVISION, ENVIRONMENT DIVISION, WORKING STORAGE and PROCEDURE DIVISION as various copybooks which you include in your test program
 
-This puts your sections and paragraphs of your business program into a test program "sandbox"
+This puts the sections and paragraphs of your business program into a test program "sandbox"
 
-In this sandbox you need to write some COBOL code to test conditions:
+In this sandbox you write some COBOL code to test conditions:
 ```
 MOVE A TO B
 PERFORM A-SECTION
@@ -73,7 +73,86 @@ Capturing this data is fine, but it needs to be queryable in a reasonably easy w
 
 CUTSTOR and CUTPROC are a collection of helper fields and procedures that make querying and managing a unit test program easy and familiar to a COBOL programmer
 
-TODO - Add friendly example of a typical TEST section
+
+### A Basic Example
+A simple calculator paragraph is shown below
+```COBOL
+       BA-ADD-NUMBERS.
+           COMPUTE WS-RESULT = WS-NUM-1 + WS-NUM-2
+       .
+```
+
+The corresponding test case looks like this
+```COBOL
+       TEST-ADD-NUMBERS SECTION.
+           *> GIVEN
+           MOVE 15 TO WS-NUM-1 
+           MOVE 45 TO WS-NUM-2 
+
+           *> WHEN
+           PERFORM BA-ADD-NUMBERS          
+           
+           *> THEN
+           MOVE 60.00 TO CUT-ASSERT-TARGET-N 
+           MOVE WS-RESULT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM
+
+           PERFORM CUT-END-TEST 
+       .
+```
+
+GIVEN, WHEN, THEN is an alternative wording to Arrange, Act, Assert.
+
+### A More Complex Example
+Sometimes COBOL programs don't change data, they just call out to other systems. In this case working storage validation won't prove anything
+
+Let's look at an example of the calculator dividing by zero
+```COBOL
+       BC-DIV-NUMBERS.
+           IF WS-NUM-2 = 0
+               PERFORM CA-DISPLAY-ERROR 
+           ELSE
+              COMPUTE WS-RESULT  = WS-NUM-1 / WS-NUM-2 
+           END-IF 
+       .
+```
+
+We want to make sure that this paragraph can handle an attempted divide by zero. A test case would look like this
+```COBOL
+       TEST-DIV-BY-ZERO-HANDLE SECTION.
+           *> TEST THAT THE CALCULATOR CAN PROTECT 
+           *> AGAINST DIVIDE BY ZEROS
+       
+           *> GIVEN
+           MOVE 10 TO WS-NUM-1 
+           MOVE 0 TO WS-NUM-2 
+       
+           *> WHEN
+           PERFORM BC-DIV-NUMBERS
+           
+           *> THEN
+           STRING 'BC-DIV-NUMBERS '
+                  'FOLLOWED-BY CA-DISPLAY-ERROR'
+                  DELIMITED BY SIZE
+                  INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE 
+    
+           PERFORM CUT-END-TEST 
+       .
+```
+
+This case demonstrates the power of the CUT-ASSERT-TRACE, which allows you to query the section and paragraph trace of an execution
+
+This case asserts that `BC-DIV-NUMBERS` must run, followed by CA-DISPLAY-ERROR. Demonstrating that the paragraph identified coming divide by zero error
+
+If CA-DISPLAY-ERROR was not called the output of the test run would be
+```
+TEST CASE - TEST-DIV-BY-ZERO-HANDLE
+[FAIL] UNABLE TO FIND CA-DISPLAY-ERROR IN EXECUTION TRACE
+[FAIL]
+```
+
 
 # Is This Effective?
 In my experience, yes
@@ -94,31 +173,21 @@ Having the inner working of each section documented by a unit test program makes
 When run against Examples/Example01/test-pgm.cbl
 ```
 ...
-TEST CASE - TEST-FIND-WITH-IN-TRACE-FATAL                                                                       
-[FAIL] FATAL ERROR: UNABLE TO FIND FIELD NAME DOESNT-EXISTFOR SECTION BB000-PROCESS-HEADER-RECORD                                                            
-[PASS]                                                                                                                                                       
+TEST CASE - TEST-ADD-TRACE-ADDS-TRACE
+[PASS]
+
+TEST CASE - TEST-EVALUATE-OP-EQ-POS  
+[PASS]
+
+TEST CASE - TEST-EVALUATE-OP-NEQ-POS 
+[PASS]
  
-TEST CASE - TEST-CLEAR-TRACE-CLEARS-TRACE                                                                       
-[PASS]                                                                                                                                                       
- 
-TEST CASE - TEST-ADD-TRACE-ADDS-TRACE                                                                           
-[PASS]                                                                                                                                                       
- 
-TEST CASE - TEST-END-TEST-SUIT-RUNS                                                                             
  
 TEST EXECUTION RESULTS
 ===================================================
-PASS: 0
-FAIL: 0
-SKIP: 0
-===================================================
-WE MOCKED THE EXIT!
- 
-TEST EXECUTION RESULTS
-===================================================
-PASS: 22
-FAIL: 0
-SKIP: 0
+PASS : 25
+FAIL : 0
+SKIP : 0
 ===================================================
 ```
 

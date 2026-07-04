@@ -5,22 +5,21 @@
        WORKING-STORAGE SECTION.
       * COBOL UT WORKING STORAGE
          01  DUT-DATA.
-           05 DUT-NUM-ACTUAL   PIC 9(18).
-           05 DUT-NUM-EXPECTED PIC 9(18).
-           05 DUT-CHAR-ACTUAL  PIC X(100).
-           05 DUT-CHAR-EXPECTED PIC X(100).
            05 DUT-MESSAGE      PIC X(100).
            05 DUT-TEST-NAME    PIC X(100).
            05 DUT-TEST-PASS-COUNT PIC 9(9).
            05 DUT-TEST-PASS-COUNT-DISPLAY PIC Z(8)9.
            05 DUT-TEST-FAIL-COUNT PIC 9(9).
+           05 DUT-TEST-ERROR-COUNT PIC 9(9).
            05 DUT-TEST-FAIL-COUNT-DISPLAY PIC Z(8)9.
            05 DUT-TEST-SKIP-COUNT-DISPLAY PIC Z(8)9.
+           05 DUT-TEST-ERROR-COUNT-DISPLAY PIC Z(8)9.
            05 DUT-TEST-SKIP-COUNT PIC 9(9).
            05 DUT-TEST-STATUS  PIC X(1) VALUE 'F'.
               88 DUT-TEST-FAIL VALUE 'F'.
               88 DUT-TEST-PASS VALUE 'P'.
               88 DUT-TEST-SKIP VALUE 'S'.
+              88 DUT-TEST-ERROR VALUE 'E'.
            05 DUT-SECTION-SEARCH-STATUS PIC X.
               88 DUT-SECTION-FOUND VALUE 'Y'.
               88 DUT-SECTION-NOT-FOUND VALUE 'N'.
@@ -29,15 +28,24 @@
               88 DUT-FIELD-NOT-FOUND VALUE 'N'.
 
        01  DUT-DISPLAYS.
-           05 DUT-DISPLAY-ERROR.
+           05 DUT-DISPLAY-FAIL.
               10 FILLER PIC X(7) VALUE '[FAIL] '.
-              10 DUT-DISPLAY-ERROR-MSG PIC X(150).
+              10 DUT-DISPLAY-FAIL-MSG PIC X(150).
            05 DUT-DISPLAY-PASS.
               10 FILLER PIC X(7) VALUE '[PASS] '.
               10 DUT-DISPLAY-PASS-MSG PIC X(150).
            05 DUT-DISPLAY-SKIP.
               10 FILLER PIC X(7) VALUE '[SKIP] '.
               10 DUT-DISPLAY-SKIP-MSG PIC X(150).
+           05 DUT-DISPLAY-INFO.
+              10 FILLER PIC X(7) VALUE '[INFO] '.
+              10 DUT-DISPLAY-INFO-MSG PIC X(150).
+           05 DUT-DISPLAY-WARN.
+              10 FILLER PIC X(7) VALUE '[WARN] '.
+              10 DUT-DISPLAY-WARN-MSG PIC X(150).
+           05 DUT-DISPLAY-ERROR.
+              10 FILLER PIC X(8) VALUE '[ERROR] '.
+              10 DUT-DISPLAY-ERROR-MSG PIC X(150).
 
 
        01  DUT-EXEC-TRACE.
@@ -77,9 +85,29 @@
 
 
        01  DUT-ASSERT-FIELDS.
-           05 DUT-ASSERT-TARGET PIC X(30) VALUE SPACES. 
-           05 DUT-ASSERT-ACTUAL PIC X(30) VALUE SPACES.
+           05 DUT-ASSERT-TARGET PIC X(256) VALUE SPACES. 
+           05 DUT-ASSERT-ACTUAL PIC X(256) VALUE SPACES.
+           05 DUT-ASSERT-TARGET-N PIC 9(18)v9(18).
+           05 DUT-ASSERT-ACTUAL-N PIC 9(18)v9(18).
+           *> Before displaying the TARGET and ACTUALS are moved to 
+           *> THE DISPLAY-OUT mirrors
 
+           *> Z(35).99 is probably "good enough"
+           *> COBOL doesn't handle trailing zeros very well (or at all)
+           *> This captures a lot of currency
+           *> The test fail is done on the COMP-2 fields which have high
+           *> precision, so the dev still knows something is up, even
+           *> if the display can't show it
+           *> And it's more than likely, if there's some issue with the 
+           *> result then it'll be wrong by more than 2 decimal places
+
+           05 DUT-ASSERT-TARGET-DIS-N PIC Z(34)9.99.
+           05 DUT-ASSERT-ACTUAL-DIS-N PIC Z(34)9.99.
+
+           *> If the above gets a rounding error then fallback to these
+           *> fields which are less pretty but provide the full context
+           05 DUT-ASSERT-TARGET-DIS-N-LONG PIC Z(17)9.9(18).
+           05 DUT-ASSERT-ACTUAL-DIS-N-LONG PIC Z(17)9.9(18).
 
        PROCEDURE DIVISION.
 
@@ -89,6 +117,7 @@
            EVALUATE TRUE 
            WHEN DUT-TEST-PASS
               ADD 1 TO DUT-TEST-PASS-COUNT
+              DISPLAY DUT-DISPLAY-PASS
               PERFORM DUT-PASS
            WHEN DUT-TEST-FAIL
               ADD 1 TO DUT-TEST-FAIL-COUNT
@@ -96,6 +125,9 @@
            WHEN DUT-TEST-SKIP
               ADD 1 TO DUT-TEST-SKIP-COUNT
               PERFORM DUT-SKIP
+           WHEN DUT-TEST-ERROR
+              ADD 1 TO DUT-TEST-ERROR-COUNT
+              PERFORM DUT-ERROR
            END-EVALUATE 
            PERFORM DUT-CLEAR-TRACE 
            DISPLAY ' '
@@ -107,15 +139,16 @@
            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
+           MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
            DISPLAY '==================================================='
-           DISPLAY 'PASS: ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
-           DISPLAY 'FAIL: ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
-           DISPLAY 'SKIP: ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+           DISPLAY 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
+           DISPLAY 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
+           DISPLAY 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+           IF DUT-TEST-ERROR-COUNT NOT = 0
+               DISPLAY 'ERROR: ' 
+                             FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+           END-IF
            DISPLAY '==================================================='
-           PERFORM DUT-STOP-RUN     
-       .
-
-       DUT-STOP-RUN SECTION.
            STOP RUN
        .
 
@@ -240,19 +273,91 @@
               *> UNTIL END-WITH IS FOUND IN COMMAND
        .
           
+       *> General assertion statement
+       *> A check is done to see if the numeric fields were populated
+       *> before invoking this section. if they were then thrown and
+       *> error on the test case as this is likely incorrect
        DUT-ASSERT-EQUALS SECTION.
-           
-           IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL 
+           IF DUT-ASSERT-TARGET-N NOT = 0
+              STRING 'USE DUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              END-STRING
+              PERFORM DUT-ERROR
+           ELSE
+               IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL
+                   PERFORM DUT-PASS 
+               ELSE
+                   SET DUT-TEST-FAIL TO TRUE 
+                   STRING
+                       'Expected "' 
+                     FUNCTION TRIM(DUT-ASSERT-TARGET)
+                       '" but got "'
+                    FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
+                       '"'
+                       DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM DUT-FAIL
+               END-IF
+           END-IF 
+           MOVE SPACES TO DUT-ASSERT-TARGET
+                          DUT-ASSERT-ACTUAL
+       .      
+
+       
+       *> Use this when working with numerics of high precision or with
+       *> Decimal places
+       *> Will default to 2 decimal places of precision unless 
+       *> that causes the output to display Expected X but got X where
+       *> X is identical
+       *> TODO revisit this, perhaps a better rounding / post decimal
+       *> point z supression would be better
+       DUT-ASSERT-EQUALS-NUM SECTION.
+           IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
                PERFORM DUT-PASS
            ELSE
                SET DUT-TEST-FAIL TO TRUE
-               STRING FUNCTION TRIM(DUT-ASSERT-TARGET)
-                   ' =/= '
-                   FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
-                   DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
-               END-STRING
+               PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
                PERFORM DUT-FAIL 
            END-IF 
+           MOVE ZEROS TO DUT-ASSERT-TARGET-DIS-N-LONG
+                         DUT-ASSERT-ACTUAL-DIS-N-LONG
+                         DUT-ASSERT-TARGET-N
+                         DUT-ASSERT-ACTUAL-N
+       .
+
+       DUT-ASSERT-EQUALS-NUM-FAIL SECTION.
+           MOVE DUT-ASSERT-TARGET-N TO 
+                                  DUT-ASSERT-TARGET-DIS-N
+           MOVE DUT-ASSERT-ACTUAL-N TO 
+                                  DUT-ASSERT-ACTUAL-DIS-N
+           IF DUT-ASSERT-TARGET-DIS-N = DUT-ASSERT-ACTUAL-DIS-N
+               *> This means a rounding error has happened
+               *> Fallback to long number display
+               PERFORM DUT-HANDLE-DIS-ROUND-ERROR
+           ELSE 
+               STRING
+                   'Expected ' 
+                   FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N)
+                   ' but got '
+                   FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N) 
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+               END-STRING
+           END-IF
+       .
+
+       DUT-HANDLE-DIS-ROUND-ERROR SECTION.
+
+           MOVE DUT-ASSERT-TARGET-N TO 
+                            DUT-ASSERT-TARGET-DIS-N-LONG
+           MOVE DUT-ASSERT-ACTUAL-N TO 
+                            DUT-ASSERT-ACTUAL-DIS-N-LONG
+           STRING
+               'Expected ' 
+             FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N-LONG)
+               ' but got '
+            FUNCTION TRIM (DUT-ASSERT-ACTUAL-DIS-N-LONG) 
+               DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+           END-STRING
        .
 
        DUT-REGISTER-FIELD SECTION.
@@ -303,14 +408,14 @@
               STRING 'UNABLE TO FIND '
                      FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
                      ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL
            ELSE
               STRING 'FOUND SECTION ' 
               FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
               ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
            END-IF
        .
@@ -342,7 +447,7 @@
                      FUNCTION TRIM(DUT-RT-SECTION-NAME(
                                          DUT-TRACE-SECTION-INDEX))
                      ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL
            ELSE
@@ -407,7 +512,7 @@
                      FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
               END-STRING
-              PERFORM DUT-FAIL 
+              PERFORM DUT-ERROR
            END-IF
        .
 
@@ -460,7 +565,7 @@
                      FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
                      ' ON SECTION '
                      DUT-TEMP-SECTION-NAME
-              DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+              DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               PERFORM DUT-FAIL 
       
               STRING 'EXPECTED ' 
@@ -469,7 +574,7 @@
                       DUT-TEMP-FIELD-OPERATOR
                       ' '
                       FUNCTION TRIM(DUT-TEMP-FIELD-EXPECTED)
-                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL 
       
@@ -477,7 +582,7 @@
                      FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
                      ' = '
                      FUNCTION TRIM(DUT-TEMP-FIELD-VALUE)
-                     DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                     DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL
            ELSE 
@@ -521,14 +626,20 @@
            END-PERFORM
        .
 
-       DUT-FAIL SECTION.
-           SET DUT-TEST-FAIL TO TRUE 
-           DISPLAY  DUT-DISPLAY-ERROR
+       DUT-ERROR SECTION.
+           SET DUT-TEST-ERROR TO TRUE
+           DISPLAY DUT-DISPLAY-ERROR
            MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
        .
 
+       DUT-FAIL SECTION.
+           SET DUT-TEST-FAIL TO TRUE 
+           DISPLAY  DUT-DISPLAY-FAIL
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+       .
+
        DUT-PASS SECTION.
-           DISPLAY  DUT-DISPLAY-PASS
+           *> No display on DUT-PASS 
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
        .
 
@@ -536,7 +647,7 @@
            SET DUT-TEST-SKIP TO TRUE
            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
-           MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
            DISPLAY  DUT-DISPLAY-SKIP
            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
@@ -549,16 +660,16 @@
            SET DUT-TEST-PASS TO TRUE
            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
-           MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+           PERFORM BEFORE-EACH
        .
 
        DUT-DISPLAY-TEST-CASE-NAME SECTION.
            DISPLAY 'TEST CASE - ' DUT-TEST-NAME
+           EXIT SECTION
        .
 
-       *> Will need to be mocked in the test program as that
-       *> is where this section is actually used
        DUT-TRACE-FIELDS SECTION.
            CONTINUE 
        .
