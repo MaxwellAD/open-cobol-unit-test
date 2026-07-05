@@ -5,7 +5,7 @@
            EVALUATE TRUE 
            WHEN CUT-TEST-PASS
               ADD 1 TO CUT-TEST-PASS-COUNT
-              MOVE CUT-DISPLAY-PASS TO UTOUT-RECORD
+              MOVE CUT-DISPLAY-PASS TO CUT-OUT-RECORD
               PERFORM CUT-WRITE-UT-RECORD
               PERFORM CUT-PASS
            WHEN CUT-TEST-FAIL
@@ -19,15 +19,15 @@
               PERFORM CUT-ERROR
            END-EVALUATE 
            PERFORM CUT-CLEAR-TRACE 
-           MOVE ' ' TO UTOUT-RECORD
+           MOVE ' ' TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
        .
        
        CUT-END-TEST-SUITE SECTION.
 
-           MOVE ' ' TO UTOUT-RECORD
+           MOVE ' ' TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
-           MOVE 'TEST EXECUTION RESULTS' TO UTOUT-RECORD
+           MOVE 'TEST EXECUTION RESULTS' TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
 
            MOVE CUT-TEST-PASS-COUNT TO CUT-TEST-PASS-COUNT-DISPLAY
@@ -35,30 +35,30 @@
            MOVE CUT-TEST-SKIP-COUNT TO CUT-TEST-SKIP-COUNT-DISPLAY
            MOVE CUT-TEST-ERROR-COUNT TO CUT-TEST-ERROR-COUNT-DISPLAY
            MOVE '===================================================' TO 
-                 UTOUT-RECORD
+                 CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'PASS : ' FUNCTION TRIM(CUT-TEST-PASS-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO UTOUT-RECORD 
+           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'FAIL : ' FUNCTION TRIM(CUT-TEST-FAIL-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO UTOUT-RECORD 
+           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'SKIP : ' FUNCTION TRIM(CUT-TEST-SKIP-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO UTOUT-RECORD 
+           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            IF CUT-TEST-ERROR-COUNT NOT = 0
             STRING 'ERROR: ' FUNCTION TRIM(CUT-TEST-ERROR-COUNT-DISPLAY)
-               DELIMITED BY SIZE INTO UTOUT-RECORD
+               DELIMITED BY SIZE INTO CUT-OUT-RECORD
                PERFORM CUT-WRITE-UT-RECORD
            END-IF
            MOVE '===================================================' TO 
-                 UTOUT-RECORD
+                 CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
-           CLOSE UTOUT 
+           CLOSE CUT-OUT 
            STOP RUN
        .
 
@@ -200,11 +200,10 @@
                ELSE
                    SET CUT-TEST-FAIL TO TRUE 
                    STRING
-                       'Expected "' 
+                       'Expected ' 
                      FUNCTION TRIM(CUT-ASSERT-TARGET)
-                       '" but got "'
+                       ' but got '
                     FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
-                       '"'
                        DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                    END-STRING
                    PERFORM CUT-FAIL
@@ -539,14 +538,14 @@
 
        CUT-ERROR SECTION.
            SET CUT-TEST-ERROR TO TRUE
-           MOVE CUT-DISPLAY-ERROR TO UTOUT-RECORD
+           MOVE CUT-DISPLAY-ERROR TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD 
            MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
        .
 
        CUT-FAIL SECTION.
            SET CUT-TEST-FAIL TO TRUE 
-           MOVE CUT-DISPLAY-FAIL TO UTOUT-RECORD
+           MOVE CUT-DISPLAY-FAIL TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
            MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
        .
@@ -562,9 +561,9 @@
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
            MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
            PERFORM CUT-DISPLAY-TEST-CASE-NAME 
-           MOVE CUT-DISPLAY-SKIP TO UTOUT-RECORD
+           MOVE CUT-DISPLAY-SKIP TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD 
-           MOVE ' ' TO UTOUT-RECORD
+           MOVE ' ' TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD 
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG
            ADD 1 TO CUT-TEST-SKIP-COUNT
@@ -582,13 +581,13 @@
        .
 
        CUT-WRITE-UT-RECORD SECTION.
-           WRITE UTOUT-RECORD
-           MOVE SPACES TO UTOUT-RECORD
+           WRITE CUT-OUT-RECORD
+           MOVE SPACES TO CUT-OUT-RECORD
        .
 
        CUT-DISPLAY-TEST-CASE-NAME SECTION.
            STRING 'TEST CASE - ' CUT-TEST-NAME DELIMITED BY 
-           SIZE INTO UTOUT-RECORD
+           SIZE INTO CUT-OUT-RECORD
 
            PERFORM CUT-WRITE-UT-RECORD
            EXIT SECTION
