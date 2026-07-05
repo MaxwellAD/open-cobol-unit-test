@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                
+                    
 ****************************************************************************************
     COVERAGE REPORT - DUTPGM                                            
 ****************************************************************************************
@@ -63,9 +63,14 @@
 [-]            MOVE '===================================================' TO 
                      DUT-OUT-RECORD
 [-]            PERFORM DUT-WRITE-UT-RECORD
-               CLOSE DUT-OUT 
+[-]            PERFORM DUT-SHUT-DOWN-TEST-SUITE 
+           .
+    
+           DUT-SHUT-DOWN-TEST-SUITE SECTION.
+[-]            CLOSE DUT-OUT 
 [-]            STOP RUN
            .
+    
     
            DUT-ASSERT-TRACE SECTION.
 [+]            MOVE 1 TO DUT-TRACE-POINTER
@@ -518,22 +523,22 @@
            .
     
            DUT-DEBUG-DISPLAY-TRACE SECTION.
-[-]            DISPLAY 'DISPLAYING TRACE'
+[+]            DISPLAY 'DISPLAYING TRACE'
                *>DISPLAY 'SECTION INDEX ' DUT-TRACE-SECTION-INDEX
-[-]            PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
+[+]            PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
                              DUT-TRACE-SECTION-INDEX >= DUT-RT-SECTION-COUNT
-[-]               DISPLAY 'SECTION NAME: ' DUT-RT-SECTION-NAME(
+[+]               DISPLAY 'SECTION NAME: ' DUT-RT-SECTION-NAME(
                            DUT-TRACE-SECTION-INDEX)
     
                   
-[-]               PERFORM VARYING DUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
+[+]               PERFORM VARYING DUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
                               DUT-TRACE-FIELD-INDEX >= 
                          DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
     
-[-]                  DISPLAY 'FIELD: ' DUT-RT-SECTION-FIELD-NAME(
+[+]                  DISPLAY 'FIELD: ' DUT-RT-SECTION-FIELD-NAME(
                                                 DUT-TRACE-SECTION-INDEX
                                                 DUT-TRACE-FIELD-INDEX)
-[-]                  DISPLAY 'VALUE: ' DUT-RT-SECTION-FIELD-VALUE(
+[+]                  DISPLAY 'VALUE: ' DUT-RT-SECTION-FIELD-VALUE(
                                DUT-TRACE-SECTION-INDEX
                                DUT-TRACE-FIELD-INDEX)
     
@@ -604,9 +609,9 @@
 ****************************************************************************************
     SUMMARY STATISTICS                           
 ****************************************************************************************
-    TOTAL STATEMENTS: 0169
-    COVERED STATEMENTS: 0117
-    STATEMENT COVERAGE: 069.23%
+    TOTAL STATEMENTS: 0171
+    COVERED STATEMENTS: 0123
+    STATEMENT COVERAGE: 071.92%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************

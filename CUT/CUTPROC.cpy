@@ -58,6 +58,10 @@
            MOVE '===================================================' TO 
                  CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
+           PERFORM CUT-SHUT-DOWN-TEST-SUITE 
+       .
+
+       CUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE CUT-OUT 
            STOP RUN
        .

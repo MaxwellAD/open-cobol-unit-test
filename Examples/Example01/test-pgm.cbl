@@ -824,6 +824,54 @@
            PERFORM CUT-END-TEST 
        .
 
+       
+       TEST-END-TEST-ERROR SECTION.
+           *> TEST THAT THE ERROR PATHWAY IS TAKEN ON ERROR RESULT
+       
+           *> GIVEN
+           SET DUT-TEST-ERROR TO TRUE 
+           MOVE 0 TO DUT-TEST-ERROR-COUNT 
+
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-ERROR'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-ERROR-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-DISPLAY-TRACE-SHOWS-ALL SECTION.
+           *> TEST THAT THE DEBUG DISPLAY TRACE SHOWS ALL SECTIONS
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD
+           MOVE 0 TO DUT-TRACE-FIELD-INDEX 
+
+           *> WHEN
+           PERFORM DUT-DEBUG-DISPLAY-TRACE 
+           
+           *> THEN
+           MOVE 6 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-SECTION-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           MOVE 2 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-FIELD-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+           
+       
+           PERFORM CUT-END-TEST 
+       .
 
               
        END-TEST-SUITE SECTION.

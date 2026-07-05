@@ -177,9 +177,14 @@
            MOVE '===================================================' TO 
                  DUT-OUT-RECORD
            PERFORM DUT-WRITE-UT-RECORD
+           PERFORM DUT-SHUT-DOWN-TEST-SUITE 
+       .
+
+       DUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE DUT-OUT 
            STOP RUN
        .
+
 
        DUT-ASSERT-TRACE SECTION.
            MOVE 1 TO DUT-TRACE-POINTER
