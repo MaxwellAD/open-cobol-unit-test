@@ -73,10 +73,22 @@ TEST CASE - TEST-EVALUATE-OP-EQ-POS
 TEST CASE - TEST-EVALUATE-OP-NEQ-POS
 [PASS]
 
+TEST CASE - TEST-END-TEST-PASS
+[PASS]
+
+TEST CASE - TEST-END-TEST-FAIL
+[PASS]
+
+TEST CASE - TEST-END-TEST-ERROR
+[PASS]
+
+TEST CASE - TEST-DISPLAY-TRACE-SHOWS-ALL
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 25
+PASS : 29
 FAIL : 0
 SKIP : 0
 ===================================================
