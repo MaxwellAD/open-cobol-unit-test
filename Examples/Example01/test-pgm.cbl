@@ -772,7 +772,31 @@
            PERFORM CUT-END-TEST 
        .
        
-      
+       TEST-END-TEST-PASS SECTION.
+           *> TEST THAT THE END-TEST PROCESS CAN TAKE THE RIGHT PATH
+       
+           *> GIVEN
+           SET DUT-TEST-PASS TO TRUE
+           MOVE 0 TO DUT-TEST-PASS-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-WRITE-UT-RECORD '
+                  'FOLLOWED-BY DUT-PASS '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-PASS-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
 
 
               

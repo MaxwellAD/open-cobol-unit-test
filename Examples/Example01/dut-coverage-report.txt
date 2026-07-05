@@ -1,4 +1,4 @@
-          
+                                                                                          
 ****************************************************************************************
     COVERAGE REPORT - DUTPGM                                            
 ****************************************************************************************
@@ -9,10 +9,10 @@
            DUT-END-TEST SECTION.
                EVALUATE TRUE 
                WHEN DUT-TEST-PASS
-[-]               ADD 1 TO DUT-TEST-PASS-COUNT
-[-]               MOVE DUT-DISPLAY-PASS TO DUT-OUT-RECORD
-[-]               PERFORM DUT-WRITE-UT-RECORD
-[-]               PERFORM DUT-PASS
+[+]               ADD 1 TO DUT-TEST-PASS-COUNT
+[+]               MOVE DUT-DISPLAY-PASS TO DUT-OUT-RECORD
+[+]               PERFORM DUT-WRITE-UT-RECORD
+[+]               PERFORM DUT-PASS
                WHEN DUT-TEST-FAIL
 [-]               ADD 1 TO DUT-TEST-FAIL-COUNT
 [-]               PERFORM DUT-FAIL 
@@ -23,9 +23,9 @@
 [-]               ADD 1 TO DUT-TEST-ERROR-COUNT
 [-]               PERFORM DUT-ERROR
                END-EVALUATE 
-[-]            PERFORM DUT-CLEAR-TRACE 
-[-]            MOVE ' ' TO DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-CLEAR-TRACE 
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
            .
            
            DUT-END-TEST-SUITE SECTION.
@@ -605,8 +605,8 @@
     SUMMARY STATISTICS                           
 ****************************************************************************************
     TOTAL STATEMENTS: 0169
-    COVERED STATEMENTS: 0106
-    STATEMENT COVERAGE: 062.72%
+    COVERED STATEMENTS: 0113
+    STATEMENT COVERAGE: 066.86%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************
