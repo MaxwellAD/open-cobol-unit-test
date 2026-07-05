@@ -1,7 +1,14 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. DUTPGM.
-
+       ENVIRONMENT DIVISION. 
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT DUT-OUT ASSIGN TO DUT-RPTO
+           ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
+       FILE SECTION.
+       FD  DUT-OUT RECORDING MODE F.
+       01 DUT-OUT-RECORD PIC X(160).
        WORKING-STORAGE SECTION.
       * COBOL UT WORKING STORAGE
          01  DUT-DATA.
@@ -117,38 +124,60 @@
            EVALUATE TRUE 
            WHEN DUT-TEST-PASS
               ADD 1 TO DUT-TEST-PASS-COUNT
-              DISPLAY DUT-DISPLAY-PASS
+              MOVE DUT-DISPLAY-PASS TO DUT-OUT-RECORD
+              PERFORM DUT-WRITE-UT-RECORD
               PERFORM DUT-PASS
            WHEN DUT-TEST-FAIL
               ADD 1 TO DUT-TEST-FAIL-COUNT
               PERFORM DUT-FAIL 
            WHEN DUT-TEST-SKIP
-              ADD 1 TO DUT-TEST-SKIP-COUNT
-              PERFORM DUT-SKIP
+              *> DUT-END-TEST doesn't run if the case is SKIPPED
+              CONTINUE 
            WHEN DUT-TEST-ERROR
               ADD 1 TO DUT-TEST-ERROR-COUNT
               PERFORM DUT-ERROR
            END-EVALUATE 
            PERFORM DUT-CLEAR-TRACE 
-           DISPLAY ' '
+           MOVE ' ' TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
        .
        
        DUT-END-TEST-SUITE SECTION.
-           DISPLAY ' '
-           DISPLAY 'TEST EXECUTION RESULTS'
+
+           MOVE ' ' TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
+           MOVE 'TEST EXECUTION RESULTS' TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
+
            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
            MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
-           DISPLAY '==================================================='
-           DISPLAY 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
-           DISPLAY 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
-           DISPLAY 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+           MOVE '===================================================' TO 
+                 DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
+
+           STRING 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
+           DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+           PERFORM DUT-WRITE-UT-RECORD
+
+           STRING 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
+           DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+           PERFORM DUT-WRITE-UT-RECORD
+
+           STRING 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+           DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+           PERFORM DUT-WRITE-UT-RECORD
+
            IF DUT-TEST-ERROR-COUNT NOT = 0
-               DISPLAY 'ERROR: ' 
-                             FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+            STRING 'ERROR: ' FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+               DELIMITED BY SIZE INTO DUT-OUT-RECORD
+               PERFORM DUT-WRITE-UT-RECORD
            END-IF
-           DISPLAY '==================================================='
+           MOVE '===================================================' TO 
+                 DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
+           CLOSE DUT-OUT 
            STOP RUN
        .
 
@@ -275,8 +304,9 @@
           
        *> General assertion statement
        *> A check is done to see if the numeric fields were populated
-       *> before invoking this section. if they were then thrown and
+       *> before invoking this section. if they were, then throw an
        *> error on the test case as this is likely incorrect
+       *> TARGET-N and ACTUAL-N are for DUT-ASSERT-EQUALS-NUM 
        DUT-ASSERT-EQUALS SECTION.
            IF DUT-ASSERT-TARGET-N NOT = 0
               STRING 'USE DUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
@@ -289,11 +319,10 @@
                ELSE
                    SET DUT-TEST-FAIL TO TRUE 
                    STRING
-                       'Expected "' 
+                       'Expected ' 
                      FUNCTION TRIM(DUT-ASSERT-TARGET)
-                       '" but got "'
+                       ' but got '
                     FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
-                       '"'
                        DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                    END-STRING
                    PERFORM DUT-FAIL
@@ -628,13 +657,15 @@
 
        DUT-ERROR SECTION.
            SET DUT-TEST-ERROR TO TRUE
-           DISPLAY DUT-DISPLAY-ERROR
+           MOVE DUT-DISPLAY-ERROR TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD 
            MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
        .
 
        DUT-FAIL SECTION.
            SET DUT-TEST-FAIL TO TRUE 
-           DISPLAY  DUT-DISPLAY-FAIL
+           MOVE DUT-DISPLAY-FAIL TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD
            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
        .
 
@@ -649,7 +680,10 @@
            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
-           DISPLAY  DUT-DISPLAY-SKIP
+           MOVE DUT-DISPLAY-SKIP TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD 
+           MOVE ' ' TO DUT-OUT-RECORD
+           PERFORM DUT-WRITE-UT-RECORD 
            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
            ADD 1 TO DUT-TEST-SKIP-COUNT
 
@@ -665,8 +699,16 @@
            PERFORM BEFORE-EACH
        .
 
+       DUT-WRITE-UT-RECORD SECTION.
+           DISPLAY DUT-OUT-RECORD
+           MOVE SPACES TO DUT-OUT-RECORD
+       .
+
        DUT-DISPLAY-TEST-CASE-NAME SECTION.
-           DISPLAY 'TEST CASE - ' DUT-TEST-NAME
+           STRING 'TEST CASE - ' DUT-TEST-NAME DELIMITED BY 
+           SIZE INTO DUT-OUT-RECORD
+
+           PERFORM DUT-WRITE-UT-RECORD
            EXIT SECTION
        .
 

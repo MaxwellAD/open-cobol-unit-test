@@ -2,8 +2,10 @@
        PROGRAM-ID. TESTCUT.
        ENVIRONMENT DIVISION.
        COPY CUTENV.
+       COPY FILECTL.
        DATA DIVISION.
        COPY CUTDATA.
+       COPY FILESEC.
        WORKING-STORAGE SECTION.
        
        
@@ -215,8 +217,7 @@
                CUT-DISPLAY-ERROR-MSG 
                PERFORM CUT-FAIL 
            END-IF 
-
-           *> TODO FOLLOWED-BY DUT-FAIL WITH "Expected ..."
+           *> TODO FOLLOWED-BY DUT-FAIL WITH "'Expected ..."
            *> 'WITH DUT-DISPLAY-ERROR-MSG = '
            *> 'Expected 5.554400000000000000 but got '
            *> '5.555500000000000000"'
