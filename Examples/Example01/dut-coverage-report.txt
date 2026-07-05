@@ -1,4 +1,4 @@
-                                                                                          
+                                                                                                                                                                                                                                                       
 ****************************************************************************************
     COVERAGE REPORT - DUTPGM                                            
 ****************************************************************************************
@@ -14,8 +14,8 @@
 [+]               PERFORM DUT-WRITE-UT-RECORD
 [+]               PERFORM DUT-PASS
                WHEN DUT-TEST-FAIL
-[-]               ADD 1 TO DUT-TEST-FAIL-COUNT
-[-]               PERFORM DUT-FAIL 
+[+]               ADD 1 TO DUT-TEST-FAIL-COUNT
+[+]               PERFORM DUT-FAIL 
                WHEN DUT-TEST-SKIP
                   *> DUT-END-TEST doesn't run if the case is SKIPPED
                   CONTINUE 
@@ -605,8 +605,8 @@
     SUMMARY STATISTICS                           
 ****************************************************************************************
     TOTAL STATEMENTS: 0169
-    COVERED STATEMENTS: 0113
-    STATEMENT COVERAGE: 066.86%
+    COVERED STATEMENTS: 0115
+    STATEMENT COVERAGE: 068.04%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************

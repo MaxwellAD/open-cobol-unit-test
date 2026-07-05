@@ -798,6 +798,32 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-END-TEST-FAIL SECTION.
+           *> TEST THAT END-TEST CAN TAKE THE CORRECT PATH IN A TEST
+           *> FAIL
+       
+           *> GIVEN
+           SET DUT-TEST-FAIL TO TRUE 
+           MOVE 0 TO DUT-TEST-FAIL-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-FAIL-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
               
        END-TEST-SUITE SECTION.
