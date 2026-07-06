@@ -1050,6 +1050,41 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-REGISTER-FIELD-REGISTERS SECTION.
+           *> TEST THAT REGISTER FIELD REGISTERS A FIELD AND INCREMENTS
+           *> COUNTER PROPERLY
+       
+           *> GIVEN
+           *> AUTOMATED SETUP
+           *> 1 registered section
+           MOVE 1 TO DUT-RT-SECTION-COUNT
+           *> 2 fields per section 
+           MOVE 2 TO DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT)
+
+
+
+           *> WHEN
+           *> WHAT IS ACTUALLY CODED IN THE CUT-TRACE-FIELDS
+           MOVE 'WS-EXAMPLE' TO DUT-TEMP-FIELD-NAME
+           MOVE 1000 TO DUT-TEMP-FIELD-VALUE 
+           PERFORM DUT-REGISTER-FIELD 
+           
+           *> THEN
+           *> WE NEED 3 FIELDS TO BE REGISTERED AND THE INDEX TO BE 3
+
+           MOVE 3 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX) TO 
+           CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           MOVE 3 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-FIELD-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
 
               

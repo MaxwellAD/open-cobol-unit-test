@@ -292,19 +292,19 @@
            .
     
            DUT-REGISTER-FIELD SECTION.
-[-]            MOVE DUT-RT-SECTION-COUNT TO DUT-TRACE-SECTION-INDEX
-[-]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO
+[+]            MOVE DUT-RT-SECTION-COUNT TO DUT-TRACE-SECTION-INDEX
+[+]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO
                                                     DUT-TRACE-FIELD-INDEX
-[-]            MOVE DUT-TEMP-FIELD-NAME TO 
+[+]            MOVE DUT-TEMP-FIELD-NAME TO 
                DUT-RT-SECTION-FIELD-NAME(DUT-TRACE-SECTION-INDEX
                DUT-TRACE-FIELD-INDEX)
-[-]            MOVE DUT-TEMP-FIELD-VALUE TO
+[+]            MOVE DUT-TEMP-FIELD-VALUE TO
                DUT-RT-SECTION-FIELD-VALUE(DUT-TRACE-SECTION-INDEX
                DUT-TRACE-FIELD-INDEX)
     
                *> Advance the index
-[-]            ADD 1 TO DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
-[-]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO 
+[+]            ADD 1 TO DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+[+]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO 
                   DUT-TRACE-FIELD-INDEX
     
            .
@@ -610,8 +610,8 @@
     SUMMARY STATISTICS                           
 ****************************************************************************************
     TOTAL STATEMENTS: 0173
-    COVERED STATEMENTS: 0158
-    STATEMENT COVERAGE: 091.32%
+    COVERED STATEMENTS: 0164
+    STATEMENT COVERAGE: 094.79%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************

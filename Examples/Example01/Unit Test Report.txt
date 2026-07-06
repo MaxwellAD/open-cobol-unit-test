@@ -103,10 +103,13 @@ TEST CASE - TEST-END-TEST-SUITE-NOERR
 TEST CASE - TEST-DUT-SKIP
 [PASS]
 
+TEST CASE - TEST-REGISTER-FIELD-REGISTERS
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 35
+PASS : 36
 FAIL : 0
 SKIP : 0
 ===================================================
