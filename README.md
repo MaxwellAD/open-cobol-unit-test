@@ -4,16 +4,17 @@ An open source COBOL Unit Test library
 
 Designed to be as xUnit compatible as possible
 
-Allows the user to execute COBOL sections inside of a business program in a unit test environment
+Allows the user to execute COBOL sections and paragraphs inside of a business program in a unit test environment
 
 # Why
-All any test needs to do is:
-1. What your code did
-2. How it did it
-
-The first is pretty easy, checking output files or API responses is simple, but you have to run the whole program
-
-But knowing how it was done is a bit more challenging
+The ability to isolate test cases down to the scale of sections and paragraphs enables using code to:
+- **Faster Execution:** Running a unit test should take milliseconds
+- **Immediate Feedback:** When integrated into the compile step, developers catch bugs as soon as they appear
+- **Precise Isolation:** Bugs that do happen have their exact scenario documented
+- **More deterministic results:** Zero external file, database or API dependancies
+- **Code structure improvements:** Baddly written code is difficult to unit test without refactoring
+- **Higher code coverage:** Far easier to get deep into complex logic to test edge cases
+- **Higher quality assurance:** Code based unit tests are cheap, easy and reliable leading to higher QA
 
 # How
 In xUnit style you would need a test program, and a business program
@@ -21,20 +22,9 @@ In xUnit style you would need a test program, and a business program
 ## 1. What your program did
 A test program needs access to all of the fields and procedures of the business program
 
-`harness.sh` extracts the business programs DATA DIVISION, ENVIRONMENT DIVISION, WORKING STORAGE and PROCEDURE DIVISION as various copybooks which you include in your test program
+`harness.sh` extracts the business programs `DATA DIVISION`, `ENVIRONMENT DIVISION`, `WORKING STORAGE` and `PROCEDURE DIVISION` as various copybooks which you include in your test program
 
-This puts the sections and paragraphs of your business program into a test program "sandbox"
-
-In this sandbox you write some COBOL code to test conditions:
-```
-MOVE A TO B
-PERFORM A-SECTION
-IF C
-    DISPLAY 'THE TEST PASSED'
-ELSE
-    DISPLAY 'THE TEST FAILED'
-END-IF
-```
+This puts the sections and paragraphs of your business program into a test program sandbox
 
 ## 2. How it did it
 Or more precisely "which sections did you run, and what did working storage look like at each point"
@@ -74,7 +64,7 @@ Capturing this data is fine, but it needs to be queryable in a reasonably easy w
 CUTSTOR and CUTPROC are a collection of helper fields and procedures that make querying and managing a unit test program easy and familiar to a COBOL programmer
 
 
-### A Basic Example
+## A Basic Example
 A simple calculator paragraph is shown below
 ```COBOL
        BA-ADD-NUMBERS.
@@ -103,7 +93,7 @@ The corresponding test case looks like this
 
 GIVEN, WHEN, THEN is an alternative wording to Arrange, Act, Assert.
 
-### A More Complex Example
+## A More Complex Example
 Sometimes COBOL programs don't change data, they just call out to other systems. In this case working storage validation won't prove anything
 
 Let's look at an example of the calculator dividing by zero
@@ -142,9 +132,9 @@ We want to make sure that this paragraph can handle an attempted divide by zero.
        .
 ```
 
-This case demonstrates the power of the CUT-ASSERT-TRACE, which allows you to query the section and paragraph trace of an execution
+This case demonstrates the power of the `CUT-ASSERT-TRACE`, which allows you to query the section and paragraph trace of an execution
 
-This case asserts that `BC-DIV-NUMBERS` must run, followed by CA-DISPLAY-ERROR. Demonstrating that the paragraph identified coming divide by zero error
+This case asserts that `BC-DIV-NUMBERS` must run, followed by `CA-DISPLAY-ERROR`. Demonstrating that the paragraph identified a divide by zero error
 
 If CA-DISPLAY-ERROR was not called the output of the test run would be
 ```
@@ -162,7 +152,7 @@ The framework is already in a state where it can test itself
 
 Everything inside CUTSTOR and CUTPROC is prefix with "CUT-" (COBOL Unit Test) e.g `01  CUT-DATA.`. To avoid obvious naming conflicts, the framework is testing an imaginary program with "CUT-" replaced with "DUT-", for "Dummy Unit Test" e.g `01  DUT-DATA.`
 
-Seen in Examples/Example01
+Seen in Examples/Example01/
 
 New features can be implemented into DUT and have their behaviours observed before being added to CUT. Making for a much easier development process
 
@@ -191,6 +181,8 @@ SKIP : 0
 ===================================================
 ```
 
-In this commit you can compile with `cobc -x test-pgm-out.cbl -o testpgm -I "tmp" -I "CUT"`
+`test-pgm-out.cbl` is generated with `./harness.sh Examples/Example01/pgm-to-test.cbl Examples/Example01/test-pgm.cbl`
 
-The test-pgm-out.cbl was generated with `./harness.sh Examples/Example01/pgm-to-test.cbl Examples/Example01/test-pgm.cbl`
+Use `cobc -x test-pgm-out.cbl -o testpgm -I "tmp" -I "CUT"` to compile the unit test program
+
+

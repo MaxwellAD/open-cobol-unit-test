@@ -8,39 +8,65 @@
            DUT-END-TEST SECTION.
                EVALUATE TRUE 
                WHEN DUT-TEST-PASS
-[-]               ADD 1 TO DUT-TEST-PASS-COUNT
-[-]               DISPLAY DUT-DISPLAY-PASS
-[-]               PERFORM DUT-PASS
+[+]               ADD 1 TO DUT-TEST-PASS-COUNT
+[+]               MOVE DUT-DISPLAY-PASS TO DUT-OUT-RECORD
+[+]               PERFORM DUT-WRITE-UT-RECORD
+[+]               PERFORM DUT-PASS
                WHEN DUT-TEST-FAIL
-[-]               ADD 1 TO DUT-TEST-FAIL-COUNT
-[-]               PERFORM DUT-FAIL 
+[+]               ADD 1 TO DUT-TEST-FAIL-COUNT
+[+]               PERFORM DUT-FAIL 
                WHEN DUT-TEST-SKIP
-[-]               ADD 1 TO DUT-TEST-SKIP-COUNT
-[-]               PERFORM DUT-SKIP
+                  *> DUT-END-TEST doesn't run if the case is SKIPPED
+                  CONTINUE 
                WHEN DUT-TEST-ERROR
-[-]               ADD 1 TO DUT-TEST-ERROR-COUNT
-[-]               PERFORM DUT-ERROR
+[+]               ADD 1 TO DUT-TEST-ERROR-COUNT
+[+]               PERFORM DUT-ERROR
                END-EVALUATE 
-[-]            PERFORM DUT-CLEAR-TRACE 
-[-]            DISPLAY ' '
+[+]            PERFORM DUT-CLEAR-TRACE 
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
            .
            
            DUT-END-TEST-SUITE SECTION.
-[-]            DISPLAY ' '
-[-]            DISPLAY 'TEST EXECUTION RESULTS'
-[-]            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
-[-]            DISPLAY '==================================================='
-[-]            DISPLAY 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
-[-]            DISPLAY 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
-[-]            DISPLAY 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+    
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
+[+]            MOVE 'TEST EXECUTION RESULTS' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
+    
+[+]            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
+[+]            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
+[+]            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
+[+]            MOVE '===================================================' TO 
+                     DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
+    
+[+]            STRING 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
+               DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+[+]            PERFORM DUT-WRITE-UT-RECORD
+    
+[+]            STRING 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
+               DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+[+]            PERFORM DUT-WRITE-UT-RECORD
+    
+[+]            STRING 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+               DELIMITED BY SIZE INTO DUT-OUT-RECORD 
+[+]            PERFORM DUT-WRITE-UT-RECORD
+    
                IF DUT-TEST-ERROR-COUNT NOT = 0
-[-]                DISPLAY 'ERROR: ' 
-                                 FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+[+]                MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
+[+]             STRING 'ERROR: ' FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+                   DELIMITED BY SIZE INTO DUT-OUT-RECORD
+[+]                PERFORM DUT-WRITE-UT-RECORD
                END-IF
-[-]            DISPLAY '==================================================='
+[+]            MOVE '===================================================' TO 
+                     DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-SHUT-DOWN-TEST-SUITE 
+           .
+    
+           DUT-SHUT-DOWN-TEST-SUITE SECTION.
+[-]            CLOSE DUT-OUT 
 [-]            STOP RUN
            .
     
@@ -116,28 +142,6 @@
     
                . 
     
-           DUT-ASSERT-EXPECT SECTION.
-[-]            MOVE 1 TO DUT-EXPECT-POINTER
-[-]            MOVE 0 TO DUT-EXPECT-WORD-COUNT
-               
-[-]            PERFORM UNTIL DUT-EXPECT-POINTER > LENGTH OF 
-                             DUT-EXPECT 
-                             OR DUT-TRACE-WORD-COUNT >= 20
-               
-[-]                UNSTRING DUT-EXPECT 
-                       DELIMITED BY ALL SPACE
-                       INTO DUT-EXPECT-TEMP-WORD
-                       WITH POINTER DUT-EXPECT-POINTER
-                   END-UNSTRING
-                   *>DISPLAY 'EXPECT REGISTER: ' DUT-EXPECT-TEMP-WORD 
-                   IF DUT-EXPECT-TEMP-WORD NOT = SPACES
-[-]                    ADD 1 TO DUT-EXPECT-WORD-COUNT
-[-]                    MOVE DUT-EXPECT-TEMP-WORD TO 
-                               DUT-EXPECT-WORD(DUT-EXPECT-WORD-COUNT)
-                   END-IF
-               END-PERFORM
-           .
-    
            DUT-ASSERT-TRACE-HANDLE-WITH SECTION.
                *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
                *> UNTIL END-WITH
@@ -167,25 +171,27 @@
               
            *> General assertion statement
            *> A check is done to see if the numeric fields were populated
-           *> before invoking this section. if they were then thrown and
+           *> before invoking this section. if they were, then throw an
            *> error on the test case as this is likely incorrect
+           *> TARGET-N and ACTUAL-N are for DUT-ASSERT-EQUALS-NUM 
            DUT-ASSERT-EQUALS SECTION.
-               IF DUT-ASSERT-TARGET-N NOT = 0
+               IF DUT-ASSERT-TARGET-N NOT = 0 OR DUT-ASSERT-ACTUAL-N NOT = 0
 [+]               STRING 'USE DUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
                          DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
                   END-STRING
 [+]               PERFORM DUT-ERROR
+[+]               MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                                DUT-ASSERT-ACTUAL-N
                ELSE
                    IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL
 [+]                    PERFORM DUT-PASS 
                    ELSE
 [+]                    SET DUT-TEST-FAIL TO TRUE 
 [+]                    STRING
-                           'Expected "' 
+                           'Expected ' 
                          FUNCTION TRIM(DUT-ASSERT-TARGET)
-                            but got  
+                           ' but got '
                         FUNCTION TRIM (DUT-ASSERT-ACTUAL) 
-                           '"'
                            DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                        END-STRING
 [+]                    PERFORM DUT-FAIL
@@ -204,12 +210,23 @@
            *> TODO revisit this, perhaps a better rounding / post decimal
            *> point z supression would be better
            DUT-ASSERT-EQUALS-NUM SECTION.
-               IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
-[+]                PERFORM DUT-PASS
+    
+               IF DUT-ASSERT-TARGET NOT = SPACES OR 
+                  DUT-ASSERT-ACTUAL NOT = SPACES 
+[+]                STRING 'USE DUT-ASSERT-EQUALS TO EVALUATE STRINGS'
+                          DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                   END-STRING
+[+]                PERFORM DUT-ERROR
+[+]                MOVE SPACES TO DUT-ASSERT-TARGET
+                                  DUT-ASSERT-ACTUAL
                ELSE
-[+]                SET DUT-TEST-FAIL TO TRUE
-[+]                PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
-[+]                PERFORM DUT-FAIL 
+                   IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
+[+]                    PERFORM DUT-PASS
+                   ELSE
+[+]                    SET DUT-TEST-FAIL TO TRUE
+[+]                    PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+[+]                    PERFORM DUT-FAIL 
+                   END-IF 
                END-IF 
 [+]            MOVE ZEROS TO DUT-ASSERT-TARGET-DIS-N-LONG
                              DUT-ASSERT-ACTUAL-DIS-N-LONG
@@ -227,7 +244,7 @@
                    *> Fallback to long number display
 [+]                PERFORM DUT-HANDLE-DIS-ROUND-ERROR
                ELSE 
-[-]                STRING
+[+]                STRING
                        'Expected ' 
                        FUNCTION TRIM(DUT-ASSERT-TARGET-DIS-N)
                        ' but got '
@@ -253,19 +270,19 @@
            .
     
            DUT-REGISTER-FIELD SECTION.
-[-]            MOVE DUT-RT-SECTION-COUNT TO DUT-TRACE-SECTION-INDEX
-[-]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO
+[+]            MOVE DUT-RT-SECTION-COUNT TO DUT-TRACE-SECTION-INDEX
+[+]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO
                                                     DUT-TRACE-FIELD-INDEX
-[-]            MOVE DUT-TEMP-FIELD-NAME TO 
+[+]            MOVE DUT-TEMP-FIELD-NAME TO 
                DUT-RT-SECTION-FIELD-NAME(DUT-TRACE-SECTION-INDEX
                DUT-TRACE-FIELD-INDEX)
-[-]            MOVE DUT-TEMP-FIELD-VALUE TO
+[+]            MOVE DUT-TEMP-FIELD-VALUE TO
                DUT-RT-SECTION-FIELD-VALUE(DUT-TRACE-SECTION-INDEX
                DUT-TRACE-FIELD-INDEX)
     
                *> Advance the index
-[-]            ADD 1 TO DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
-[-]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO 
+[+]            ADD 1 TO DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
+[+]            MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT) TO 
                   DUT-TRACE-FIELD-INDEX
     
            .
@@ -303,12 +320,6 @@
                          DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                   END-STRING
 [+]               PERFORM DUT-FAIL
-               ELSE
-[+]               STRING 'FOUND SECTION ' 
-                  FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-                  ' IN EXECUTION TRACE'
-                  DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
-                  END-STRING
                END-IF
            .
     
@@ -342,12 +353,6 @@
                          DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                   END-STRING
 [+]               PERFORM DUT-FAIL
-               ELSE
-[+]               STRING 'FOUND SECTION ' 
-                  FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-                  ' IN EXECUTION TRACE'
-                  DELIMITED BY SIZE INTO DUT-DISPLAY-PASS-MSG 
-                  END-STRING
                END-IF
            .
     
@@ -495,22 +500,22 @@
            .
     
            DUT-DEBUG-DISPLAY-TRACE SECTION.
-[-]            DISPLAY 'DISPLAYING TRACE'
+[+]            DISPLAY 'DISPLAYING TRACE'
                *>DISPLAY 'SECTION INDEX ' DUT-TRACE-SECTION-INDEX
-[-]            PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
+[+]            PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
                              DUT-TRACE-SECTION-INDEX >= DUT-RT-SECTION-COUNT
-[-]               DISPLAY 'SECTION NAME: ' DUT-RT-SECTION-NAME(
+[+]               DISPLAY 'SECTION NAME: ' DUT-RT-SECTION-NAME(
                            DUT-TRACE-SECTION-INDEX)
     
                   
-[-]               PERFORM VARYING DUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
+[+]               PERFORM VARYING DUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
                               DUT-TRACE-FIELD-INDEX >= 
                          DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX)
     
-[-]                  DISPLAY 'FIELD: ' DUT-RT-SECTION-FIELD-NAME(
+[+]                  DISPLAY 'FIELD: ' DUT-RT-SECTION-FIELD-NAME(
                                                 DUT-TRACE-SECTION-INDEX
                                                 DUT-TRACE-FIELD-INDEX)
-[-]                  DISPLAY 'VALUE: ' DUT-RT-SECTION-FIELD-VALUE(
+[+]                  DISPLAY 'VALUE: ' DUT-RT-SECTION-FIELD-VALUE(
                                DUT-TRACE-SECTION-INDEX
                                DUT-TRACE-FIELD-INDEX)
     
@@ -520,13 +525,15 @@
     
            DUT-ERROR SECTION.
 [+]            SET DUT-TEST-ERROR TO TRUE
-[+]            DISPLAY DUT-DISPLAY-ERROR
+[+]            MOVE DUT-DISPLAY-ERROR TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
 [+]            MOVE SPACES TO DUT-DISPLAY-ERROR-MSG
            .
     
            DUT-FAIL SECTION.
 [+]            SET DUT-TEST-FAIL TO TRUE 
-[+]            DISPLAY  DUT-DISPLAY-FAIL
+[+]            MOVE DUT-DISPLAY-FAIL TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
 [+]            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
            .
     
@@ -536,14 +543,17 @@
            .
     
            DUT-SKIP SECTION.
-[-]            SET DUT-TEST-SKIP TO TRUE
-[-]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
-[-]            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
-[-]            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
-[-]            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
-[-]            DISPLAY  DUT-DISPLAY-SKIP
-[-]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
-[-]            ADD 1 TO DUT-TEST-SKIP-COUNT
+[+]            SET DUT-TEST-SKIP TO TRUE
+[+]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
+[+]            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
+[+]            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+[+]            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+[+]            MOVE DUT-DISPLAY-SKIP TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
+[+]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
+[+]            ADD 1 TO DUT-TEST-SKIP-COUNT
     
            .
     
@@ -557,10 +567,19 @@
 [+]            PERFORM BEFORE-EACH
            .
     
+           DUT-WRITE-UT-RECORD SECTION.
+[+]            DISPLAY DUT-OUT-RECORD
+[+]            MOVE SPACES TO DUT-OUT-RECORD
+           .
+    
            DUT-DISPLAY-TEST-CASE-NAME SECTION.
-[+]            DISPLAY 'TEST CASE - ' DUT-TEST-NAME
+[+]            STRING 'TEST CASE - ' DUT-TEST-NAME DELIMITED BY 
+               SIZE INTO DUT-OUT-RECORD
+    
+[+]            PERFORM DUT-WRITE-UT-RECORD
                EXIT SECTION
            .
+    
     
            DUT-TRACE-FIELDS SECTION.
                CONTINUE 
@@ -568,9 +587,9 @@
 ****************************************************************************************
     SUMMARY STATISTICS                           
 ****************************************************************************************
-    TOTAL STATEMENTS: 0153
-    COVERED STATEMENTS: 0101
-    STATEMENT COVERAGE: 066.01%
+    TOTAL STATEMENTS: 0167
+    COVERED STATEMENTS: 0164
+    STATEMENT COVERAGE: 098.20%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************

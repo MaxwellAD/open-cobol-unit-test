@@ -90,7 +90,7 @@ awk '
 # Get all data division lines - output to DATADIV.cpy
 awk '
   # 1. Match the starting line: Column 8 starts with DATA DIVISION.
-  substr($0, 8, 14) ~ /^DATA DIVISION\./ {
+  substr($0, 8, 14) ~ /^FILE SECTION\./ {
     inside = 1;
     next; # Skip printing the header line itself
   }
@@ -104,12 +104,12 @@ awk '
 
   # 3. Print lines while inside the block
   inside
-' tmp/mocked.cbl > tmp/DATADIV.cpy
+' tmp/mocked.cbl > tmp/FILESEC.cpy
 
 # Get all environment division lines - output to ENVDIV.cpy
 awk '
   # 1. Match the starting line: Column 8 starts with ENVIRONMENT DIVISION.
-  substr($0, 8, 21) ~ /^ENVIRONMENT DIVISION\./ {
+  substr($0, 8, 21) ~ /^FILE-CONTROL\./ {
     inside = 1;
     next; # Skip printing the header line itself
   }
@@ -124,7 +124,7 @@ awk '
 
   # 3. Print lines while inside the block
   inside
-' tmp/mocked.cbl > tmp/ENVDIV.cpy
+' tmp/mocked.cbl > tmp/FILECTL.cpy
 
 
 
@@ -137,7 +137,7 @@ awk '
 sed -E '/PROCEDURE DIVISION/,$ { /^[[:space:]]{1,7}(TEST-)[A-Za-z0-9_-]*(\s+SECTION)?\./ { /PROCEDURE DIVISION/b; p; s/^[[:space:]]*([A-Za-z0-9_-]+).*/            MOVE "\1"\n           TO CUT-TEST-NAME \n           PERFORM CUT-TEST-INIT./ } }' $2 |
 
 # Add file output opening
-sed '/PROCEDURE DIVISION/a\       OPEN-OUTPUT SECTION.\n           OPEN OUTPUT UTOUT .\n           MOVE SPACES TO UTOUT-RECORD .' |
+sed '/PROCEDURE DIVISION/a\       OPEN-OUTPUT SECTION.\n           OPEN OUTPUT CUT-OUT .\n           MOVE SPACES TO CUT-OUT-RECORD .' |
 
 # Remove SKIP- sections
 sed '/^[[:space:]]*SKIP-/,/^[[:space:]]*[A-Za-z0-9-]\+[[:space:]]\+SECTION\./ { /^[[:space:]]*SKIP-/b; /^[[:space:]]*[A-Za-z0-9-]\+[[:space:]]\+SECTION\./b; d }' | \

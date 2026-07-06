@@ -2,8 +2,10 @@
        PROGRAM-ID. TESTCUT.
        ENVIRONMENT DIVISION.
        COPY CUTENV.
+       COPY FILECTL.
        DATA DIVISION.
        COPY CUTDATA.
+       COPY FILESEC.
        WORKING-STORAGE SECTION.
        
        
@@ -175,18 +177,58 @@
            *> TEST THE ASSERT EQUALS NUM WITH A SIMPLE NUMBER
        
            *> GIVEN
-           MOVE 5 TO DUT-ASSERT-TARGET 
-           MOVE 5 TO DUT-ASSERT-ACTUAL 
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE 5 TO DUT-ASSERT-ACTUAL-N
        
            *> WHEN
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-FAIL 
-               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
-               CUT-DISPLAY-ERROR-MSG 
+           IF NOT DUT-TEST-PASS  
+               MOVE 'DUT DIDN''T PASS THE CASE WHEN IT SHOULD HAVE' TO 
+               CUT-DISPLAY-FAIL-MSG 
                PERFORM CUT-FAIL 
            END-IF
+
+           STRING 'DUT-ASSERT-EQUALS-NUM '
+                  'FOLLOWED-BY DUT-PASS'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-FAIL SECTION.
+           *> TEST THAT ASSERT-EQUALS-NUM HANDLES A BASIC FAIL WITH NO
+           *> ROUNDING ISSUE
+       
+           *> GIVEN
+           MOVE 5.5 TO DUT-ASSERT-TARGET-N 
+           MOVE 5.4 TO DUT-ASSERT-ACTUAL-N
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM
+           
+           *> THEN
+           *> TODO THIS WILL READ BETTER IS USING A NOT FOLLOWED-BY
+           *> GOING STRAIGHT TO DUT FAIL SHOWS IT DIDN'T TRY TO HANDLE
+           *> A ROUNDING ERROR
+           STRING 'DUT-ASSERT-EQUALS-NUM '
+                  'FOLLOWED-BY DUT-ASSERT-EQUALS-NUM-FAIL '
+                  'DIRECTLY-FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF NOT DUT-TEST-FAIL 
+               MOVE 'DUT DIDN''T FAIL THE CASE WHEN IT SHOULD HAVE'
+               TO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL 
+           END-IF 
+
        
            PERFORM CUT-END-TEST 
        .
@@ -210,13 +252,12 @@
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-PASS  
-               MOVE 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED' TO 
-               CUT-DISPLAY-ERROR-MSG 
+           IF NOT DUT-TEST-FAIL  
+               MOVE 'DUT DIDN''T FAIL THE CASE WHEN IT SHOULD HAVE' TO 
+               CUT-DISPLAY-FAIL-MSG 
                PERFORM CUT-FAIL 
            END-IF 
-
-           *> TODO FOLLOWED-BY DUT-FAIL WITH "Expected ..."
+           *> TODO FOLLOWED-BY DUT-FAIL WITH "'Expected ..."
            *> 'WITH DUT-DISPLAY-ERROR-MSG = '
            *> 'Expected 5.554400000000000000 but got '
            *> '5.555500000000000000"'
@@ -229,6 +270,68 @@
                   INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-ERROR SECTION.
+           *> TEST CASE FOR ASSERT EQUALS NUM DETECTING INCORRECT USGAE
+
+       
+           *> GIVEN
+           *> THESE FIELDS ARE INVALID FOR ASSERT-EQUALS-NUM
+           MOVE 5 TO DUT-ASSERT-ACTUAL 
+           MOVE 5 TO DUT-ASSERT-TARGET 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM 
+           
+           *> THEN
+           IF NOT DUT-TEST-ERROR
+               MOVE 'DUT SHOULD HAVE ERRORED THE CASE BUT IT DIDN''T'
+               TO CUT-DISPLAY-FAIL-MSG
+           END-IF
+
+           *> ENSURE THAT THE VALUES ARE ZEROED OUT ON ERROR
+           MOVE SPACES TO CUT-ASSERT-TARGET 
+           MOVE DUT-ASSERT-TARGET TO CUT-ASSERT-ACTUAL 
+           PERFORM CUT-ASSERT-EQUALS 
+
+           MOVE SPACES TO CUT-ASSERT-TARGET 
+           MOVE DUT-ASSERT-ACTUAL TO CUT-ASSERT-ACTUAL 
+           PERFORM CUT-ASSERT-EQUALS 
+
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-ERROR SECTION.
+           *> TEST THAT ASSERT-EQUALS CAN HANDLE INCORRECT USEAGE
+       
+           *> GIVEN
+           MOVE 5 TO DUT-ASSERT-TARGET-N 
+           MOVE 5 TO DUT-ASSERT-ACTUAL-N 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS 
+           
+           *> THEN
+           STRING 'DUT-ASSERT-EQUALS '
+                  'FOLLOWED-BY DUT-ERROR '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+
+           *> ENSURE THAT THE INCORRECT VALUES ARE INDEED RESET
+           MOVE 0 TO CUT-ASSERT-TARGET-N
+           MOVE DUT-ASSERT-TARGET-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM
+
+           MOVE 0 TO CUT-ASSERT-ACTUAL-N
+           MOVE DUT-ASSERT-ACTUAL-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM
+
        
            PERFORM CUT-END-TEST 
        .
@@ -589,6 +692,11 @@
                DELIMITED BY SIZE
                INTO CUT-TRACE 
            END-STRING
+
+           *> ENSURE THAT THE FIELD IS RESET
+           MOVE 0 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-ASSERT-TARGET-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
        
            PERFORM CUT-END-TEST 
        .
@@ -771,7 +879,212 @@
            PERFORM CUT-END-TEST 
        .
        
-      
+       TEST-END-TEST-PASS SECTION.
+           *> TEST THAT THE END-TEST PROCESS CAN TAKE THE RIGHT PATH
+       
+           *> GIVEN
+           SET DUT-TEST-PASS TO TRUE
+           MOVE 0 TO DUT-TEST-PASS-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-WRITE-UT-RECORD '
+                  'FOLLOWED-BY DUT-PASS '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-PASS-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-END-TEST-FAIL SECTION.
+           *> TEST THAT END-TEST CAN TAKE THE CORRECT PATH IN A TEST
+           *> FAIL
+       
+           *> GIVEN
+           SET DUT-TEST-FAIL TO TRUE 
+           MOVE 0 TO DUT-TEST-FAIL-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-FAIL-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       
+       TEST-END-TEST-ERROR SECTION.
+           *> TEST THAT THE ERROR PATHWAY IS TAKEN ON ERROR RESULT
+       
+           *> GIVEN
+           SET DUT-TEST-ERROR TO TRUE 
+           MOVE 0 TO DUT-TEST-ERROR-COUNT 
+
+           *> WHEN
+           PERFORM DUT-END-TEST 
+           
+           *> THEN
+           STRING 'DUT-END-TEST '
+                  'FOLLOWED-BY DUT-ERROR'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-ERROR-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-DISPLAY-TRACE-SHOWS-ALL SECTION.
+           *> TEST THAT THE DEBUG DISPLAY TRACE SHOWS ALL SECTIONS
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD
+           MOVE 0 TO DUT-TRACE-FIELD-INDEX 
+
+           *> WHEN
+           PERFORM DUT-DEBUG-DISPLAY-TRACE 
+           
+           *> THEN
+           MOVE 6 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-SECTION-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           MOVE 2 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-FIELD-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+           
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-END-TEST-SUITE-ERROR SECTION.
+           *> TEST THE DUT-END-TEST-SUITE WHEN THERE IS AN ERROE VALUE
+           *> ERROR VALUES SHOULD ONLY BE WRITTEN IF GREATER THAN 0
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-ERROR-COUNT  
+           MOVE 0 TO DUT-TEST-ERROR-COUNT-DISPLAY 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST-SUITE
+           
+           *> THEN
+           *> ONLY WHEN THERE'S AN ERROR DOES THE VALUE GET MOVED
+           *> TO THE DISPLAY FIELD
+           MOVE DUT-TEST-ERROR-COUNT TO CUT-ASSERT-TARGET-N            
+           MOVE DUT-TEST-ERROR-COUNT-DISPLAY TO CUT-ASSERT-ACTUAL-N
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+       
+
+       TEST-END-TEST-SUITE-NOERR SECTION.
+           *> TEST WHEN END-TEST-SUITE RUNS AND THERE IS NO ERROR VALUE
+
+       
+           *> GIVEN
+           MOVE 0 TO DUT-TEST-ERROR-COUNT 
+           MOVE 5 TO DUT-TEST-ERROR-COUNT-DISPLAY
+       
+           *> WHEN
+           PERFORM DUT-END-TEST-SUITE 
+           
+           *> THEN
+           *> AS TEST-ERROR-COUNT IS 0 THEN THE DISPLAY FIELD SHOULD
+           *> NOT BE UPDATED
+           MOVE 5 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-ERROR-COUNT-DISPLAY TO CUT-ASSERT-ACTUAL-N
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-DUT-SKIP SECTION.
+           *> TEST THAT DUT-SKIP INCREMENTS THE SKIP COUNTER AND LOGS
+           *> ITS NAME
+       
+           *> GIVEN
+           MOVE 0 TO DUT-TEST-SKIP-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SKIP 
+           
+           *> THEN
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-SKIP-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           STRING 'DUT-SKIP '
+                  'FOLLOWED-BY DUT-DISPLAY-TEST-CASE-NAME'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-REGISTER-FIELD-REGISTERS SECTION.
+           *> TEST THAT REGISTER FIELD REGISTERS A FIELD AND INCREMENTS
+           *> COUNTER PROPERLY
+       
+           *> GIVEN
+           *> AUTOMATED SETUP
+           *> 1 registered section
+           MOVE 1 TO DUT-RT-SECTION-COUNT
+           *> 2 fields per section 
+           MOVE 2 TO DUT-RT-SECTION-FIELD-COUNT(DUT-RT-SECTION-COUNT)
+
+
+
+           *> WHEN
+           *> WHAT IS ACTUALLY CODED IN THE CUT-TRACE-FIELDS
+           MOVE 'WS-EXAMPLE' TO DUT-TEMP-FIELD-NAME
+           MOVE 1000 TO DUT-TEMP-FIELD-VALUE 
+           PERFORM DUT-REGISTER-FIELD 
+           
+           *> THEN
+           *> WE NEED 3 FIELDS TO BE REGISTERED AND THE INDEX TO BE 3
+
+           MOVE 3 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-RT-SECTION-FIELD-COUNT(DUT-TRACE-SECTION-INDEX) TO 
+           CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           MOVE 3 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TRACE-FIELD-INDEX TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
 
               
@@ -798,11 +1111,8 @@
            CONTINUE
        .
 
-       MOCK-DUT-STOP-RUN SECTION.
-
-           DISPLAY 'WE MOCKED THE EXIT!'
-           EXIT SECTION 
-           DISPLAY 'WE DIDNT EXIT'
+       MOCK-DUT-SHUT-DOWN-TEST-SUITE SECTION.
+           EXIT SECTION
        .
 
 
