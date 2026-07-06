@@ -85,10 +85,19 @@ TEST CASE - TEST-END-TEST-ERROR
 TEST CASE - TEST-DISPLAY-TRACE-SHOWS-ALL
 [PASS]
 
+TEST CASE - TEST-END-TEST-SUITE-ERROR
+[PASS]
+
+TEST CASE - TEST-END-TEST-SUITE-NOERR
+[PASS]
+
+TEST CASE - TEST-DUT-SKIP
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 29
+PASS : 32
 FAIL : 0
 SKIP : 0
 ===================================================

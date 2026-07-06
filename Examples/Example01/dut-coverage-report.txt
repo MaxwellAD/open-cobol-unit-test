@@ -1,4 +1,3 @@
-                    
 ****************************************************************************************
     COVERAGE REPORT - DUTPGM                                            
 ****************************************************************************************
@@ -30,40 +29,41 @@
            
            DUT-END-TEST-SUITE SECTION.
     
-[-]            MOVE ' ' TO DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD
-[-]            MOVE 'TEST EXECUTION RESULTS' TO DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
+[+]            MOVE 'TEST EXECUTION RESULTS' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
     
-[-]            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
-[-]            MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
-[-]            MOVE '===================================================' TO 
+[+]            MOVE DUT-TEST-PASS-COUNT TO DUT-TEST-PASS-COUNT-DISPLAY
+[+]            MOVE DUT-TEST-FAIL-COUNT TO DUT-TEST-FAIL-COUNT-DISPLAY
+[+]            MOVE DUT-TEST-SKIP-COUNT TO DUT-TEST-SKIP-COUNT-DISPLAY
+[+]            MOVE '===================================================' TO 
                      DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
     
-[-]            STRING 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
+[+]            STRING 'PASS : ' FUNCTION TRIM(DUT-TEST-PASS-COUNT-DISPLAY)
                DELIMITED BY SIZE INTO DUT-OUT-RECORD 
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
     
-[-]            STRING 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
+[+]            STRING 'FAIL : ' FUNCTION TRIM(DUT-TEST-FAIL-COUNT-DISPLAY)
                DELIMITED BY SIZE INTO DUT-OUT-RECORD 
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
     
-[-]            STRING 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
+[+]            STRING 'SKIP : ' FUNCTION TRIM(DUT-TEST-SKIP-COUNT-DISPLAY)
                DELIMITED BY SIZE INTO DUT-OUT-RECORD 
-[-]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD
     
                IF DUT-TEST-ERROR-COUNT NOT = 0
-[-]             STRING 'ERROR: ' FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
+[+]                MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
+    
+[+]             STRING 'ERROR: ' FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
                    DELIMITED BY SIZE INTO DUT-OUT-RECORD
-[-]                PERFORM DUT-WRITE-UT-RECORD
+[+]                PERFORM DUT-WRITE-UT-RECORD
                END-IF
-[-]            MOVE '===================================================' TO 
+[+]            MOVE '===================================================' TO 
                      DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD
-[-]            PERFORM DUT-SHUT-DOWN-TEST-SUITE 
+[+]            PERFORM DUT-WRITE-UT-RECORD
+[+]            PERFORM DUT-SHUT-DOWN-TEST-SUITE 
            .
     
            DUT-SHUT-DOWN-TEST-SUITE SECTION.
@@ -566,17 +566,17 @@
            .
     
            DUT-SKIP SECTION.
-[-]            SET DUT-TEST-SKIP TO TRUE
-[-]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
-[-]            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
-[-]            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
-[-]            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
-[-]            MOVE DUT-DISPLAY-SKIP TO DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD 
-[-]            MOVE ' ' TO DUT-OUT-RECORD
-[-]            PERFORM DUT-WRITE-UT-RECORD 
-[-]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
-[-]            ADD 1 TO DUT-TEST-SKIP-COUNT
+[+]            SET DUT-TEST-SKIP TO TRUE
+[+]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG 
+[+]            MOVE SPACES TO DUT-DISPLAY-PASS-MSG
+[+]            MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+[+]            PERFORM DUT-DISPLAY-TEST-CASE-NAME 
+[+]            MOVE DUT-DISPLAY-SKIP TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
+[+]            MOVE ' ' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
+[+]            MOVE SPACES TO DUT-DISPLAY-SKIP-MSG
+[+]            ADD 1 TO DUT-TEST-SKIP-COUNT
     
            .
     
@@ -610,8 +610,8 @@
     SUMMARY STATISTICS                           
 ****************************************************************************************
     TOTAL STATEMENTS: 0171
-    COVERED STATEMENTS: 0123
-    STATEMENT COVERAGE: 071.92%
+    COVERED STATEMENTS: 0155
+    STATEMENT COVERAGE: 090.64%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************

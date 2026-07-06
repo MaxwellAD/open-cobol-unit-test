@@ -873,6 +873,78 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-END-TEST-SUITE-ERROR SECTION.
+           *> TEST THE DUT-END-TEST-SUITE WHEN THERE IS AN ERROE VALUE
+           *> ERROR VALUES SHOULD ONLY BE WRITTEN IF GREATER THAN 0
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-ERROR-COUNT  
+           MOVE 0 TO DUT-TEST-ERROR-COUNT-DISPLAY 
+       
+           *> WHEN
+           PERFORM DUT-END-TEST-SUITE
+           
+           *> THEN
+           *> ONLY WHEN THERE'S AN ERROR DOES THE VALUE GET MOVED
+           *> TO THE DISPLAY FIELD
+           MOVE DUT-TEST-ERROR-COUNT TO CUT-ASSERT-TARGET-N            
+           MOVE DUT-TEST-ERROR-COUNT-DISPLAY TO CUT-ASSERT-ACTUAL-N
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+       
+
+       TEST-END-TEST-SUITE-NOERR SECTION.
+           *> TEST WHEN END-TEST-SUITE RUNS AND THERE IS NO ERROR VALUE
+
+       
+           *> GIVEN
+           MOVE 0 TO DUT-TEST-ERROR-COUNT 
+           MOVE 5 TO DUT-TEST-ERROR-COUNT-DISPLAY
+       
+           *> WHEN
+           PERFORM DUT-END-TEST-SUITE 
+           
+           *> THEN
+           *> AS TEST-ERROR-COUNT IS 0 THEN THE DISPLAY FIELD SHOULD
+           *> NOT BE UPDATED
+           MOVE 5 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-ERROR-COUNT-DISPLAY TO CUT-ASSERT-ACTUAL-N
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-DUT-SKIP SECTION.
+           *> TEST THAT DUT-SKIP INCREMENTS THE SKIP COUNTER AND LOGS
+           *> ITS NAME
+       
+           *> GIVEN
+           MOVE 0 TO DUT-TEST-SKIP-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SKIP 
+           
+           *> THEN
+           MOVE 1 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-TEST-SKIP-COUNT TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+
+           STRING 'DUT-SKIP '
+                  'FOLLOWED-BY DUT-DISPLAY-TEST-CASE-NAME'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .
+
+
+
               
        END-TEST-SUITE SECTION.
            PERFORM DISPLAY-COVERAGE 
@@ -897,11 +969,8 @@
            CONTINUE
        .
 
-       MOCK-DUT-STOP-RUN SECTION.
-
-           DISPLAY 'WE MOCKED THE EXIT!'
-           EXIT SECTION 
-           DISPLAY 'WE DIDNT EXIT'
+       MOCK-DUT-SHUT-DOWN-TEST-SUITE SECTION.
+           EXIT SECTION
        .
 
 
