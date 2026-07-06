@@ -33,7 +33,6 @@
            MOVE CUT-TEST-PASS-COUNT TO CUT-TEST-PASS-COUNT-DISPLAY
            MOVE CUT-TEST-FAIL-COUNT TO CUT-TEST-FAIL-COUNT-DISPLAY
            MOVE CUT-TEST-SKIP-COUNT TO CUT-TEST-SKIP-COUNT-DISPLAY
-           MOVE CUT-TEST-ERROR-COUNT TO CUT-TEST-ERROR-COUNT-DISPLAY
            MOVE '===================================================' TO 
                  CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
@@ -51,6 +50,7 @@
            PERFORM CUT-WRITE-UT-RECORD
 
            IF CUT-TEST-ERROR-COUNT NOT = 0
+               MOVE CUT-TEST-ERROR-COUNT TO CUT-TEST-ERROR-COUNT-DISPLAY
             STRING 'ERROR: ' FUNCTION TRIM(CUT-TEST-ERROR-COUNT-DISPLAY)
                DELIMITED BY SIZE INTO CUT-OUT-RECORD
                PERFORM CUT-WRITE-UT-RECORD
@@ -198,6 +198,8 @@
                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
               END-STRING
               PERFORM CUT-ERROR
+              MOVE ZEROS TO CUT-ASSERT-TARGET-N
+                            CUT-ASSERT-ACTUAL-N
            ELSE
                IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL
                    PERFORM CUT-PASS 
@@ -233,6 +235,8 @@
                       DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
                PERFORM CUT-ERROR
+               MOVE SPACES TO CUT-ASSERT-TARGET
+                              CUT-ASSERT-ACTUAL
            ELSE
                IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
                    PERFORM CUT-PASS
@@ -334,12 +338,6 @@
                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL
-           ELSE
-              STRING 'FOUND SECTION ' 
-              FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-              ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              END-STRING
            END-IF
        .
 

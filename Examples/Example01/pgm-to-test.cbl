@@ -170,7 +170,6 @@
 
            IF DUT-TEST-ERROR-COUNT NOT = 0
                MOVE DUT-TEST-ERROR-COUNT TO DUT-TEST-ERROR-COUNT-DISPLAY
-
             STRING 'ERROR: ' FUNCTION TRIM(DUT-TEST-ERROR-COUNT-DISPLAY)
                DELIMITED BY SIZE INTO DUT-OUT-RECORD
                PERFORM DUT-WRITE-UT-RECORD
@@ -185,7 +184,6 @@
            CLOSE DUT-OUT 
            STOP RUN
        .
-
 
        DUT-ASSERT-TRACE SECTION.
            MOVE 1 TO DUT-TRACE-POINTER
@@ -314,11 +312,13 @@
        *> error on the test case as this is likely incorrect
        *> TARGET-N and ACTUAL-N are for DUT-ASSERT-EQUALS-NUM 
        DUT-ASSERT-EQUALS SECTION.
-           IF DUT-ASSERT-TARGET-N NOT = 0
+           IF DUT-ASSERT-TARGET-N NOT = 0 OR DUT-ASSERT-ACTUAL-N NOT = 0
               STRING 'USE DUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
               END-STRING
               PERFORM DUT-ERROR
+              MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                            DUT-ASSERT-ACTUAL-N
            ELSE
                IF DUT-ASSERT-TARGET = DUT-ASSERT-ACTUAL
                    PERFORM DUT-PASS 
@@ -347,12 +347,23 @@
        *> TODO revisit this, perhaps a better rounding / post decimal
        *> point z supression would be better
        DUT-ASSERT-EQUALS-NUM SECTION.
-           IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
-               PERFORM DUT-PASS
+
+           IF DUT-ASSERT-TARGET NOT = SPACES OR 
+              DUT-ASSERT-ACTUAL NOT = SPACES 
+               STRING 'USE DUT-ASSERT-EQUALS TO EVALUATE STRINGS'
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM DUT-ERROR
+               MOVE SPACES TO DUT-ASSERT-TARGET
+                              DUT-ASSERT-ACTUAL
            ELSE
-               SET DUT-TEST-FAIL TO TRUE
-               PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
-               PERFORM DUT-FAIL 
+               IF DUT-ASSERT-TARGET-N = DUT-ASSERT-ACTUAL-N
+                   PERFORM DUT-PASS
+               ELSE
+                   SET DUT-TEST-FAIL TO TRUE
+                   PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+                   PERFORM DUT-FAIL 
+               END-IF 
            END-IF 
            MOVE ZEROS TO DUT-ASSERT-TARGET-DIS-N-LONG
                          DUT-ASSERT-ACTUAL-DIS-N-LONG
@@ -446,12 +457,6 @@
                      DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL
-           ELSE
-              STRING 'FOUND SECTION ' 
-              FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-              ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
-              END-STRING
            END-IF
        .
 
@@ -717,6 +722,7 @@
            PERFORM DUT-WRITE-UT-RECORD
            EXIT SECTION
        .
+
 
        DUT-TRACE-FIELDS SECTION.
            CONTINUE 
