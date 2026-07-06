@@ -490,12 +490,6 @@
                      DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM DUT-FAIL
-           ELSE
-              STRING 'FOUND SECTION ' 
-              FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-              ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO DUT-DISPLAY-PASS-MSG 
-              END-STRING
            END-IF
        .
 

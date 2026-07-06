@@ -371,12 +371,6 @@
                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               END-STRING
               PERFORM CUT-FAIL
-           ELSE
-              STRING 'FOUND SECTION ' 
-              FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-              ' IN EXECUTION TRACE'
-              DELIMITED BY SIZE INTO CUT-DISPLAY-PASS-MSG 
-              END-STRING
            END-IF
        .
 

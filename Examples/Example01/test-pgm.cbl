@@ -177,18 +177,58 @@
            *> TEST THE ASSERT EQUALS NUM WITH A SIMPLE NUMBER
        
            *> GIVEN
-           MOVE 5 TO DUT-ASSERT-TARGET 
-           MOVE 5 TO DUT-ASSERT-ACTUAL 
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE 5 TO DUT-ASSERT-ACTUAL-N
        
            *> WHEN
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-FAIL 
-               MOVE 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED' TO 
-               CUT-DISPLAY-ERROR-MSG 
+           IF NOT DUT-TEST-PASS  
+               MOVE 'DUT DIDN''T PASS THE CASE WHEN IT SHOULD HAVE' TO 
+               CUT-DISPLAY-FAIL-MSG 
                PERFORM CUT-FAIL 
            END-IF
+
+           STRING 'DUT-ASSERT-EQUALS-NUM '
+                  'FOLLOWED-BY DUT-PASS'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-FAIL SECTION.
+           *> TEST THAT ASSERT-EQUALS-NUM HANDLES A BASIC FAIL WITH NO
+           *> ROUNDING ISSUE
+       
+           *> GIVEN
+           MOVE 5.5 TO DUT-ASSERT-TARGET-N 
+           MOVE 5.4 TO DUT-ASSERT-ACTUAL-N
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM
+           
+           *> THEN
+           *> TODO THIS WILL READ BETTER IS USING A NOT FOLLOWED-BY
+           *> GOING STRAIGHT TO DUT FAIL SHOWS IT DIDN'T TRY TO HANDLE
+           *> A ROUNDING ERROR
+           STRING 'DUT-ASSERT-EQUALS-NUM '
+                  'FOLLOWED-BY DUT-ASSERT-EQUALS-NUM-FAIL '
+                  'DIRECTLY-FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF NOT DUT-TEST-FAIL 
+               MOVE 'DUT DIDN''T FAIL THE CASE WHEN IT SHOULD HAVE'
+               TO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL 
+           END-IF 
+
        
            PERFORM CUT-END-TEST 
        .
@@ -230,6 +270,68 @@
                   INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-ERROR SECTION.
+           *> TEST CASE FOR ASSERT EQUALS NUM DETECTING INCORRECT USGAE
+
+       
+           *> GIVEN
+           *> THESE FIELDS ARE INVALID FOR ASSERT-EQUALS-NUM
+           MOVE 5 TO DUT-ASSERT-ACTUAL 
+           MOVE 5 TO DUT-ASSERT-TARGET 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM 
+           
+           *> THEN
+           IF NOT DUT-TEST-ERROR
+               MOVE 'DUT SHOULD HAVE ERRORED THE CASE BUT IT DIDN''T'
+               TO CUT-DISPLAY-FAIL-MSG
+           END-IF
+
+           *> ENSURE THAT THE VALUES ARE ZEROED OUT ON ERROR
+           MOVE SPACES TO CUT-ASSERT-TARGET 
+           MOVE DUT-ASSERT-TARGET TO CUT-ASSERT-ACTUAL 
+           PERFORM CUT-ASSERT-EQUALS 
+
+           MOVE SPACES TO CUT-ASSERT-TARGET 
+           MOVE DUT-ASSERT-ACTUAL TO CUT-ASSERT-ACTUAL 
+           PERFORM CUT-ASSERT-EQUALS 
+
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-ERROR SECTION.
+           *> TEST THAT ASSERT-EQUALS CAN HANDLE INCORRECT USEAGE
+       
+           *> GIVEN
+           MOVE 5 TO DUT-ASSERT-TARGET-N 
+           MOVE 5 TO DUT-ASSERT-ACTUAL-N 
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS 
+           
+           *> THEN
+           STRING 'DUT-ASSERT-EQUALS '
+                  'FOLLOWED-BY DUT-ERROR '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+
+           *> ENSURE THAT THE INCORRECT VALUES ARE INDEED RESET
+           MOVE 0 TO CUT-ASSERT-TARGET-N
+           MOVE DUT-ASSERT-TARGET-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM
+
+           MOVE 0 TO CUT-ASSERT-ACTUAL-N
+           MOVE DUT-ASSERT-ACTUAL-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM
+
        
            PERFORM CUT-END-TEST 
        .
@@ -590,6 +692,11 @@
                DELIMITED BY SIZE
                INTO CUT-TRACE 
            END-STRING
+
+           *> ENSURE THAT THE FIELD IS RESET
+           MOVE 0 TO CUT-ASSERT-TARGET-N 
+           MOVE DUT-ASSERT-TARGET-N TO CUT-ASSERT-ACTUAL-N 
+           PERFORM CUT-ASSERT-EQUALS-NUM 
        
            PERFORM CUT-END-TEST 
        .
