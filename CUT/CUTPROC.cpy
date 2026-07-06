@@ -138,28 +138,6 @@
 
            . 
 
-       CUT-ASSERT-EXPECT SECTION.
-           MOVE 1 TO CUT-EXPECT-POINTER
-           MOVE 0 TO CUT-EXPECT-WORD-COUNT
-           
-           PERFORM UNTIL CUT-EXPECT-POINTER > LENGTH OF 
-                         CUT-EXPECT 
-                         OR CUT-TRACE-WORD-COUNT >= 20
-           
-               UNSTRING CUT-EXPECT 
-                   DELIMITED BY ALL SPACE
-                   INTO CUT-EXPECT-TEMP-WORD
-                   WITH POINTER CUT-EXPECT-POINTER
-               END-UNSTRING
-               *>DISPLAY 'EXPECT REGISTER: ' CUT-EXPECT-TEMP-WORD 
-               IF CUT-EXPECT-TEMP-WORD NOT = SPACES
-                   ADD 1 TO CUT-EXPECT-WORD-COUNT
-                   MOVE CUT-EXPECT-TEMP-WORD TO 
-                           CUT-EXPECT-WORD(CUT-EXPECT-WORD-COUNT)
-               END-IF
-           END-PERFORM
-       .
-
        CUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
            *> UNTIL END-WITH

@@ -257,28 +257,6 @@
 
            . 
 
-       DUT-ASSERT-EXPECT SECTION.
-           MOVE 1 TO DUT-EXPECT-POINTER
-           MOVE 0 TO DUT-EXPECT-WORD-COUNT
-           
-           PERFORM UNTIL DUT-EXPECT-POINTER > LENGTH OF 
-                         DUT-EXPECT 
-                         OR DUT-TRACE-WORD-COUNT >= 20
-           
-               UNSTRING DUT-EXPECT 
-                   DELIMITED BY ALL SPACE
-                   INTO DUT-EXPECT-TEMP-WORD
-                   WITH POINTER DUT-EXPECT-POINTER
-               END-UNSTRING
-               *>DISPLAY 'EXPECT REGISTER: ' DUT-EXPECT-TEMP-WORD 
-               IF DUT-EXPECT-TEMP-WORD NOT = SPACES
-                   ADD 1 TO DUT-EXPECT-WORD-COUNT
-                   MOVE DUT-EXPECT-TEMP-WORD TO 
-                           DUT-EXPECT-WORD(DUT-EXPECT-WORD-COUNT)
-               END-IF
-           END-PERFORM
-       .
-
        DUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
            *> UNTIL END-WITH
