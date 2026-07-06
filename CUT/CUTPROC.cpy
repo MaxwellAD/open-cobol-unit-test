@@ -193,7 +193,7 @@
        *> error on the test case as this is likely incorrect
        *> TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
        CUT-ASSERT-EQUALS SECTION.
-           IF CUT-ASSERT-TARGET-N NOT = 0
+           IF CUT-ASSERT-TARGET-N NOT = 0 OR CUT-ASSERT-ACTUAL-N NOT = 0
               STRING 'USE CUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
               END-STRING
@@ -226,12 +226,21 @@
        *> TODO revisit this, perhaps a better rounding / post decimal
        *> point z supression would be better
        CUT-ASSERT-EQUALS-NUM SECTION.
-           IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
-               PERFORM CUT-PASS
+
+           IF CUT-ASSERT-TARGET NOT = SPACES OR 
+              CUT-ASSERT-ACTUAL NOT = SPACES 
+               STRING 'USE CUT-ASSERT-EQUALS TO EVALUATE STRINGS'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-ERROR
            ELSE
-               SET CUT-TEST-FAIL TO TRUE
-               PERFORM CUT-ASSERT-EQUALS-NUM-FAIL
-               PERFORM CUT-FAIL 
+               IF CUT-ASSERT-TARGET-N = CUT-ASSERT-ACTUAL-N
+                   PERFORM CUT-PASS
+               ELSE
+                   SET CUT-TEST-FAIL TO TRUE
+                   PERFORM CUT-ASSERT-EQUALS-NUM-FAIL
+                   PERFORM CUT-FAIL 
+               END-IF 
            END-IF 
            MOVE ZEROS TO CUT-ASSERT-TARGET-DIS-N-LONG
                          CUT-ASSERT-ACTUAL-DIS-N-LONG
