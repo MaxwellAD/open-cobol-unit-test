@@ -212,9 +212,9 @@
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-PASS  
-               MOVE 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED' TO 
-               CUT-DISPLAY-ERROR-MSG 
+           IF NOT DUT-TEST-FAIL  
+               MOVE 'DUT DIDN''T FAIL THE CASE WHEN IT SHOULD HAVE' TO 
+               CUT-DISPLAY-FAIL-MSG 
                PERFORM CUT-FAIL 
            END-IF 
            *> TODO FOLLOWED-BY DUT-FAIL WITH "'Expected ..."
