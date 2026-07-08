@@ -1,16 +1,16 @@
 # Open COBOL Unit Test
 
-An open source COBOL Unit Test library
+An open source COBOL Unit Test library (under construction)
 
 Designed to be as xUnit compatible as possible
 
 Allows the user to execute COBOL sections and paragraphs inside of a business program in a unit test environment
 
 # Why
-The ability to isolate test cases down to the scale of sections and paragraphs enables using code to:
-- **Faster Execution:** Running a unit test should take milliseconds
-- **Immediate Feedback:** When integrated into the compile step, developers catch bugs as soon as they appear
-- **Precise Isolation:** Bugs that do happen have their exact scenario documented
+The ability to isolate test cases down to the scale of sections and paragraphs enables:
+- **Faster execution:** Running a unit test should take milliseconds
+- **Immediate feedback:** When integrated into the compile step, developers catch bugs as soon as they appear
+- **Precise isolation:** Bugs that do happen have their exact scenario documented
 - **More deterministic results:** Zero external file, database or API dependancies
 - **Code structure improvements:** Baddly written code is difficult to unit test without refactoring
 - **Higher code coverage:** Far easier to get deep into complex logic to test edge cases
@@ -19,27 +19,30 @@ The ability to isolate test cases down to the scale of sections and paragraphs e
 # How
 In xUnit style you would need a test program, and a business program
 
-## 1. What your program did
 A test program needs access to all of the fields and procedures of the business program
 
 `harness.sh` extracts the business programs `DATA DIVISION`, `ENVIRONMENT DIVISION`, `WORKING STORAGE` and `PROCEDURE DIVISION` as various copybooks which you include in your test program
 
 This puts the sections and paragraphs of your business program into a test program sandbox
 
-## 2. How it did it
-Or more precisely "which sections did you run, and what did working storage look like at each point"
+## Execution Validation
+
+At its most basic, you can check fields before and after executing a business routine
+
+But often you need to validate how the code did something, not necessarily the end result of that
 
 As far as I can see, there's no easy way to expose this information in a way that's useful for this context
 
 So `harness.sh` will also instrument a breadcrumb at the top of each section and paragraph of the business program to log which section or paragraph has been run
 ```COBOL
-       READ-NEXT-RECORD SECTION .
-           MOVE "READ-NEXT-RECORD"
-           TO CUT-TEMP-SECTION-NAME
-           PERFORM CUT-ADD-TRACE-SECTION
+       READ-NEXT-RECORD SECTION.
+           MOVE "READ-NEXT-RECORD"        *> line inserted by inserted by harness.sh
+           TO CUT-TEMP-SECTION-NAME       *> line inserted by inserted by harness.sh
+           PERFORM CUT-ADD-TRACE-SECTION  *> line inserted by inserted by harness.sh
            ... 
            business logic 
            ...
+        .
 ```
 
 This breadcrumb also takes a snapshot of various working storage fields, defined in the test program
@@ -56,12 +59,11 @@ This breadcrumb also takes a snapshot of various working storage fields, defined
        .
 ```
 
-This should encourage smaller sections and paragraphs as unit tests will be simpler with less data setup 
 
 ## Making This Data Accessible
-Capturing this data is fine, but it needs to be queryable in a reasonably easy way which is where the CUTSTOR and CUTPROC come in
+Capturing this data is fine, but it needs to be queryable in a reasonably easy way which is where the `CUTSTOR` and `CUTPROC` come in
 
-CUTSTOR and CUTPROC are a collection of helper fields and procedures that make querying and managing a unit test program easy and familiar to a COBOL programmer
+`CUTSTOR` and `CUTPROC` are a collection of helper fields and procedures that make querying and managing a unit test program easy and familiar to a COBOL programmer
 
 
 ## A Basic Example
@@ -91,7 +93,7 @@ The corresponding test case looks like this
        .
 ```
 
-GIVEN, WHEN, THEN is an alternative wording to Arrange, Act, Assert.
+`GIVEN`, `WHEN`, `THEN` is an alternative wording to `Arrange`, `Act`, `Assert`.
 
 ## A More Complex Example
 Sometimes COBOL programs don't change data, they just call out to other systems. In this case working storage validation won't prove anything
