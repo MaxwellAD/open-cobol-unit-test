@@ -1085,6 +1085,134 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-NOT-DIR-FB-SIMPLE-FAIL SECTION.
+           *> TEST THE NOT DIRECTLY FOLLOWED BY PATH SIMPLY WHEN THE
+           *> SECTION IS THERE
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+
+           STRING 'DUT-ASSERT-TRACE-HANDLE-VERBS '
+                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-NOT '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF DUT-TEST-PASS 
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED ON'
+                     ' NOT DIRECTLY FOLLOWED BY' DELIMITED BY SIZE INTO 
+                     CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-DB-SIMPLE-PASS SECTION.
+           *> TEST A SIMPLE CASE WHERE SOME SECTION DOES NOT 
+           *> DIRECTLY FOLLOW SOME OTHER SECTION
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                 'NOT DIRECTLY-FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+                  'FOLLOWED-BY BC000-PROCESS-DETAIL-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+               STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-FB-WITH-PAS SECTION.
+           *> TEST THAT NOT DIRECTLY FOLLOWED-BY CAN HANDLE A MORE COMPLEX
+           *> EXAMPLE WITH WITH CASES
+           *> THE SECTION IS ALLOWED BECAUSE WORKING STORAGE WAS
+           *> DIFFERENT
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD
+
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'WITH '
+                  'WS-NUMBER = 6 '
+                  'END-WITH '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+              STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-FB-WITH-FAIL SECTION.
+           *> TEST THAT NOT DIRECTLY FOLLOWED BY CAN HANDLE FAILING ON
+           *> A WITH CASE
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+       
+           *> WHEN
+           *> THIS SHOULD FAIL ON THE NOT DIRECTLY FOLLOWED BY
+           *> BUT IF A WITH IS PRESENT THEN THE CODE DOES A CHECK
+           *> TO ENSURE THE WITH CAN'T SAVE THE CASE
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'WITH '
+                  'WS-NUMBER = 7 '
+                  'END-WITH '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-PASS  
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE PASSED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+           
+       
+           PERFORM CUT-END-TEST 
+       .
 
 
               
