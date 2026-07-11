@@ -500,20 +500,27 @@
            *>DISPLAY 'SECTION INDEX ' CUT-TRACE-SECTION-INDEX
            PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
                          CUT-TRACE-SECTION-INDEX >= CUT-RT-SECTION-COUNT
-              DISPLAY 'SECTION NAME: ' CUT-RT-SECTION-NAME(
-                       CUT-TRACE-SECTION-INDEX)
+              STRING '[DEBUG] SECTION NAME: ' CUT-RT-SECTION-NAME(
+                       CUT-TRACE-SECTION-INDEX) DELIMITED BY SIZE INTO 
+                        CUT-OUT-RECORD
+              PERFORM CUT-WRITE-UT-RECORD 
 
               
               PERFORM VARYING CUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
                           CUT-TRACE-FIELD-INDEX >= 
                      CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
 
-                 DISPLAY 'FIELD: ' CUT-RT-SECTION-FIELD-NAME(
+                 STRING '[DEBUG] FIELD: ' CUT-RT-SECTION-FIELD-NAME(
                                             CUT-TRACE-SECTION-INDEX
                                             CUT-TRACE-FIELD-INDEX)
-                 DISPLAY 'VALUE: ' CUT-RT-SECTION-FIELD-VALUE(
+                                            DELIMITED BY SIZE INTO 
+                                            CUT-OUT-RECORD
+                 PERFORM CUT-WRITE-UT-RECORD 
+                 STRING '[DEBUG] VALUE: ' CUT-RT-SECTION-FIELD-VALUE(
                            CUT-TRACE-SECTION-INDEX
                            CUT-TRACE-FIELD-INDEX)
+                           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
+                 PERFORM CUT-WRITE-UT-RECORD 
 
               END-PERFORM
            END-PERFORM

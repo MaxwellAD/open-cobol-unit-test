@@ -69,6 +69,9 @@
            05 DUT-TEMP-FIELD-OPERATOR PIC X(2) VALUE SPACES.
            05 DUT-RT-SECTION-COUNT PIC 9(3) VALUE 1.
            05 DUT-EXEC-TRACE-INDEX PIC 9(3) VALUE 1. *> ITERATE EXEC CMD
+           05 DUT-EXEC-TRACE-NOT-FLAG PIC X(1) VALUE 'N'.
+              88 DUT-EXEC-TRACE-NOT VALUE 'Y'.
+              88 DUT-EXEC-TRACE-NORMAL VALUE 'N'.
            05 DUT-EXEC-TRACE-OCCURS. *> THE COMMAND SPLIT INTO WORDS
               10 DUT-EXEC-TRACE-WORD PIC X(30) OCCURS 50 TIMES.
 
@@ -239,23 +242,45 @@
                                          DUT-TEMP-SECTION-NAME
                  *>DISPLAY 'SEARCHING FOR  ' DUT-TEMP-SECTION-NAME
                  PERFORM DUT-FIND-FOLLOWED-BY
+                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+                     = 'WITH'
+                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
+                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+                 END-IF 
+                 *> Don't forget to disable NOT flag
+                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
+
               *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
               WHEN 'DIRECTLY-FOLLOWED-BY'
                  ADD 1 TO DUT-EXEC-TRACE-INDEX
                  MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
                                          DUT-TEMP-SECTION-NAME
                  PERFORM DUT-FIND-DIRECTLY-FOLLOWED-BY
-              *> IF IT'S A WITH COMMAND
-              WHEN 'WITH'
-                 PERFORM DUT-ASSERT-TRACE-HANDLE-WITH
+                 *>IF DUT-TEST-FAIL AND DUT-EXEC-TRACE-NOT 
+                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+                     = 'WITH'
+                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
+                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+                 END-IF 
+                 *> Don't forget to disable NOT flag
+                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
+                    *>ADD 1 TO DUT-TRACE-SECTION-INDEX
+                    *>ADD 2 TO DUT-EXEC-TRACE-INDEX
+                     *> WE FAILED ON THE SECTION NAME, BUT THE 
+                     *> WITH MIGHT SAVE IT IF WS IS DIFFERENT
               *> ELSE
+              WHEN 'NOT'
+                 PERFORM DUT-ASSERT-TRACE-HANDLE-NOT  
               WHEN OTHER
                     *> MUST BE A NEW SECTION
                     MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
                                             TO DUT-TEMP-SECTION-NAME
               END-EVALUATE
-
            . 
+
+       DUT-ASSERT-TRACE-HANDLE-NOT SECTION.
+           SET DUT-EXEC-TRACE-NOT TO TRUE 
+       .
 
        DUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
@@ -407,12 +432,18 @@
            *> DUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> DUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
            *> DUT-TRACE-SECTION-INDEX <-- INDEX OF THE SECTION TRACE
+           *> DUT-END-SECTION-NAME <-- THE END SECTION
 
            SET DUT-SECTION-NOT-FOUND TO TRUE
            PERFORM VARYING DUT-TRACE-SECTION-INDEX FROM
-                                    DUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
-                           DUT-SECTION-FOUND OR 
+                           DUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
+                           DUT-SECTION-FOUND 
+                         OR 
                          DUT-TRACE-SECTION-INDEX > DUT-RT-SECTION-COUNT
+                       *>OR DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX) 
+                       *>= DUT-END-SECTION-NAME
+
+
               *>DISPLAY 'FOUND SECTION: ' 
               *>DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
               IF DUT-TEMP-SECTION-NAME = 
@@ -458,17 +489,50 @@
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF DUT-SECTION-NOT-FOUND
-              SET DUT-TEST-FAIL TO TRUE 
-              STRING 'UNABLE TO FIND '
-                     FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-                     ' DIRECTLY AFTER '
-                     FUNCTION TRIM(DUT-RT-SECTION-NAME(
-                                         DUT-TRACE-SECTION-INDEX))
-                     ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM DUT-FAIL
+              IF DUT-EXEC-TRACE-NOT 
+                  *> IF IN A NOT CASE THEN NOT FINDING THE SECTION IS
+                  *> GOOD
+                  CONTINUE
+                  *> RESET THE FLAG FOR THE NEXT STATEMENTS
+              ELSE
+                 SET DUT-TEST-FAIL TO TRUE 
+                 STRING 'UNABLE TO FIND '
+                        FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                        ' DIRECTLY AFTER '
+                        FUNCTION TRIM(DUT-RT-SECTION-NAME(
+                                            DUT-TRACE-SECTION-INDEX))
+                        ' IN EXECUTION TRACE'
+                        DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                 END-STRING
+                 PERFORM DUT-FAIL
+              END-IF
+           ELSE 
+               *> IF THE SECTION WAS FOUND
+               IF DUT-EXEC-TRACE-NOT 
+                   *> THIS IS BAD
+                   SET DUT-TEST-FAIL TO TRUE 
+                   STRING 'FOUND ' FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                   ' DIRECTLY AFTER '
+                   FUNCTION TRIM(DUT-RT-SECTION-NAME(
+                                            DUT-TRACE-SECTION-INDEX))
+                   ' IN EXECUTION TRACE '
+                   DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM DUT-FAIL 
+               END-IF
            END-IF
+
+           IF DUT-EXEC-TRACE-NOT 
+           AND DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1) = 'WITH'
+               *> A WITH COULD STILL FAIL THE CASE
+               *> SO LET WITH DO IT'S CHECK AND WITH WILL RESET THE FLAG
+               CONTINUE
+           ELSE 
+               SET DUT-EXEC-TRACE-NORMAL TO TRUE 
+           END-IF 
+               
+           
+
        .
 
        DUT-FIND-WITH-IN-TRACE SECTION.
@@ -559,18 +623,27 @@
            EVALUATE DUT-TEMP-FIELD-OPERATOR
            WHEN '='
               IF DUT-TEMP-FIELD-VALUE = DUT-TEMP-FIELD-EXPECTED
-                 CONTINUE
+                 SET DUT-TEST-PASS TO TRUE 
               ELSE
                  SET DUT-TEST-FAIL TO TRUE 
               END-IF 
            WHEN '!='
               IF DUT-TEMP-FIELD-VALUE NOT = DUT-TEMP-FIELD-EXPECTED
-                 CONTINUE
+                 SET DUT-TEST-PASS TO TRUE 
               ELSE
                  SET DUT-TEST-FAIL TO TRUE 
               END-IF 
            END-EVALUATE 
 
+
+           *> IF IT'S A NOT SEARCH THEN INVERT THE RESULTS
+           EVALUATE TRUE
+           WHEN DUT-EXEC-TRACE-NOT AND DUT-TEST-FAIL 
+               SET DUT-TEST-PASS TO TRUE 
+           WHEN DUT-EXEC-TRACE-NOT AND DUT-TEST-PASS 
+               SET DUT-TEST-FAIL TO TRUE
+           END-EVALUATE 
+               
 
            IF DUT-TEST-FAIL
               STRING 'OPERATION EVALUATION FAILED FOR ' 
@@ -580,7 +653,7 @@
               DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
               PERFORM DUT-FAIL 
       
-              STRING 'EXPECTED ' 
+              STRING 'ASSERTED ' 
                       FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
                       ' '
                       DUT-TEMP-FIELD-OPERATOR
@@ -590,7 +663,7 @@
               END-STRING
               PERFORM DUT-FAIL 
       
-              STRING 'BUT GOT '
+              STRING 'AND GOT '
                      FUNCTION TRIM(DUT-TEMP-FIELD-NAME)
                      ' = '
                      FUNCTION TRIM(DUT-TEMP-FIELD-VALUE)
@@ -600,6 +673,7 @@
            ELSE 
               CONTINUE 
            END-IF 
+           SET DUT-EXEC-TRACE-NORMAL TO TRUE 
        .
 
       *****************************************************************
