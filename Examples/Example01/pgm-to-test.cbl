@@ -242,24 +242,32 @@
                                          DUT-TEMP-SECTION-NAME
                  *>DISPLAY 'SEARCHING FOR  ' DUT-TEMP-SECTION-NAME
                  PERFORM DUT-FIND-FOLLOWED-BY
+                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+                     = 'WITH'
+                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
+                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+                 END-IF 
+                 *> Don't forget to disable NOT flag
+                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
+
               *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
               WHEN 'DIRECTLY-FOLLOWED-BY'
                  ADD 1 TO DUT-EXEC-TRACE-INDEX
                  MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
                                          DUT-TEMP-SECTION-NAME
                  PERFORM DUT-FIND-DIRECTLY-FOLLOWED-BY
-                 IF DUT-TEST-FAIL AND DUT-EXEC-TRACE-NOT 
-                    IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
-                        = 'WITH'
-                        ADD 1 TO DUT-EXEC-TRACE-INDEX 
-                        PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
-                    END-IF 
+                 *>IF DUT-TEST-FAIL AND DUT-EXEC-TRACE-NOT 
+                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+                     = 'WITH'
+                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
+                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+                 END-IF 
+                 *> Don't forget to disable NOT flag
+                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
+                    *>ADD 1 TO DUT-TRACE-SECTION-INDEX
+                    *>ADD 2 TO DUT-EXEC-TRACE-INDEX
                      *> WE FAILED ON THE SECTION NAME, BUT THE 
                      *> WITH MIGHT SAVE IT IF WS IS DIFFERENT
-
-              *> IF IT'S A WITH COMMAND
-              WHEN 'WITH'
-                 PERFORM DUT-ASSERT-TRACE-HANDLE-WITH
               *> ELSE
               WHEN 'NOT'
                  PERFORM DUT-ASSERT-TRACE-HANDLE-NOT  
