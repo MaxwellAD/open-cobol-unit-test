@@ -118,10 +118,13 @@ TEST CASE - TEST-NOT-DIR-FB-WITH-PASS
 TEST CASE - TEST-NOT-DIR-FB-WITH-FAIL
 [PASS]
 
+TEST CASE - TEST-NOT-FB-SIMPLE-FAIL
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 40
+PASS : 41
 FAIL : 0
 SKIP : 0
 ===================================================

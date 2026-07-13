@@ -72,6 +72,7 @@
            05 DUT-EXEC-TRACE-NOT-FLAG PIC X(1) VALUE 'N'.
               88 DUT-EXEC-TRACE-NOT VALUE 'Y'.
               88 DUT-EXEC-TRACE-NORMAL VALUE 'N'.
+           05 DUT-END-SECTION-NAME PIC X(30) VALUE SPACES.
            05 DUT-EXEC-TRACE-OCCURS. *> THE COMMAND SPLIT INTO WORDS
               10 DUT-EXEC-TRACE-WORD PIC X(30) OCCURS 50 TIMES.
 
@@ -440,8 +441,8 @@
                            DUT-SECTION-FOUND 
                          OR 
                          DUT-TRACE-SECTION-INDEX > DUT-RT-SECTION-COUNT
-                       *>OR DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX) 
-                       *>= DUT-END-SECTION-NAME
+                       OR DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX) 
+                       = DUT-END-SECTION-NAME
 
 
               *>DISPLAY 'FOUND SECTION: ' 
