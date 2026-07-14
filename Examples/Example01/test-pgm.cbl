@@ -1217,6 +1217,33 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-NOT-FB-SIMPLE-FAIL SECTION.
+           *> TEST THAT NOT FOLLOWED-BY CAN WORK WHEN THE NOT IS THE
+           *> FINAL SECTION IN THE ASSERT TRACE
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC
+       
+           *> WHEN
+           STRING 'BA000-MAIN-PROCESSING '
+                  'NOT FOLLOWED-BY AB000-INITIALIZATION'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-PASS 
+               STRING 'DUT PASSED THE TEST WHEN IT SHOULD HAVE FAILED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
               
        END-TEST-SUITE SECTION.
