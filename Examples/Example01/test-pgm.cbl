@@ -1206,6 +1206,15 @@
            PERFORM DUT-ASSERT-TRACE
            
            *> THEN
+
+           STRING 'DUT-ASSERT-TRACE '
+                  'FOLLOWED-BY DUT-FIND-WITH-IN-TRACE '
+                  'FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
            IF DUT-TEST-PASS  
               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE PASSED'
               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
