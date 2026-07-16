@@ -1398,6 +1398,33 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-NOT-FB-SIMPLE-FAIL-LONG SECTION.
+           *> TEST THAT NOT FB FAILED A CASE WITH ASSERTIONS AFTER
+           *> THE NOT
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'BB000-PROCESS-HEADER-RECORD '
+                  'NOT FOLLOWED-BY AB000-INITIALIZATION '
+                  'FOLLOWED-BY BA000-MAIN-PROCESSING '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-PASS
+               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED '
+                      'AS BA000 DOESNT FOLLOW BB000'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL
+           END-IF
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
 
               

@@ -133,10 +133,13 @@ TEST CASE - TEST-NOT-FB-WTIH-FAIL-PASS
 TEST CASE - TEST-NOT-FB-SIMPLE-PASS-LONG
 [PASS]
 
+TEST CASE - TEST-NOT-FB-SIMPLE-FAIL-LONG
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 45
+PASS : 46
 FAIL : 0
 SKIP : 0
 ===================================================
