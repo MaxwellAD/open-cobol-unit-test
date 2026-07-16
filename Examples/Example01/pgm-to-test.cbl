@@ -62,6 +62,8 @@
            05 DUT-TRACE-POINTER    PIC 9(4) COMP VALUE 1.
            05 DUT-TRACE-FIELD-INDEX PIC 9(3) VALUE 1.
            05 DUT-TRACE-SECTION-INDEX PIC 9(3) VALUE 1.
+           *> BELOW IS NEEDED TO DO A GHOST LOOKAHEAD ON NOT FOLLOWED-BY
+           05 DUT-TRACE-SECTION-INDEX-MEM PIC 9(3) VALUE 1.
            05 DUT-TEMP-SECTION-NAME PIC X(30) VALUE SPACES.
            05 DUT-TEMP-FIELD-NAME   PIC X(30) VALUE SPACES.
            05 DUT-TEMP-FIELD-VALUE  PIC X(30) VALUE SPACES.
@@ -235,48 +237,77 @@
            *> FOR EACH COMMAND IN DUT-EXEC-TRACE-WORD
               *> IF IT'S A FOLLOWED-BY COMMAND
 
-              EVALUATE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
-              WHEN 'FOLLOWED-BY'
-                 ADD 1 TO DUT-EXEC-TRACE-INDEX
-                 MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
-                                         DUT-TEMP-SECTION-NAME
-                 *>DISPLAY 'SEARCHING FOR  ' DUT-TEMP-SECTION-NAME
-                 PERFORM DUT-FIND-FOLLOWED-BY
-                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
-                     = 'WITH'
-                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
-                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
-                 END-IF 
-                 *> Don't forget to disable NOT flag
-                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
+           EVALUATE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
+           WHEN 'FOLLOWED-BY'
+               PERFORM DUT-HANDLE-FOLLOWED-BY
+           *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
+           WHEN 'DIRECTLY-FOLLOWED-BY'
+               PERFORM DUT-HANDL-DIRECTLY-FOLLOWED-BY 
+           *> ELSE
+           WHEN 'NOT'
+              PERFORM DUT-ASSERT-TRACE-HANDLE-NOT  
+           WHEN OTHER
+                 *> MUST BE A NEW SECTION
+                 MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
+                                         TO DUT-TEMP-SECTION-NAME
+           END-EVALUATE
+       . 
 
-              *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
-              WHEN 'DIRECTLY-FOLLOWED-BY'
-                 ADD 1 TO DUT-EXEC-TRACE-INDEX
-                 MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
-                                         DUT-TEMP-SECTION-NAME
-                 PERFORM DUT-FIND-DIRECTLY-FOLLOWED-BY
-                 *>IF DUT-TEST-FAIL AND DUT-EXEC-TRACE-NOT 
-                 IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
-                     = 'WITH'
-                     ADD 1 TO DUT-EXEC-TRACE-INDEX 
-                     PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
-                 END-IF 
-                 *> Don't forget to disable NOT flag
-                 SET DUT-EXEC-TRACE-NORMAL TO TRUE
-                    *>ADD 1 TO DUT-TRACE-SECTION-INDEX
-                    *>ADD 2 TO DUT-EXEC-TRACE-INDEX
-                     *> WE FAILED ON THE SECTION NAME, BUT THE 
-                     *> WITH MIGHT SAVE IT IF WS IS DIFFERENT
-              *> ELSE
-              WHEN 'NOT'
-                 PERFORM DUT-ASSERT-TRACE-HANDLE-NOT  
-              WHEN OTHER
-                    *> MUST BE A NEW SECTION
-                    MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) 
-                                            TO DUT-TEMP-SECTION-NAME
-              END-EVALUATE
-           . 
+       DUT-HANDLE-FOLLOWED-BY SECTION.
+           ADD 1 TO DUT-EXEC-TRACE-INDEX
+           MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                   DUT-TEMP-SECTION-NAME
+           *>DISPLAY 'SEARCHING FOR  ' DUT-TEMP-SECTION-NAME
+           *> SAVE THE CURRENT SECTION INDEX TO MEMORY
+           *> IF THE FOLLOWED BY IS A NOT FOLLOWED-BY WE'LL NEED
+           *> TO REVERT AS A NOT FOLLOWED-BY DOES A "GHOST" LOOKAHEAD
+           MOVE DUT-TRACE-SECTION-INDEX TO DUT-TRACE-SECTION-INDEX-MEM
+           PERFORM DUT-FIND-FOLLOWED-BY
+           IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+               = 'WITH'
+               ADD 1 TO DUT-EXEC-TRACE-INDEX 
+               PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+           END-IF 
+           *> Don't forget to disable NOT flag
+           IF DUT-EXEC-TRACE-NOT 
+               PERFORM DUT-ASSERT-TRACE-RESET-NOT 
+           END-IF 
+
+       .
+
+       DUT-ASSERT-TRACE-RESET-NOT SECTION.
+           *> "AND IT WAS ALL A DREAM"
+           DISPLAY 'DUT-TRACE-SECTION-INDEX-MEM' 
+           DUT-TRACE-SECTION-INDEX-MEM
+           DISPLAY 'DUT-TRACE-SECTION-INDEX' DUT-TRACE-SECTION-INDEX 
+           MOVE DUT-TRACE-SECTION-INDEX-MEM TO
+                                         DUT-TRACE-SECTION-INDEX 
+           SET DUT-EXEC-TRACE-NORMAL TO TRUE
+       .
+       
+       DUT-HANDL-DIRECTLY-FOLLOWED-BY SECTION.
+           ADD 1 TO DUT-EXEC-TRACE-INDEX
+           MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) TO 
+                                   DUT-TEMP-SECTION-NAME
+           MOVE DUT-TRACE-SECTION-INDEX TO DUT-TRACE-SECTION-INDEX-MEM
+           
+           PERFORM DUT-FIND-DIRECTLY-FOLLOWED-BY
+           *>IF DUT-TEST-FAIL AND DUT-EXEC-TRACE-NOT 
+           IF DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX + 1)
+               = 'WITH'
+               ADD 1 TO DUT-EXEC-TRACE-INDEX 
+               PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+           END-IF 
+           *> Don't forget to disable NOT flag
+           IF DUT-EXEC-TRACE-NOT 
+               PERFORM DUT-ASSERT-TRACE-RESET-NOT
+           END-IF 
+              *>ADD 1 TO DUT-TRACE-SECTION-INDEX
+              *>ADD 2 TO DUT-EXEC-TRACE-INDEX
+               *> WE FAILED ON THE SECTION NAME, BUT THE 
+               *> WITH MIGHT SAVE IT IF WS IS DIFFERENT
+
+       .
 
        DUT-ASSERT-TRACE-HANDLE-NOT SECTION.
            SET DUT-EXEC-TRACE-NOT TO TRUE 
@@ -440,8 +471,6 @@
                            DUT-SECTION-FOUND 
                          OR 
                          DUT-TRACE-SECTION-INDEX > DUT-RT-SECTION-COUNT
-                       *>OR DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX) 
-                       *>= DUT-END-SECTION-NAME
 
 
               *>DISPLAY 'FOUND SECTION: ' 
@@ -459,13 +488,31 @@
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF DUT-SECTION-NOT-FOUND
-              SET DUT-TEST-FAIL TO TRUE 
-              STRING 'UNABLE TO FIND '
-                     FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
-                     ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM DUT-FAIL
+              IF DUT-EXEC-TRACE-NOT 
+                  *> We didn't find the section, but that's good
+                  EXIT SECTION
+              ELSE
+                  SET DUT-TEST-FAIL TO TRUE 
+                                 DISPLAY 'DUT-TRACE-SECTION-INDEX-MEM' 
+               DUT-TRACE-SECTION-INDEX-MEM
+               DISPLAY 'DUT-TRACE-SECTION-INDEX' DUT-TRACE-SECTION-INDEX 
+                  STRING 'UNABLE TO FIND '
+                         FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                         ' IN EXECUTION TRACE'
+                         DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                  END-STRING
+                  PERFORM DUT-FAIL
+              END-IF 
+           ELSE
+               IF DUT-EXEC-TRACE-NOT 
+                  SET DUT-TEST-FAIL TO TRUE 
+                  STRING 'FOUND SECTION '
+                         FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
+                         ' IN EXECUTION TRACE'
+                         DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                  END-STRING
+                  PERFORM DUT-FAIL
+               END-IF 
            END-IF
        .
 
@@ -477,7 +524,9 @@
            SET DUT-SECTION-NOT-FOUND TO TRUE
            *>DISPLAY 'FOUND SECTION: ' 
            *>DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
+
            ADD 1 TO DUT-TRACE-SECTION-INDEX 
+
            IF DUT-TEMP-SECTION-NAME = 
               DUT-RT-SECTION-NAME(DUT-TRACE-SECTION-INDEX)
               SET DUT-SECTION-FOUND TO TRUE
@@ -496,6 +545,9 @@
                   *> RESET THE FLAG FOR THE NEXT STATEMENTS
               ELSE
                  SET DUT-TEST-FAIL TO TRUE 
+                                DISPLAY 'DUT-TRACE-SECTION-INDEX-MEM' 
+               DUT-TRACE-SECTION-INDEX-MEM
+               DISPLAY 'DUT-TRACE-SECTION-INDEX' DUT-TRACE-SECTION-INDEX 
                  STRING 'UNABLE TO FIND '
                         FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
                         ' DIRECTLY AFTER '
@@ -528,7 +580,8 @@
                *> SO LET WITH DO IT'S CHECK AND WITH WILL RESET THE FLAG
                CONTINUE
            ELSE 
-               SET DUT-EXEC-TRACE-NORMAL TO TRUE 
+               *>SET DUT-EXEC-TRACE-NORMAL TO TRUE 
+               CONTINUE 
            END-IF 
                
            
@@ -673,7 +726,7 @@
            ELSE 
               CONTINUE 
            END-IF 
-           SET DUT-EXEC-TRACE-NORMAL TO TRUE 
+           *>SET DUT-EXEC-TRACE-NORMAL TO TRUE 
        .
 
       *****************************************************************

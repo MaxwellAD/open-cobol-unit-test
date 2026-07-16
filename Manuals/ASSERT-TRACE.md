@@ -86,7 +86,7 @@ A modifier to the `FOLLOWED-BY` and `DIRECTLY-FOLLOWED-BY` statements
 
 `NOT` `FOLLOWED-BY` asserts the reverse of `FOLLOWED-BY`, where `FOLLOWED-BY` needs the section to pass the test, `NOT` `FOLLOWED-BY` needs to not see the section
 
-`NOT` `FOLLOWED-BY` searches from its location in the stack trace until the next `FOLLOWED-BY` statement or until the end of the trace, whichever is soonest
+`NOT` `FOLLOWED-BY` searches from its location in the trace until the end of the trace but does not update the index, so the next non-NOT followed by will pick up from that last
 
 `NOT` `DIRECTLY-FOLLOWED-BY` asserts that the very next section must not be the one specified
 
@@ -98,7 +98,7 @@ NOT FOLLOWED-BY COMMIT-DATABASE-UPDATE
 FOLLOWED-BY ROLLBACK-UPDATE
 ```
 
-Asserts that we `UPDATE-DATABASE` to run, followed by `HANDLE-DATABASE-ERROR`, after handling the database error, `COMMIT-DATABASE-UPDATE` can `NOT` run until `ROLLBACK-UPDATE` has run
+Asserts that we `UPDATE-DATABASE` to run, followed by `HANDLE-DATABASE-ERROR`, after handling the database error, `COMMIT-DATABASE-UPDATE` can `NOT` run
 
 
 
