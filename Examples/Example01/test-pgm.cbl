@@ -1373,7 +1373,7 @@
            *> WHEN
            STRING 'BA000-MAIN-PROCESSING '
                   'NOT FOLLOWED-BY AB000-INITIALIZATION '
-                  'FOLLOWED-BY BC000-PROCESS-DETAIL-RECORD '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
                DELIMITED BY SIZE
                INTO DUT-TRACE 
            END-STRING
