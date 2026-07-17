@@ -198,7 +198,6 @@
                INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE
-           PERFORM CUT-DEBUG-DISPLAY-TRACE 
 
            
        
