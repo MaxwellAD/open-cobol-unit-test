@@ -113,30 +113,79 @@
            *> FOR EACH COMMAND IN CUT-EXEC-TRACE-WORD
               *> IF IT'S A FOLLOWED-BY COMMAND
 
-              EVALUATE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
-              WHEN 'FOLLOWED-BY'
-                 ADD 1 TO CUT-EXEC-TRACE-INDEX
-                 MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                         CUT-TEMP-SECTION-NAME
-                 *>DISPLAY 'SEARCHING FOR  ' CUT-TEMP-SECTION-NAME
-                 PERFORM CUT-FIND-FOLLOWED-BY
-              *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
-              WHEN 'DIRECTLY-FOLLOWED-BY'
-                 ADD 1 TO CUT-EXEC-TRACE-INDEX
-                 MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                         CUT-TEMP-SECTION-NAME
-                 PERFORM CUT-FIND-DIRECTLY-FOLLOWED-BY
-              *> IF IT'S A WITH COMMAND
-              WHEN 'WITH'
-                 PERFORM CUT-ASSERT-TRACE-HANDLE-WITH
-              *> ELSE
-              WHEN OTHER
-                    *> MUST BE A NEW SECTION
-                    MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
-                                            TO CUT-TEMP-SECTION-NAME
-              END-EVALUATE
+           EVALUATE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
+           *> IF IT'S A FOLLOWED-BY COMMAND
+           WHEN 'FOLLOWED-BY'
+               PERFORM CUT-HANDLE-FOLLOWED-BY
+           *> IF IT'S A DIRECTLY-FOLLOWED-BY COMMAND
+           WHEN 'DIRECTLY-FOLLOWED-BY'
+               PERFORM CUT-HANDL-DIRECTLY-FOLLOWED-BY 
+           *> IF IT'S A NOT COMMAND
+           WHEN 'NOT'
+              PERFORM CUT-ASSERT-TRACE-HANDLE-NOT  
+           WHEN OTHER
+                 *> TODO
+                 *> THIS SHOULDN'T ACTUALLY RUN, THIS IS SOME UNEXPECTED
+                 *> KEYWORD - ASSUME USER ERROR AND TRIGGER A FATAL
+                 *> RESPONSE
+                 MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
+                                         TO CUT-TEMP-SECTION-NAME
+           END-EVALUATE
+       . 
 
-           . 
+       CUT-HANDLE-FOLLOWED-BY SECTION.
+           ADD 1 TO CUT-EXEC-TRACE-INDEX
+           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
+                                   CUT-TEMP-SECTION-NAME
+           *>DISPLAY 'SEARCHING FOR  ' CUT-TEMP-SECTION-NAME
+           *> SAVE THE CURRENT SECTION INDEX TO MEMORY
+           *> IF THE FOLLOWED-BY IS A NOT FOLLOWED-BY WE'LL NEED
+           *> TO REVERT AS A NOT FOLLOWED-BY DOES A "GHOST" LOOKAHEAD
+           MOVE CUT-TRACE-SECTION-INDEX TO CUT-TRACE-SECTION-INDEX-MEM
+           PERFORM CUT-FIND-FOLLOWED-BY
+           *> IF THE NEXT WORD IS A WITH THEN CHECK THE WITH FIELDS
+           IF CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX + 1)
+               = 'WITH'
+               ADD 1 TO CUT-EXEC-TRACE-INDEX 
+               PERFORM CUT-ASSERT-TRACE-HANDLE-WITH 
+           END-IF 
+           *> Don't forget to reset NOT flag
+           IF CUT-EXEC-TRACE-NOT 
+               PERFORM CUT-ASSERT-TRACE-RESET-NOT 
+           END-IF 
+
+       .
+
+       CUT-ASSERT-TRACE-RESET-NOT SECTION.
+           *> "AND IT WAS ALL A DREAM"
+           MOVE CUT-TRACE-SECTION-INDEX-MEM TO
+                                         CUT-TRACE-SECTION-INDEX 
+           SET CUT-EXEC-TRACE-NORMAL TO TRUE
+       .
+       
+       CUT-HANDL-DIRECTLY-FOLLOWED-BY SECTION.
+           ADD 1 TO CUT-EXEC-TRACE-INDEX
+           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
+                                   CUT-TEMP-SECTION-NAME
+           MOVE CUT-TRACE-SECTION-INDEX TO CUT-TRACE-SECTION-INDEX-MEM
+           
+           PERFORM CUT-FIND-DIRECTLY-FOLLOWED-BY
+           *>IF CUT-TEST-FAIL AND CUT-EXEC-TRACE-NOT 
+           IF CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX + 1)
+               = 'WITH'
+               ADD 1 TO CUT-EXEC-TRACE-INDEX 
+               PERFORM CUT-ASSERT-TRACE-HANDLE-WITH 
+           END-IF 
+           *> Don't forget to disable NOT flag
+           IF CUT-EXEC-TRACE-NOT 
+               PERFORM CUT-ASSERT-TRACE-RESET-NOT
+           END-IF 
+
+       .
+
+       CUT-ASSERT-TRACE-HANDLE-NOT SECTION.
+           SET CUT-EXEC-TRACE-NOT TO TRUE 
+       .
 
        CUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
@@ -288,15 +337,19 @@
            *> CUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> CUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
            *> CUT-TRACE-SECTION-INDEX <-- INDEX OF THE SECTION TRACE
+           *> CUT-END-SECTION-NAME <-- THE END SECTION
 
            SET CUT-SECTION-NOT-FOUND TO TRUE
            PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM
-                                    CUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
-                           CUT-SECTION-FOUND OR 
+                           CUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
+                           CUT-SECTION-FOUND 
+                         OR 
                          CUT-TRACE-SECTION-INDEX > CUT-RT-SECTION-COUNT
+
+
               *>DISPLAY 'FOUND SECTION: ' 
               *>CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
-              IF CUT-TEMP-SECTION-NAME = 
+           IF CUT-TEMP-SECTION-NAME = 
                  CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
                  SET CUT-SECTION-FOUND TO TRUE
                  *> WE FOUND THE SECTION, LEAVE THE PERFORM  
@@ -309,13 +362,25 @@
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF CUT-SECTION-NOT-FOUND
-              SET CUT-TEST-FAIL TO TRUE 
-              STRING 'UNABLE TO FIND '
-                     FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                     ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM CUT-FAIL
+              IF CUT-EXEC-TRACE-NORMAL 
+                  SET CUT-TEST-FAIL TO TRUE 
+                  STRING 'UNABLE TO FIND '
+                         FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                         ' IN EXECUTION TRACE'
+                         DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                  END-STRING
+                  PERFORM CUT-FAIL
+              END-IF 
+           ELSE
+               IF CUT-EXEC-TRACE-NOT 
+                  SET CUT-TEST-FAIL TO TRUE 
+                  STRING 'FOUND SECTION '
+                         FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                         ' IN EXECUTION TRACE'
+                         DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                  END-STRING
+                  PERFORM CUT-FAIL
+               END-IF 
            END-IF
        .
 
@@ -327,7 +392,9 @@
            SET CUT-SECTION-NOT-FOUND TO TRUE
            *>DISPLAY 'FOUND SECTION: ' 
            *>CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
+
            ADD 1 TO CUT-TRACE-SECTION-INDEX 
+
            IF CUT-TEMP-SECTION-NAME = 
               CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
               SET CUT-SECTION-FOUND TO TRUE
@@ -339,17 +406,34 @@
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF CUT-SECTION-NOT-FOUND
-              SET CUT-TEST-FAIL TO TRUE 
-              STRING 'UNABLE TO FIND '
-                     FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                     ' DIRECTLY AFTER '
-                     FUNCTION TRIM(CUT-RT-SECTION-NAME(
-                                         CUT-TRACE-SECTION-INDEX))
-                     ' IN EXECUTION TRACE'
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM CUT-FAIL
+              IF CUT-EXEC-TRACE-NORMAL 
+                 SET CUT-TEST-FAIL TO TRUE 
+                 STRING 'UNABLE TO FIND '
+                        FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                        ' DIRECTLY AFTER '
+                        FUNCTION TRIM(CUT-RT-SECTION-NAME(
+                                            CUT-TRACE-SECTION-INDEX))
+                        ' IN EXECUTION TRACE'
+                        DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                 END-STRING
+                 PERFORM CUT-FAIL
+              END-IF
+           ELSE 
+               *> IF THE SECTION WAS FOUND
+               IF CUT-EXEC-TRACE-NOT 
+                   *> THIS IS BAD
+                   SET CUT-TEST-FAIL TO TRUE 
+                   STRING 'FOUND ' FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                   ' DIRECTLY AFTER '
+                   FUNCTION TRIM(CUT-RT-SECTION-NAME(
+                                            CUT-TRACE-SECTION-INDEX))
+                   ' IN EXECUTION TRACE '
+                   DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL 
+               END-IF
            END-IF
+
        .
 
        CUT-FIND-WITH-IN-TRACE SECTION.
@@ -440,18 +524,27 @@
            EVALUATE CUT-TEMP-FIELD-OPERATOR
            WHEN '='
               IF CUT-TEMP-FIELD-VALUE = CUT-TEMP-FIELD-EXPECTED
-                 CONTINUE
+                 SET CUT-TEST-PASS TO TRUE 
               ELSE
                  SET CUT-TEST-FAIL TO TRUE 
               END-IF 
            WHEN '!='
               IF CUT-TEMP-FIELD-VALUE NOT = CUT-TEMP-FIELD-EXPECTED
-                 CONTINUE
+                 SET CUT-TEST-PASS TO TRUE 
               ELSE
                  SET CUT-TEST-FAIL TO TRUE 
               END-IF 
            END-EVALUATE 
 
+
+           *> IF IT'S A NOT SEARCH THEN INVERT THE RESULTS
+           EVALUATE TRUE
+           WHEN CUT-EXEC-TRACE-NOT AND CUT-TEST-FAIL 
+               SET CUT-TEST-PASS TO TRUE 
+           WHEN CUT-EXEC-TRACE-NOT AND CUT-TEST-PASS 
+               SET CUT-TEST-FAIL TO TRUE
+           END-EVALUATE 
+               
 
            IF CUT-TEST-FAIL
               STRING 'OPERATION EVALUATION FAILED FOR ' 
@@ -461,7 +554,7 @@
               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
               PERFORM CUT-FAIL 
       
-              STRING 'EXPECTED ' 
+              STRING 'ASSERTED ' 
                       FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
                       ' '
                       CUT-TEMP-FIELD-OPERATOR
@@ -471,7 +564,7 @@
               END-STRING
               PERFORM CUT-FAIL 
       
-              STRING 'BUT GOT '
+              STRING 'AND GOT '
                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
                      ' = '
                      FUNCTION TRIM(CUT-TEMP-FIELD-VALUE)
@@ -500,27 +593,20 @@
            *>DISPLAY 'SECTION INDEX ' CUT-TRACE-SECTION-INDEX
            PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
                          CUT-TRACE-SECTION-INDEX >= CUT-RT-SECTION-COUNT
-              STRING '[DEBUG] SECTION NAME: ' CUT-RT-SECTION-NAME(
-                       CUT-TRACE-SECTION-INDEX) DELIMITED BY SIZE INTO 
-                        CUT-OUT-RECORD
-              PERFORM CUT-WRITE-UT-RECORD 
+              DISPLAY 'SECTION NAME: ' CUT-RT-SECTION-NAME(
+                       CUT-TRACE-SECTION-INDEX)
 
               
               PERFORM VARYING CUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
                           CUT-TRACE-FIELD-INDEX >= 
                      CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
 
-                 STRING '[DEBUG] FIELD: ' CUT-RT-SECTION-FIELD-NAME(
+                 DISPLAY 'FIELD: ' CUT-RT-SECTION-FIELD-NAME(
                                             CUT-TRACE-SECTION-INDEX
                                             CUT-TRACE-FIELD-INDEX)
-                                            DELIMITED BY SIZE INTO 
-                                            CUT-OUT-RECORD
-                 PERFORM CUT-WRITE-UT-RECORD 
-                 STRING '[DEBUG] VALUE: ' CUT-RT-SECTION-FIELD-VALUE(
+                 DISPLAY 'VALUE: ' CUT-RT-SECTION-FIELD-VALUE(
                            CUT-TRACE-SECTION-INDEX
                            CUT-TRACE-FIELD-INDEX)
-                           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
-                 PERFORM CUT-WRITE-UT-RECORD 
 
               END-PERFORM
            END-PERFORM
