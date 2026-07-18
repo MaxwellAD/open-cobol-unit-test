@@ -212,16 +212,15 @@
            PERFORM DUT-ASSERT-EQUALS-NUM
            
            *> THEN
-           *> TODO THIS WILL READ BETTER IS USING A NOT FOLLOWED-BY
-           *> GOING STRAIGHT TO DUT FAIL SHOWS IT DIDN'T TRY TO HANDLE
-           *> A ROUNDING ERROR
+           *> ENSURE WE DON'T TRY TO HANDLE A ROUNDING ERROR
            STRING 'DUT-ASSERT-EQUALS-NUM '
                   'FOLLOWED-BY DUT-ASSERT-EQUALS-NUM-FAIL '
-                  'DIRECTLY-FOLLOWED-BY DUT-FAIL'
+                  'NOT FOLLOWED-BY DUT-HANDLE-DIS-ROUND-ERROR '
                DELIMITED BY SIZE
                INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE
+
 
            IF NOT DUT-TEST-FAIL 
                MOVE 'DUT DIDN''T FAIL THE CASE WHEN IT SHOULD HAVE'
@@ -468,7 +467,7 @@
            PERFORM CUT-END-TEST 
        .
 
-       TEST-ASSERT-TRACE-DIR-DB-NEG SECTION.
+       TEST-ASSERT-TRACE-DIR-FB-NEG SECTION.
            *> BASIC TEST FOR ASSERTING DIRECTLY FOLLOWED BY IN AN
            *> EXECUTION TRACE WHERE THE FIELD IS NOT DIRECTLY FOLLOWED 
            *> BY
@@ -543,7 +542,7 @@
                   *> EVALUATE OPERATION SUCCESSFUL
                   *> MOVING ONTO NEXT VERB
                   'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
-                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
+                  *>'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
                   'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
                   *> BB000-PROCESS-HEADER-RECORD
                   'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
@@ -1085,6 +1084,345 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-NOT-DIR-FB-SIMPLE-FAIL SECTION.
+           *> TEST THE NOT DIRECTLY FOLLOWED BY PATH SIMPLY WHEN THE
+           *> SECTION IS THERE
+           *> MAIN-PROCESSING IS NOT DIRECTLY AFTER INITIALIZATION
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+
+           STRING 'DUT-ASSERT-TRACE-HANDLE-VERBS '
+                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-NOT '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF DUT-TEST-PASS 
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED ON'
+                     ' NOT DIRECTLY FOLLOWED BY' DELIMITED BY SIZE INTO 
+                     CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-FB-SIMPLE-PASS SECTION.
+           *> TEST A SIMPLE CASE WHERE SOME SECTION DOES NOT 
+           *> DIRECTLY FOLLOW SOME OTHER SECTION
+           *> HEADER-RECORD IS NOT DIRECTLY AFTER INIT SO THIS SHOULD PASS
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                 'NOT DIRECTLY-FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+                  'FOLLOWED-BY BC000-PROCESS-DETAIL-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+               STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-FB-WITH-PASS SECTION.
+           *> TEST THAT NOT DIRECTLY FOLLOWED-BY CAN HANDLE A MORE COMPLEX
+           *> EXAMPLE WITH WITH CASES
+           *> THE SECTION IS ALLOWED ONLY BECAUSE WORKING STORAGE WAS
+           *> WS-NUMER = 7 and not 6
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD
+
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'WITH '
+                  'WS-NUMBER = 6 '
+                  'END-WITH '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+              STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-DIR-FB-WITH-FAIL SECTION.
+           *> TEST THAT NOT DIRECTLY FOLLOWED BY CAN HANDLE FAILING ON
+           *> A WITH CASE
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+       
+           *> WHEN
+           *> THIS SHOULD FAIL ON THE NOT DIRECTLY FOLLOWED BY
+           *> BUT IF A WITH IS PRESENT THEN THE CODE DOES A CHECK
+           *> TO ENSURE THE WITH CAN'T SAVE THE CASE
+           STRING 'AB000-INITIALIZATION '
+                  'NOT DIRECTLY-FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  'WITH '
+                      'WS-NUMBER = 7 '
+                  'END-WITH '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+
+           STRING 'DUT-ASSERT-TRACE '
+                  'FOLLOWED-BY DUT-FIND-WITH-IN-TRACE '
+                  'FOLLOWED-BY DUT-FAIL'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF DUT-TEST-PASS  
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE PASSED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+              END-STRING
+              PERFORM CUT-FAIL 
+           END-IF 
+           
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-SIMPLE-FAIL SECTION.
+           *> TEST THAT NOT FOLLOWED-BY CAN PASS A SIMPLE CASE
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC
+       
+           *> WHEN
+           STRING 'BA000-MAIN-PROCESSING '
+                  'NOT FOLLOWED-BY AB000-INITIALIZATION'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+               STRING 'DUT FAILED THE TEST WHEN IT SHOULD HAVE PASSED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-SIMPLE-PASS SECTION.
+           *> TEST THAT NOT FB CAN FAIL A SIMPLE CASE
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'AB000-INITIALIZATION '
+                  'NOT FOLLOWED-BY BB000-PROCESS-HEADER-RECORD'
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-PASS
+               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED '
+               'AS BB000 DOES FOLLOW AB000' DELIMITED BY SIZE 
+               INTO CUT-DISPLAY-FAIL-MSG
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-WITH-PASS SECTION.
+           *> TEST THAT NOT FOLLWOED BY CAN SAVE A CASE BASED ON A WITH
+       
+           *> THIS CASE SHOULD ACTUALLY FAIL BASED ON THE HEADER-RECORD
+           *> FOLLOWING MAIN PROCESSING BUT THE WITH WS-NUMBER = 3
+           *> SAVES THE CASE AS BB000 IS ONLY INVALID WHEN WS-NUMBER = 3
+           *> WHICH IS NOT THE CASE IN THE FIXTURE
+
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+       
+           *> WHEN
+           STRING 'BA000-MAIN-PROCESSING '
+                  'NOT FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+                  'WITH '
+                      'WS-NUMBER = 3 '
+                  'END-WITH '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-FAIL 
+               STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED '
+                      'AS WS-NUMBER IS 2, NOT 3'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               END-STRING
+               PERFORM CUT-FAIL 
+           END-IF 
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-WTIH-FAIL-PASS SECTION.
+           *> TEST THAT A WITH CONDITION STILL WORKS EVEN WITH
+           *> A LONG ASSERTION
+
+
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+       
+           *> WHEN
+           *> THIS ASSERTION STATES THAT BB000 MUST FOLLOW BA000, BUT
+           *> IT CAN'T HAVE WS-NUMBER = 3
+           *> THIS SHOULD STILL PASS, BECAUSE BB000 DOES FOLLOW
+           *> AND WS-NUMBER = 2
+           STRING 'BA000-MAIN-PROCESSING '
+                  'NOT FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+                  'WITH '
+                      'WS-NUMBER = 3 '
+                  'END-WITH '
+                  'DIRECTLY-FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+                     
+           *> THEN
+
+           *> ASSERT THAT FOLLOWED-BY IS HAPPENING 
+           *> AND THAT THE NOT IS BEING HANDLED
+           *> AND THE GHOST LOOKUP IS RESETTING THE TRACE-SECTION-INDEX
+           STRING 'DUT-ASSERT-TRACE '
+                  'FOLLOWED-BY DUT-FIND-FOLLOWED-BY '
+                  'WITH ' 
+                      'DUT-TRACE-SECTION-INDEX = 001 '
+                  'END-WITH '
+                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-NOT '
+                  'FOLLOWED-BY DUT-FIND-FOLLOWED-BY '
+                  'WITH ' 
+                      'DUT-TRACE-SECTION-INDEX = 002 '
+                  'END-WITH '
+                  'FOLLOWED-BY DUT-ASSERT-TRACE-RESET-NOT '
+                  'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
+                  'WITH '
+                      'DUT-TRACE-SECTION-INDEX = 002 '
+                  'END-WITH'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           IF DUT-TEST-FAIL 
+               STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL 
+           END-IF
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-SIMPLE-PASS-LONG SECTION.
+           *> TEST THAT NOT FB PASSED A CASE WITH ASSERTIONS AFTER
+           *> THE NOT
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'BA000-MAIN-PROCESSING '
+                  'NOT FOLLOWED-BY AB000-INITIALIZATION '
+                  'FOLLOWED-BY BB000-PROCESS-HEADER-RECORD '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-FAIL
+               STRING 'DUT FAILED THE CASE WHEN IT SHOULD HAVE PASSED'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL
+           END-IF
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-NOT-FB-SIMPLE-FAIL-LONG SECTION.
+           *> TEST THAT NOT FB FAILS A CASE WITH ASSERTIONS AFTER
+           *> THE NOT
+       
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC 
+       
+           *> WHEN
+           STRING 'BB000-PROCESS-HEADER-RECORD '
+                  'NOT FOLLOWED-BY AB000-INITIALIZATION '
+                  'FOLLOWED-BY BA000-MAIN-PROCESSING '
+               DELIMITED BY SIZE
+               INTO DUT-TRACE 
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+           
+           *> THEN
+           IF DUT-TEST-PASS
+               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED '
+                      'AS BA000 DOESNT FOLLOW BB000'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+               PERFORM CUT-FAIL
+           END-IF
+       
+           PERFORM CUT-END-TEST 
+       .
+
 
 
               
@@ -1107,6 +1445,10 @@
 
            MOVE 'FIELD-B' TO CUT-TEMP-FIELD-NAME 
            MOVE "example" TO CUT-TEMP-FIELD-VALUE
+           PERFORM CUT-REGISTER-FIELD 
+
+           MOVE 'DUT-TRACE-SECTION-INDEX' TO CUT-TEMP-FIELD-NAME 
+           MOVE DUT-TRACE-SECTION-INDEX TO CUT-TEMP-FIELD-VALUE 
            PERFORM CUT-REGISTER-FIELD 
            CONTINUE
        .

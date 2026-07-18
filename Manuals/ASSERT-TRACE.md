@@ -25,13 +25,13 @@ Sets `CUT-TEST-FAIL` to true if `SECTION-B` does not follow `SECTION-A`
 ## Syntax Diagram
 ```
 
-──────┬─── <trace-target> ───┬───────────────────────────────────────────────────────┬──────┬─────────────────────────────────────── 
-      |                      │                                                       │      |                          
-      |                      └─ WITH ─────┬── FIELD-A = <value> ──┬───── END-WITH ───┘      ├────── FOLLOWED-BY ───────┬─────┐
-      |                                   │                       V                         |                          |     V
-      |                                   └───────────<───────────┘                         └── DIRECTLY-FOLLOWED-BY ──┘     |
-      |                                                                                                                      |
-      └────────────────<───────────────────────<───────────────────────────────<──────────────────────────<──────────────────┘
+──────┬─── <trace-target> ───┬───────────────────────────────────────────────────────┬──────┬────────────────────────────────────────────────────────────── 
+      │                      │                                                       │      │                      
+      │                      └─ WITH ─────┬── FIELD-A = <value> ──┬───── END-WITH ───┘      └──┬───────────┬────┬────── FOLLOWED-BY ───────┬─────┐
+      │                                   │                       V                            │           │    │                          │     V
+      │                                   └───────────<───────────┘                            └─── NOT ───┘    └── DIRECTLY-FOLLOWED-BY ──┘     │
+      │                                                                                                                                          │
+      └────────────────<───────────────────────<───────────────────────────────<──────────────────────────────────────<──────────────────────────┘
 ```
 
 | Name | Description |
@@ -78,6 +78,29 @@ Use this sparringly as it leads to rigid code
 ```
 [FAIL] UNABLE TO FIND SECTION-B DIRECTLY AFTER SECTION-A IN EXECUTION TRACE
 ```
+
+---
+
+### NOT
+A modifier to the `FOLLOWED-BY` and `DIRECTLY-FOLLOWED-BY` statements
+
+`NOT` `FOLLOWED-BY` asserts the reverse of `FOLLOWED-BY`, where `FOLLOWED-BY` needs the section to pass the test, `NOT` `FOLLOWED-BY` needs to not see the section
+
+`NOT` `FOLLOWED-BY` searches from its location in the trace until the end of the trace but does not update the index, so the next non-NOT followed by will pick up from that last
+
+`NOT` `DIRECTLY-FOLLOWED-BY` asserts that the very next section must not be the one specified
+
+#### Example
+```
+UPDATE-DATABASE
+FOLLOWED-BY HANDLE-DATABASE-ERROR
+NOT FOLLOWED-BY COMMIT-DATABASE-UPDATE
+FOLLOWED-BY ROLLBACK-UPDATE
+```
+
+Asserts that we `UPDATE-DATABASE` to run, followed by `HANDLE-DATABASE-ERROR`, after handling the database error, `COMMIT-DATABASE-UPDATE` can `NOT` run
+
+
 
 ---
 

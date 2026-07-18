@@ -192,10 +192,8 @@
            PERFORM AD-ACCEPT-INPUT 
            
            *> THEN
-           *> TODO IMPLEMENT NOT FOLLOWED-BY
            STRING 'AD-ACCEPT-INPUT '
-                  'DIRECTLY-FOLLOWED-BY AG-ACCEPT-INPUT '
-                  'DIRECTLY-FOLLOWED-BY AE-ACCEPT-NUM1 '
+                  'NOT FOLLOWED-BY AF-ACCEPT-NUM2 '
                DELIMITED BY SIZE
                INTO CUT-TRACE 
            END-STRING
