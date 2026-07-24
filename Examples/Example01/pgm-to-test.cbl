@@ -141,7 +141,18 @@
       * SPDX-License-Identifier: GPL-3.0-or-later
       * SPDX-FileCopyrightText: 2026 MaxwellAD
        
+      ******************************************************************
+      * COMMENT FORMAT:
+      * USAGE: INTERNAL = USED BY THE CUT FRAMEWORK
+      *           or
+      *        EXTERNAL = USED BY THE END USER
+      *
+      * DESCRIPTION: A SHORT DESCRIPTION ABOUT THE SECTION
+      * 
+      ****************************************************************** 
        
+      * USAGE: EXTERNAL
+      * DESCRIPTION: 
       * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST
       * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT
       * CLEAR THE EXECUTION TRACE
@@ -168,7 +179,8 @@
            PERFORM DUT-WRITE-UT-RECORD
            .
        
-
+      * USAGE: EXTERNAL
+      * DESCRIPTION
       * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE
       * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE
        DUT-END-TEST-SUITE SECTION.
@@ -211,6 +223,8 @@
            PERFORM DUT-SHUT-DOWN-TEST-SUITE 
            .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: 
       * SHUTDOWN SECTION EXTRACTED FOR MOCKABLE UNIT TEST OF 
       * END-TEST-SUITE
        DUT-SHUT-DOWN-TEST-SUITE SECTION.
