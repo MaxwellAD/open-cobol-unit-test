@@ -1,3 +1,7 @@
+      * COBOL UT ENVIRONMENT DIVISION
+
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT CUT-OUT ASSIGN TO CUT-RPTO
