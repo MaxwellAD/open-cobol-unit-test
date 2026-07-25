@@ -7,6 +7,9 @@
       * USAGE: INTERNAL = USED BY THE CUT FRAMEWORK
       *           or
       *        EXTERNAL = USED BY THE END USER
+      *           or
+      *        AUTO INSTRUMENT = NOT USED BY CUT OR USER
+      *                          AUTOMATICALLY INSERTED BY THE HARNESS
       *
       * DESCRIPTION: A SHORT DESCRIPTION ABOUT THE SECTION
       * 
