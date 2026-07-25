@@ -156,10 +156,10 @@
        
       * USAGE: EXTERNAL
       * DESCRIPTION: 
-      * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST
-      * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT
-      * CLEAR THE EXECUTION TRACE
-      * WRITES ANY CLOSING LINES TO THE TEST RECORD  
+      * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST.
+      * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT.
+      * CLEAR THE EXECUTION TRACE.
+      * WRITES ANY CLOSING LINES TO THE TEST RECORD.
        DUT-END-TEST SECTION.
            EVALUATE TRUE 
            WHEN DUT-TEST-PASS
@@ -183,9 +183,9 @@
            .
        
       * USAGE: EXTERNAL
-      * DESCRIPTION
-      * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE
-      * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE
+      * DESCRIPTION:
+      * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE.
+      * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE.
        DUT-END-TEST-SUITE SECTION.
 
            MOVE ' ' TO DUT-OUT-RECORD
@@ -229,7 +229,7 @@
       * USAGE: INTERNAL
       * DESCRIPTION: 
       * SHUTDOWN SECTION EXTRACTED FOR MOCKABLE UNIT TEST OF 
-      * END-TEST-SUITE
+      * END-TEST-SUITE.
        DUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE DUT-OUT 
            STOP RUN
@@ -238,6 +238,7 @@
       * USAGE TYPE: EXTERNAL
       * DESCRIPTION: USED IN CONJUNCTION WITH THE DUT-TRACE FIELD
       * THIS SECTION CYCLES THROUGH EACH STATEMENT IN THE DUT-TRACE
+      * AND DELEGATES THE HANDLING OF EACH STATEMENT GIVEN BY THE USER
        DUT-ASSERT-TRACE SECTION.
            MOVE 1 TO DUT-TRACE-POINTER
            MOVE 0 TO DUT-TRACE-WORD-COUNT
@@ -345,9 +346,9 @@
            .
        
       * USAGE: INTERNAL
-      * DESCRIPTION: ORCHESTRATES THE DIRECTLY-FOLLOWED-BY LOGIC
-      * CHECKS THE NAME OF THE NEXT SECTION IN THE EXECUTION TRACE
-      * IF THERE IS A WITH CONDITION THEN THAT WITH CONDITION IS 
+      * DESCRIPTION: ORCHESTRATES THE DIRECTLY-FOLLOWED-BY LOGIC.
+      * CHECKS THE NAME OF THE NEXT SECTION IN THE EXECUTION TRACE.
+      * IF THERE IS A WITH CONDITION THEN THAT WITH CONDITION IS
       * ALSO VALIDATED 
        DUT-HANDL-DIRECTLY-FOLLOWED-BY SECTION.
            ADD 1 TO DUT-EXEC-TRACE-INDEX
@@ -378,6 +379,7 @@
       * USEAGE: INTERNAL
       * DESCRIPTION: USED WHEN A WITH BLOCK IS FOUND. LOOPS UNTIL 
       * "END-WITH" IS FOUND AND DELEGATES TO THE WITH LOOKUP ROUTINES
+      * FOR EACH FIELD VALUE PAIR
        DUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
            *> UNTIL END-WITH
@@ -408,11 +410,11 @@
 
       * USAGE: EXTERNAL
       * DESCRIPTION:    
-       *> General assertion statement
-       *> A check is done to see if the numeric fields were populated
-       *> before invoking this section. if they were, then throw an
-       *> error on the test case as this is likely incorrect
-       *> TARGET-N and ACTUAL-N are for DUT-ASSERT-EQUALS-NUM 
+      * General assertion statement
+      * A check is done to see if the numeric fields were populated
+      * before invoking this section. if they were, then throw an
+      * error on the test case as this is likely incorrect
+      * TARGET-N and ACTUAL-N are for DUT-ASSERT-EQUALS-NUM 
        DUT-ASSERT-EQUALS SECTION.
            IF DUT-ASSERT-TARGET-N NOT = 0 OR DUT-ASSERT-ACTUAL-N NOT = 0
                STRING 'USE DUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
@@ -443,13 +445,13 @@
        
       * USAGE: EXTERNAL
       * DESCRIPTION: 
-       *> Use this when working with numerics of high precision or with
-       *> Decimal places
-       *> Will default to 2 decimal places of precision unless 
-       *> that causes the output to display Expected X but got X where
-       *> X is identical
-       *> TODO revisit this, perhaps a better rounding / post decimal
-       *> point z supression would be better
+      * Use this when working with numerics of high precision or with
+      * Decimal places
+      * Will default to 2 decimal places of precision unless 
+      * that causes the output to display Expected X but got X where
+      * X is identical
+      * TODO revisit this, perhaps a better rounding / post decimal
+      * point z supression would be better
        DUT-ASSERT-EQUALS-NUM SECTION.
 
            IF DUT-ASSERT-TARGET NOT = SPACES OR
@@ -476,7 +478,8 @@
            .
 
       * USAGE: INTERNAL
-      * DESCRIPTION: THE FAIL ROUTINE FOR WHEN A NUMERIC ASSERTION FAILS
+      * DESCRIPTION: THE FAIL ROUTINE FOR WHEN A NUMERIC EQUAL
+      * ASSERTION FAILS
        DUT-ASSERT-EQUALS-NUM-FAIL SECTION.
            MOVE DUT-ASSERT-TARGET-N TO
               DUT-ASSERT-TARGET-DIS-N
@@ -542,8 +545,9 @@
 
       * USAGE: INTERNAL
       * DESCRIPTION: AS LISTED BELOW, SEARCHES THE EXECUTION TRACE FOR 
-      * TARGET SECTION
-      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, UNLESS IT'S A NOT CASE 
+      * TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, 
+      * UNLESS IT'S A NOT CASE.
        DUT-FIND-FOLLOWED-BY SECTION.
            *> DUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> DUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -597,8 +601,9 @@
 
       * USAGE: INTERNAL
       * DESCRIPTION: SEARCHES THE NEXT INDEX IN THE EXECUTION TRACE
-      * FOR THE TARGET SECTION
-      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, UNLESS IT'S A NOT CASE 
+      * FOR THE TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND,
+      * UNLESS IT'S A NOT CASE 
        DUT-FIND-DIRECTLY-FOLLOWED-BY SECTION.
            *> DUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> DUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -802,6 +807,7 @@
            END-IF 
            .
 
+      * USGAE: AUTO INSTRUMENT
       *****************************************************************
       * ADD CURRENT SECTION TO THE TRACE STACK
       * THIS SECTION SHOULD BE INSTANTIATED AT THE TOP OF EACH SECTION
@@ -849,7 +855,7 @@
       * DESCRIPTION: THE ERROR ROUTINE, RUN WHEN A TEST CASE CANNOT 
       * COMPLETE FOR ANY REASON.
       * CURRENTLY ONLY THE DUT- FRAMEWORK USES THIS, HOWEVER PERHAPS
-      * THERE IS A CASE FOR A TEST PROGRAM TO INVOKE THIS DIRECTLY
+      * THERE IS A CASE FOR A TEST PROGRAM TO INVOKE THIS DIRECTLY?
        DUT-ERROR SECTION.
            SET DUT-TEST-ERROR TO TRUE
            MOVE DUT-DISPLAY-ERROR TO DUT-OUT-RECORD

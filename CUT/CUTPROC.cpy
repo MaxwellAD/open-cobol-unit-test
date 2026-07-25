@@ -17,10 +17,10 @@
        
       * USAGE: EXTERNAL
       * DESCRIPTION: 
-      * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST
-      * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT
-      * CLEAR THE EXECUTION TRACE
-      * WRITES ANY CLOSING LINES TO THE TEST RECORD  
+      * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST.
+      * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT.
+      * CLEAR THE EXECUTION TRACE.
+      * WRITES ANY CLOSING LINES TO THE TEST RECORD.
        CUT-END-TEST SECTION.
            EVALUATE TRUE 
            WHEN CUT-TEST-PASS
@@ -44,9 +44,9 @@
            .
        
       * USAGE: EXTERNAL
-      * DESCRIPTION
-      * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE
-      * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE
+      * DESCRIPTION:
+      * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE.
+      * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE.
        CUT-END-TEST-SUITE SECTION.
 
            MOVE ' ' TO CUT-OUT-RECORD
@@ -90,7 +90,7 @@
       * USAGE: INTERNAL
       * DESCRIPTION: 
       * SHUTDOWN SECTION EXTRACTED FOR MOCKABLE UNIT TEST OF 
-      * END-TEST-SUITE
+      * END-TEST-SUITE.
        CUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE CUT-OUT 
            STOP RUN
@@ -99,6 +99,7 @@
       * USAGE TYPE: EXTERNAL
       * DESCRIPTION: USED IN CONJUNCTION WITH THE CUT-TRACE FIELD
       * THIS SECTION CYCLES THROUGH EACH STATEMENT IN THE CUT-TRACE
+      * AND DELEGATES THE HANDLING OF EACH STATEMENT GIVEN BY THE USER
        CUT-ASSERT-TRACE SECTION.
            MOVE 1 TO CUT-TRACE-POINTER
            MOVE 0 TO CUT-TRACE-WORD-COUNT
@@ -206,9 +207,9 @@
            .
        
       * USAGE: INTERNAL
-      * DESCRIPTION: ORCHESTRATES THE DIRECTLY-FOLLOWED-BY LOGIC
-      * CHECKS THE NAME OF THE NEXT SECTION IN THE EXECUTION TRACE
-      * IF THERE IS A WITH CONDITION THEN THAT WITH CONDITION IS 
+      * DESCRIPTION: ORCHESTRATES THE DIRECTLY-FOLLOWED-BY LOGIC.
+      * CHECKS THE NAME OF THE NEXT SECTION IN THE EXECUTION TRACE.
+      * IF THERE IS A WITH CONDITION THEN THAT WITH CONDITION IS
       * ALSO VALIDATED 
        CUT-HANDL-DIRECTLY-FOLLOWED-BY SECTION.
            ADD 1 TO CUT-EXEC-TRACE-INDEX
@@ -239,6 +240,7 @@
       * USEAGE: INTERNAL
       * DESCRIPTION: USED WHEN A WITH BLOCK IS FOUND. LOOPS UNTIL 
       * "END-WITH" IS FOUND AND DELEGATES TO THE WITH LOOKUP ROUTINES
+      * FOR EACH FIELD VALUE PAIR
        CUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
            *> UNTIL END-WITH
@@ -269,11 +271,11 @@
 
       * USAGE: EXTERNAL
       * DESCRIPTION:    
-       *> General assertion statement
-       *> A check is done to see if the numeric fields were populated
-       *> before invoking this section. if they were, then throw an
-       *> error on the test case as this is likely incorrect
-       *> TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
+      * General assertion statement
+      * A check is done to see if the numeric fields were populated
+      * before invoking this section. if they were, then throw an
+      * error on the test case as this is likely incorrect
+      * TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
        CUT-ASSERT-EQUALS SECTION.
            IF CUT-ASSERT-TARGET-N NOT = 0 OR CUT-ASSERT-ACTUAL-N NOT = 0
                STRING 'USE CUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
@@ -304,13 +306,13 @@
        
       * USAGE: EXTERNAL
       * DESCRIPTION: 
-       *> Use this when working with numerics of high precision or with
-       *> Decimal places
-       *> Will default to 2 decimal places of precision unless 
-       *> that causes the output to display Expected X but got X where
-       *> X is identical
-       *> TODO revisit this, perhaps a better rounding / post decimal
-       *> point z supression would be better
+      * Use this when working with numerics of high precision or with
+      * Decimal places
+      * Will default to 2 decimal places of precision unless 
+      * that causes the output to display Expected X but got X where
+      * X is identical
+      * TODO revisit this, perhaps a better rounding / post decimal
+      * point z supression would be better
        CUT-ASSERT-EQUALS-NUM SECTION.
 
            IF CUT-ASSERT-TARGET NOT = SPACES OR
@@ -337,7 +339,8 @@
            .
 
       * USAGE: INTERNAL
-      * DESCRIPTION: THE FAIL ROUTINE FOR WHEN A NUMERIC ASSERTION FAILS
+      * DESCRIPTION: THE FAIL ROUTINE FOR WHEN A NUMERIC EQUAL
+      * ASSERTION FAILS
        CUT-ASSERT-EQUALS-NUM-FAIL SECTION.
            MOVE CUT-ASSERT-TARGET-N TO
               CUT-ASSERT-TARGET-DIS-N
@@ -403,8 +406,9 @@
 
       * USAGE: INTERNAL
       * DESCRIPTION: AS LISTED BELOW, SEARCHES THE EXECUTION TRACE FOR 
-      * TARGET SECTION
-      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, UNLESS IT'S A NOT CASE 
+      * TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, 
+      * UNLESS IT'S A NOT CASE.
        CUT-FIND-FOLLOWED-BY SECTION.
            *> CUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> CUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -458,8 +462,9 @@
 
       * USAGE: INTERNAL
       * DESCRIPTION: SEARCHES THE NEXT INDEX IN THE EXECUTION TRACE
-      * FOR THE TARGET SECTION
-      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, UNLESS IT'S A NOT CASE 
+      * FOR THE TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND,
+      * UNLESS IT'S A NOT CASE 
        CUT-FIND-DIRECTLY-FOLLOWED-BY SECTION.
            *> CUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> CUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -663,6 +668,7 @@
            END-IF 
            .
 
+      * USGAE: AUTO INSTRUMENT
       *****************************************************************
       * ADD CURRENT SECTION TO THE TRACE STACK
       * THIS SECTION SHOULD BE INSTANTIATED AT THE TOP OF EACH SECTION
@@ -710,7 +716,7 @@
       * DESCRIPTION: THE ERROR ROUTINE, RUN WHEN A TEST CASE CANNOT 
       * COMPLETE FOR ANY REASON.
       * CURRENTLY ONLY THE CUT- FRAMEWORK USES THIS, HOWEVER PERHAPS
-      * THERE IS A CASE FOR A TEST PROGRAM TO INVOKE THIS DIRECTLY
+      * THERE IS A CASE FOR A TEST PROGRAM TO INVOKE THIS DIRECTLY?
        CUT-ERROR SECTION.
            SET CUT-TEST-ERROR TO TRUE
            MOVE CUT-DISPLAY-ERROR TO CUT-OUT-RECORD
