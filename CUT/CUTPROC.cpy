@@ -1,28 +1,52 @@
-
       * COBOL UT HELPER FUNCTIONS 
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
        
+      ******************************************************************
+      * COMMENT FORMAT:
+      * USAGE: INTERNAL = USED BY THE CUT FRAMEWORK
+      *           or
+      *        EXTERNAL = USED BY THE END USER
+      *           or
+      *        AUTO INSTRUMENT = NOT USED BY CUT OR USER
+      *                          AUTOMATICALLY INSERTED BY THE HARNESS
+      *
+      * DESCRIPTION: A SHORT DESCRIPTION ABOUT THE SECTION
+      * 
+      ****************************************************************** 
+       
+      * USAGE: EXTERNAL
+      * DESCRIPTION: 
+      * CALLED AT THE END OF EVERY TEST CASE TO TERMINATE A TEST.
+      * INCREMENTS THE RESPECTIVE COUNTER FOR EACH TEST RESULT.
+      * CLEAR THE EXECUTION TRACE.
+      * WRITES ANY CLOSING LINES TO THE TEST RECORD.
        CUT-END-TEST SECTION.
            EVALUATE TRUE 
            WHEN CUT-TEST-PASS
-              ADD 1 TO CUT-TEST-PASS-COUNT
-              MOVE CUT-DISPLAY-PASS TO CUT-OUT-RECORD
-              PERFORM CUT-WRITE-UT-RECORD
-              PERFORM CUT-PASS
+               ADD 1 TO CUT-TEST-PASS-COUNT
+               MOVE CUT-DISPLAY-PASS TO CUT-OUT-RECORD
+               PERFORM CUT-WRITE-UT-RECORD
+               PERFORM CUT-PASS
            WHEN CUT-TEST-FAIL
-              ADD 1 TO CUT-TEST-FAIL-COUNT
-              PERFORM CUT-FAIL 
+               ADD 1 TO CUT-TEST-FAIL-COUNT
+               PERFORM CUT-FAIL 
            WHEN CUT-TEST-SKIP
               *> CUT-END-TEST doesn't run if the case is SKIPPED
-              CONTINUE 
+               CONTINUE 
            WHEN CUT-TEST-ERROR
-              ADD 1 TO CUT-TEST-ERROR-COUNT
-              PERFORM CUT-ERROR
+               ADD 1 TO CUT-TEST-ERROR-COUNT
+               PERFORM CUT-ERROR
            END-EVALUATE 
            PERFORM CUT-CLEAR-TRACE 
            MOVE ' ' TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
-       .
+           .
        
+      * USAGE: EXTERNAL
+      * DESCRIPTION:
+      * CALLED AT THE END OF ALL THE TESTS TO TERMINATE THE TEST SUITE.
+      * OUTPUTS THE OVERALL TEST RESULT AND SHUTS DOWN THE TEST SUITE.
        CUT-END-TEST-SUITE SECTION.
 
            MOVE ' ' TO CUT-OUT-RECORD
@@ -33,47 +57,57 @@
            MOVE CUT-TEST-PASS-COUNT TO CUT-TEST-PASS-COUNT-DISPLAY
            MOVE CUT-TEST-FAIL-COUNT TO CUT-TEST-FAIL-COUNT-DISPLAY
            MOVE CUT-TEST-SKIP-COUNT TO CUT-TEST-SKIP-COUNT-DISPLAY
-           MOVE '===================================================' TO 
-                 CUT-OUT-RECORD
+           MOVE '===================================================' TO
+              CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'PASS : ' FUNCTION TRIM(CUT-TEST-PASS-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
+              DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'FAIL : ' FUNCTION TRIM(CUT-TEST-FAIL-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
+              DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            STRING 'SKIP : ' FUNCTION TRIM(CUT-TEST-SKIP-COUNT-DISPLAY)
-           DELIMITED BY SIZE INTO CUT-OUT-RECORD 
+              DELIMITED BY SIZE INTO CUT-OUT-RECORD 
            PERFORM CUT-WRITE-UT-RECORD
 
            IF CUT-TEST-ERROR-COUNT NOT = 0
                MOVE CUT-TEST-ERROR-COUNT TO CUT-TEST-ERROR-COUNT-DISPLAY
-            STRING 'ERROR: ' FUNCTION TRIM(CUT-TEST-ERROR-COUNT-DISPLAY)
-               DELIMITED BY SIZE INTO CUT-OUT-RECORD
+               STRING 'ERROR: '
+                      FUNCTION TRIM
+                  (CUT-TEST-ERROR-COUNT-DISPLAY)
+                  DELIMITED BY SIZE INTO CUT-OUT-RECORD
                PERFORM CUT-WRITE-UT-RECORD
            END-IF
-           MOVE '===================================================' TO 
-                 CUT-OUT-RECORD
+           MOVE '===================================================' TO
+              CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
            PERFORM CUT-SHUT-DOWN-TEST-SUITE 
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: 
+      * SHUTDOWN SECTION EXTRACTED FOR MOCKABLE UNIT TEST OF 
+      * END-TEST-SUITE.
        CUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE CUT-OUT 
            STOP RUN
-       .
+           .
 
+      * USAGE TYPE: EXTERNAL
+      * DESCRIPTION: USED IN CONJUNCTION WITH THE CUT-TRACE FIELD
+      * THIS SECTION CYCLES THROUGH EACH STATEMENT IN THE CUT-TRACE
+      * AND DELEGATES THE HANDLING OF EACH STATEMENT GIVEN BY THE USER
        CUT-ASSERT-TRACE SECTION.
            MOVE 1 TO CUT-TRACE-POINTER
            MOVE 0 TO CUT-TRACE-WORD-COUNT
            MOVE 1 TO CUT-TRACE-SECTION-INDEX
            
            PERFORM UNTIL CUT-TRACE-POINTER > LENGTH OF CUT-TRACE
-                         OR CUT-TRACE-WORD-COUNT >= 20
-              PERFORM CUT-ASSERT-TRACE-REGSTR-WORDS 
+              OR CUT-TRACE-WORD-COUNT >= 20
+               PERFORM CUT-ASSERT-TRACE-REGSTR-WORDS 
            END-PERFORM
 
            *> FIRST ITEM WILL ALWAYS BE A SECTION NAME
@@ -82,36 +116,37 @@
            *> NEED TO SCAN THROUGH TRACE TO FIND FIRST SECTION NAME
            *> AND GO FROM THERE
            PERFORM CUT-FIND-FOLLOWED-BY 
-           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM 2 BY 1 UNTIL 
-                        CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) = ' '
-                        OR CUT-TEST-FAIL
-              PERFORM CUT-ASSERT-TRACE-HANDLE-VERBS 
+           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM 2 BY 1 UNTIL
+              CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) = ' '
+              OR CUT-TEST-FAIL
+               PERFORM CUT-ASSERT-TRACE-HANDLE-VERBS 
            END-PERFORM
            MOVE SPACES TO CUT-EXEC-TRACE-OCCURS
            .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: SEPARATES EACH OF THE WORDS GIVE BY THE UNIT TESTER
+      * IN THE CUT-TRACE INTO THE CUT-EXEC-TRACE-WORD OCCURS FIELD
+      * WHICH IS LATER ITERATED OVER
        CUT-ASSERT-TRACE-REGSTR-WORDS SECTION.
-           UNSTRING CUT-TRACE 
-               DELIMITED BY ALL SPACE
-               INTO CUT-TRACE-TEMP-WORD
-               WITH POINTER CUT-TRACE-POINTER
+           UNSTRING CUT-TRACE
+              DELIMITED BY ALL SPACE
+              INTO CUT-TRACE-TEMP-WORD
+              WITH POINTER CUT-TRACE-POINTER
            END-UNSTRING
-           *>DISPLAY 'TRACE REGISTER ' CUT-TRACE-TEMP-WORD 
+
            IF CUT-TRACE-TEMP-WORD NOT = SPACES
                ADD 1 TO CUT-TRACE-WORD-COUNT
-               MOVE CUT-TRACE-TEMP-WORD TO 
-                           CUT-EXEC-TRACE-WORD(CUT-TRACE-WORD-COUNT)
+               MOVE CUT-TRACE-TEMP-WORD TO
+                  CUT-EXEC-TRACE-WORD(CUT-TRACE-WORD-COUNT)
            END-IF
 
            .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: HANDLES THE START VERBS OF EACH STATEMENT IN THE 
+      * CUT-TRACE. REPRESENTED BY EACH WHEN IN THE EVALUATE
        CUT-ASSERT-TRACE-HANDLE-VERBS SECTION.
-              *>DISPLAY 'TRACE ACTION ' 
-              *>DISPLAY 'SECTION COUNT ' CUT-RT-SECTION-COUNT
-              *>DISPLAY 'TRACE-INDEX ' CUT-EXEC-TRACE-INDEX
-               *>CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
-           *> FOR EACH COMMAND IN CUT-EXEC-TRACE-WORD
-              *> IF IT'S A FOLLOWED-BY COMMAND
 
            EVALUATE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
            *> IF IT'S A FOLLOWED-BY COMMAND
@@ -122,22 +157,27 @@
                PERFORM CUT-HANDL-DIRECTLY-FOLLOWED-BY 
            *> IF IT'S A NOT COMMAND
            WHEN 'NOT'
-              PERFORM CUT-ASSERT-TRACE-HANDLE-NOT  
+               PERFORM CUT-ASSERT-TRACE-HANDLE-NOT  
            WHEN OTHER
                  *> TODO
                  *> THIS SHOULDN'T ACTUALLY RUN, THIS IS SOME UNEXPECTED
                  *> KEYWORD - ASSUME USER ERROR AND TRIGGER A FATAL
                  *> RESPONSE
-                 MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) 
-                                         TO CUT-TEMP-SECTION-NAME
+               MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX)
+                  TO CUT-TEMP-SECTION-NAME
            END-EVALUATE
-       . 
+           . 
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: WHEN INVOKED BY THE CUT-ASSERT-TRACE THIS SECTION
+      * SEARCHES THE EXECUTION TRACE FOR THE SECTION NAME GIVEN
+      * IN THE FOLLOWED-BY STATEMENT
+      * IF THERE IS A WITH CONDITION ON THE STATEMENT, THEN A WITH
+      * LOOKUP IS ALSO PERFORMED
        CUT-HANDLE-FOLLOWED-BY SECTION.
            ADD 1 TO CUT-EXEC-TRACE-INDEX
-           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                   CUT-TEMP-SECTION-NAME
-           *>DISPLAY 'SEARCHING FOR  ' CUT-TEMP-SECTION-NAME
+           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO
+              CUT-TEMP-SECTION-NAME
            *> SAVE THE CURRENT SECTION INDEX TO MEMORY
            *> IF THE FOLLOWED-BY IS A NOT FOLLOWED-BY WE'LL NEED
            *> TO REVERT AS A NOT FOLLOWED-BY DOES A "GHOST" LOOKAHEAD
@@ -145,7 +185,7 @@
            PERFORM CUT-FIND-FOLLOWED-BY
            *> IF THE NEXT WORD IS A WITH THEN CHECK THE WITH FIELDS
            IF CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX + 1)
-               = 'WITH'
+              = 'WITH'
                ADD 1 TO CUT-EXEC-TRACE-INDEX 
                PERFORM CUT-ASSERT-TRACE-HANDLE-WITH 
            END-IF 
@@ -154,25 +194,33 @@
                PERFORM CUT-ASSERT-TRACE-RESET-NOT 
            END-IF 
 
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: USED TO RESET THE "NOT" FLAG, THE NOT FLAG IS SET
+      * AS THE OPENING TO A STATEMENT IN THE CUT-TRACE
        CUT-ASSERT-TRACE-RESET-NOT SECTION.
            *> "AND IT WAS ALL A DREAM"
            MOVE CUT-TRACE-SECTION-INDEX-MEM TO
-                                         CUT-TRACE-SECTION-INDEX 
+              CUT-TRACE-SECTION-INDEX 
            SET CUT-EXEC-TRACE-NORMAL TO TRUE
-       .
+           .
        
+      * USAGE: INTERNAL
+      * DESCRIPTION: ORCHESTRATES THE DIRECTLY-FOLLOWED-BY LOGIC.
+      * CHECKS THE NAME OF THE NEXT SECTION IN THE EXECUTION TRACE.
+      * IF THERE IS A WITH CONDITION THEN THAT WITH CONDITION IS
+      * ALSO VALIDATED 
        CUT-HANDL-DIRECTLY-FOLLOWED-BY SECTION.
            ADD 1 TO CUT-EXEC-TRACE-INDEX
-           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                   CUT-TEMP-SECTION-NAME
+           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO
+              CUT-TEMP-SECTION-NAME
            MOVE CUT-TRACE-SECTION-INDEX TO CUT-TRACE-SECTION-INDEX-MEM
            
            PERFORM CUT-FIND-DIRECTLY-FOLLOWED-BY
            *>IF CUT-TEST-FAIL AND CUT-EXEC-TRACE-NOT 
            IF CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX + 1)
-               = 'WITH'
+              = 'WITH'
                ADD 1 TO CUT-EXEC-TRACE-INDEX 
                PERFORM CUT-ASSERT-TRACE-HANDLE-WITH 
            END-IF 
@@ -181,12 +229,18 @@
                PERFORM CUT-ASSERT-TRACE-RESET-NOT
            END-IF 
 
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: PROCESS OF ENABLING THE NOT FLAG
        CUT-ASSERT-TRACE-HANDLE-NOT SECTION.
            SET CUT-EXEC-TRACE-NOT TO TRUE 
-       .
+           .
 
+      * USEAGE: INTERNAL
+      * DESCRIPTION: USED WHEN A WITH BLOCK IS FOUND. LOOPS UNTIL 
+      * "END-WITH" IS FOUND AND DELEGATES TO THE WITH LOOKUP ROUTINES
+      * FOR EACH FIELD VALUE PAIR
        CUT-ASSERT-TRACE-HANDLE-WITH SECTION.
            *> GET THE FIELD AND BEING LOOPING FOR EACH FIELD
            *> UNTIL END-WITH
@@ -196,70 +250,75 @@
            *> WS-FIELD
            *> <OPERATOR>
            *> VALUE
-           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM 
-                           CUT-EXEC-TRACE-INDEX BY 1
+           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM
+              CUT-EXEC-TRACE-INDEX BY 1
               UNTIL CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX)
-               = 'END-WITH'
+              = 'END-WITH'
               *>DISPLAY 'EXEC INDEX' CUT-EXEC-TRACE-INDEX
-              MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                      CUT-TEMP-FIELD-NAME
-              ADD 1 TO CUT-EXEC-TRACE-INDEX
-              MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                      CUT-TEMP-FIELD-OPERATOR
-              ADD 1 TO CUT-EXEC-TRACE-INDEX
-              MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO 
-                                      CUT-TEMP-FIELD-EXPECTED
-              PERFORM CUT-FIND-WITH-IN-TRACE
+               MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO
+                  CUT-TEMP-FIELD-NAME
+               ADD 1 TO CUT-EXEC-TRACE-INDEX
+               MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO
+                  CUT-TEMP-FIELD-OPERATOR
+               ADD 1 TO CUT-EXEC-TRACE-INDEX
+               MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) TO
+                  CUT-TEMP-FIELD-EXPECTED
+               PERFORM CUT-FIND-WITH-IN-TRACE
            END-PERFORM 
               *> UNTIL END-WITH IS FOUND IN COMMAND
-       .
-          
-       *> General assertion statement
-       *> A check is done to see if the numeric fields were populated
-       *> before invoking this section. if they were, then throw an
-       *> error on the test case as this is likely incorrect
-       *> TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
+           .
+
+
+      * USAGE: EXTERNAL
+      * DESCRIPTION:    
+      * General assertion statement
+      * A check is done to see if the numeric fields were populated
+      * before invoking this section. if they were, then throw an
+      * error on the test case as this is likely incorrect
+      * TARGET-N and ACTUAL-N are for CUT-ASSERT-EQUALS-NUM 
        CUT-ASSERT-EQUALS SECTION.
            IF CUT-ASSERT-TARGET-N NOT = 0 OR CUT-ASSERT-ACTUAL-N NOT = 0
-              STRING 'USE CUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-              END-STRING
-              PERFORM CUT-ERROR
-              MOVE ZEROS TO CUT-ASSERT-TARGET-N
-                            CUT-ASSERT-ACTUAL-N
+               STRING 'USE CUT-ASSERT-EQUALS-NUM TO EVALUATE NUMBERS'
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-ERROR
+               MOVE ZEROS TO CUT-ASSERT-TARGET-N
+                             CUT-ASSERT-ACTUAL-N
            ELSE
                IF CUT-ASSERT-TARGET = CUT-ASSERT-ACTUAL
                    PERFORM CUT-PASS 
                ELSE
                    SET CUT-TEST-FAIL TO TRUE 
                    STRING
-                       'Expected ' 
-                     FUNCTION TRIM(CUT-ASSERT-TARGET)
-                       ' but got '
-                    FUNCTION TRIM (CUT-ASSERT-ACTUAL) 
-                       DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                      'Expected '
+                      FUNCTION TRIM(CUT-ASSERT-TARGET)
+                      ' but got '
+                      FUNCTION TRIM(CUT-ASSERT-ACTUAL)
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                    END-STRING
                    PERFORM CUT-FAIL
                END-IF
            END-IF 
            MOVE SPACES TO CUT-ASSERT-TARGET
                           CUT-ASSERT-ACTUAL
-       .      
+           .      
 
        
-       *> Use this when working with numerics of high precision or with
-       *> Decimal places
-       *> Will default to 2 decimal places of precision unless 
-       *> that causes the output to display Expected X but got X where
-       *> X is identical
-       *> TODO revisit this, perhaps a better rounding / post decimal
-       *> point z supression would be better
+      * USAGE: EXTERNAL
+      * DESCRIPTION: 
+      * Use this when working with numerics of high precision or with
+      * Decimal places
+      * Will default to 2 decimal places of precision unless 
+      * that causes the output to display Expected X but got X where
+      * X is identical
+      * TODO revisit this, perhaps a better rounding / post decimal
+      * point z supression would be better
        CUT-ASSERT-EQUALS-NUM SECTION.
 
-           IF CUT-ASSERT-TARGET NOT = SPACES OR 
+           IF CUT-ASSERT-TARGET NOT = SPACES OR
               CUT-ASSERT-ACTUAL NOT = SPACES 
                STRING 'USE CUT-ASSERT-EQUALS TO EVALUATE STRINGS'
-                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                END-STRING
                PERFORM CUT-ERROR
                MOVE SPACES TO CUT-ASSERT-TARGET
@@ -277,62 +336,79 @@
                          CUT-ASSERT-ACTUAL-DIS-N-LONG
                          CUT-ASSERT-TARGET-N
                          CUT-ASSERT-ACTUAL-N
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: THE FAIL ROUTINE FOR WHEN A NUMERIC EQUAL
+      * ASSERTION FAILS
        CUT-ASSERT-EQUALS-NUM-FAIL SECTION.
-           MOVE CUT-ASSERT-TARGET-N TO 
-                                  CUT-ASSERT-TARGET-DIS-N
-           MOVE CUT-ASSERT-ACTUAL-N TO 
-                                  CUT-ASSERT-ACTUAL-DIS-N
+           MOVE CUT-ASSERT-TARGET-N TO
+              CUT-ASSERT-TARGET-DIS-N
+           MOVE CUT-ASSERT-ACTUAL-N TO
+              CUT-ASSERT-ACTUAL-DIS-N
            IF CUT-ASSERT-TARGET-DIS-N = CUT-ASSERT-ACTUAL-DIS-N
                *> This means a rounding error has happened
                *> Fallback to long number display
                PERFORM CUT-HANDLE-DIS-ROUND-ERROR
            ELSE 
                STRING
-                   'Expected ' 
-                   FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N)
-                   ' but got '
-                   FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N) 
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                  'Expected '
+                  FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N)
+                  ' but got '
+                  FUNCTION TRIM(CUT-ASSERT-ACTUAL-DIS-N)
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                END-STRING
            END-IF
-       .
+           .
 
+
+      * USAGE: INTERNAL
+      * DESCRIPTION: IF A ROUNDING ERROR CAUSES A DISPLAY TO BE 
+      * TRUNCATED IN A CONFUSING WAY, THIS SECTION WILL RUN TO DISPLAY
+      * THE UNTRUNCATED VERSION OF THE NUMERIC VALUES
        CUT-HANDLE-DIS-ROUND-ERROR SECTION.
 
-           MOVE CUT-ASSERT-TARGET-N TO 
-                            CUT-ASSERT-TARGET-DIS-N-LONG
-           MOVE CUT-ASSERT-ACTUAL-N TO 
-                            CUT-ASSERT-ACTUAL-DIS-N-LONG
+           MOVE CUT-ASSERT-TARGET-N TO
+              CUT-ASSERT-TARGET-DIS-N-LONG
+           MOVE CUT-ASSERT-ACTUAL-N TO
+              CUT-ASSERT-ACTUAL-DIS-N-LONG
            STRING
-               'Expected ' 
-             FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
-               ' but got '
-            FUNCTION TRIM (CUT-ASSERT-ACTUAL-DIS-N-LONG) 
-               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              'Expected '
+              FUNCTION TRIM(CUT-ASSERT-TARGET-DIS-N-LONG)
+              ' but got '
+              FUNCTION TRIM(CUT-ASSERT-ACTUAL-DIS-N-LONG)
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
            END-STRING
-       .
+           .
 
+      * USAGE: EXTERNAL
+      * DESCRIPTION: WHEN CUT-TEMP-FIELD-NAME & CUT-TEMP-FIELD-VALUE ARE
+      * POPULATED THIS SECTION IS INVOKED TO ADD THOSE FIELDS TO THE
+      * EXECUTION TRACE, ASSOCIATED WITH THE SECTION BEING EXECUTED
        CUT-REGISTER-FIELD SECTION.
            MOVE CUT-RT-SECTION-COUNT TO CUT-TRACE-SECTION-INDEX
            MOVE CUT-RT-SECTION-FIELD-COUNT(CUT-RT-SECTION-COUNT) TO
-                                                CUT-TRACE-FIELD-INDEX
-           MOVE CUT-TEMP-FIELD-NAME TO 
-           CUT-RT-SECTION-FIELD-NAME(CUT-TRACE-SECTION-INDEX
-           CUT-TRACE-FIELD-INDEX)
+              CUT-TRACE-FIELD-INDEX
+           MOVE CUT-TEMP-FIELD-NAME TO
+              CUT-RT-SECTION-FIELD-NAME(CUT-TRACE-SECTION-INDEX
+              CUT-TRACE-FIELD-INDEX)
            MOVE CUT-TEMP-FIELD-VALUE TO
-           CUT-RT-SECTION-FIELD-VALUE(CUT-TRACE-SECTION-INDEX
-           CUT-TRACE-FIELD-INDEX)
+              CUT-RT-SECTION-FIELD-VALUE(CUT-TRACE-SECTION-INDEX
+              CUT-TRACE-FIELD-INDEX)
 
            *> Advance the index
            ADD 1 TO CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
-           MOVE CUT-RT-SECTION-FIELD-COUNT(CUT-RT-SECTION-COUNT) TO 
+           MOVE CUT-RT-SECTION-FIELD-COUNT(CUT-RT-SECTION-COUNT) TO
               CUT-TRACE-FIELD-INDEX
 
-       .
+           .
 
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: AS LISTED BELOW, SEARCHES THE EXECUTION TRACE FOR 
+      * TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND, 
+      * UNLESS IT'S A NOT CASE.
        CUT-FIND-FOLLOWED-BY SECTION.
            *> CUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> CUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -341,49 +417,54 @@
 
            SET CUT-SECTION-NOT-FOUND TO TRUE
            PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM
-                           CUT-TRACE-SECTION-INDEX  BY 1 UNTIL 
-                           CUT-SECTION-FOUND 
-                         OR 
-                         CUT-TRACE-SECTION-INDEX > CUT-RT-SECTION-COUNT
+              CUT-TRACE-SECTION-INDEX BY 1 UNTIL
+              CUT-SECTION-FOUND
+              OR
+              CUT-TRACE-SECTION-INDEX > CUT-RT-SECTION-COUNT
 
 
               *>DISPLAY 'FOUND SECTION: ' 
               *>CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
-           IF CUT-TEMP-SECTION-NAME = 
-                 CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
-                 SET CUT-SECTION-FOUND TO TRUE
+               IF CUT-TEMP-SECTION-NAME =
+                  CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
+                   SET CUT-SECTION-FOUND TO TRUE
                  *> WE FOUND THE SECTION, LEAVE THE PERFORM  
                  *> PRE-EMTIVELY SUBTRACT 1 FROM THE INDEX TO COUNTER
                  *> THE ADD AT THE END OF THE PERFORM
                  *> SUBTRACT 1 FROM CUT-TRACE-SECTION-INDEX
-                 EXIT PERFORM 
-              END-IF
+                   EXIT PERFORM 
+               END-IF
            END-PERFORM
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF CUT-SECTION-NOT-FOUND
-              IF CUT-EXEC-TRACE-NORMAL 
-                  SET CUT-TEST-FAIL TO TRUE 
-                  STRING 'UNABLE TO FIND '
-                         FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                         ' IN EXECUTION TRACE'
-                         DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-                  END-STRING
-                  PERFORM CUT-FAIL
-              END-IF 
+               IF CUT-EXEC-TRACE-NORMAL 
+                   SET CUT-TEST-FAIL TO TRUE 
+                   STRING 'UNABLE TO FIND '
+                          FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                          ' IN EXECUTION TRACE'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL
+               END-IF 
            ELSE
                IF CUT-EXEC-TRACE-NOT 
-                  SET CUT-TEST-FAIL TO TRUE 
-                  STRING 'FOUND SECTION '
-                         FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                         ' IN EXECUTION TRACE'
-                         DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-                  END-STRING
-                  PERFORM CUT-FAIL
+                   SET CUT-TEST-FAIL TO TRUE 
+                   STRING 'FOUND SECTION '
+                          FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                          ' IN EXECUTION TRACE'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL
                END-IF 
            END-IF
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: SEARCHES THE NEXT INDEX IN THE EXECUTION TRACE
+      * FOR THE TARGET SECTION.
+      * THE TEST CASE IS FAILED IF IT'S NOT FOUND,
+      * UNLESS IT'S A NOT CASE 
        CUT-FIND-DIRECTLY-FOLLOWED-BY SECTION.
            *> CUT-TEMP-SECTION-NAME <-- THE TARGET SECTION
            *> CUT-RT-SECTION-NAME(index) <-- LIST OF SECTIONS
@@ -395,9 +476,9 @@
 
            ADD 1 TO CUT-TRACE-SECTION-INDEX 
 
-           IF CUT-TEMP-SECTION-NAME = 
+           IF CUT-TEMP-SECTION-NAME =
               CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
-              SET CUT-SECTION-FOUND TO TRUE
+               SET CUT-SECTION-FOUND TO TRUE
               *> WE FOUND THE SECTION, LEAVE THE PERFORM  
               *> PRE-EMTIVELY SUBTRACT 1 FROM THE INDEX TO COUNTER
               *> THE ADD AT THE END OF THE PERFORM
@@ -406,36 +487,40 @@
            
            *> IF WE RAN OFF THE END THEN THE SECTION WASN'T IN THE TRACE
            IF CUT-SECTION-NOT-FOUND
-              IF CUT-EXEC-TRACE-NORMAL 
-                 SET CUT-TEST-FAIL TO TRUE 
-                 STRING 'UNABLE TO FIND '
-                        FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                        ' DIRECTLY AFTER '
-                        FUNCTION TRIM(CUT-RT-SECTION-NAME(
-                                            CUT-TRACE-SECTION-INDEX))
-                        ' IN EXECUTION TRACE'
-                        DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-                 END-STRING
-                 PERFORM CUT-FAIL
-              END-IF
+               IF CUT-EXEC-TRACE-NORMAL 
+                   SET CUT-TEST-FAIL TO TRUE 
+                   STRING 'UNABLE TO FIND '
+                          FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                          ' DIRECTLY AFTER '
+                          FUNCTION TRIM(CUT-RT-SECTION-NAME
+                      (CUT-TRACE-SECTION-INDEX))
+                          ' IN EXECUTION TRACE'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL
+               END-IF
            ELSE 
                *> IF THE SECTION WAS FOUND
                IF CUT-EXEC-TRACE-NOT 
                    *> THIS IS BAD
                    SET CUT-TEST-FAIL TO TRUE 
-                   STRING 'FOUND ' FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                   ' DIRECTLY AFTER '
-                   FUNCTION TRIM(CUT-RT-SECTION-NAME(
-                                            CUT-TRACE-SECTION-INDEX))
-                   ' IN EXECUTION TRACE '
-                   DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   STRING 'FOUND '
+                          FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                          ' DIRECTLY AFTER '
+                          FUNCTION TRIM(CUT-RT-SECTION-NAME
+                      (CUT-TRACE-SECTION-INDEX))
+                          ' IN EXECUTION TRACE '
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                    END-STRING
                    PERFORM CUT-FAIL 
                END-IF
            END-IF
 
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: SEARCHES WITHIN THE CURRENT SECTIONS TRACE TABLE
+      * FOR THE FIELD VALUE PAIR AND THEN CHECKS THE ASSERTION STATEMENT
        CUT-FIND-WITH-IN-TRACE SECTION.
            *> USED TO SEARCH
            *> CUT-TRACE-SECTION-INDEX <-- INDEX OF THE TARGET SECTION
@@ -453,9 +538,9 @@
            *> LOOP THROUGH THE TRACKED FIELDS UNTIL 
            *> A NAME MATCHES THE TARGET TO FIND THE ACTUAL VALUE
            SET CUT-FIELD-NOT-FOUND TO TRUE
-           PERFORM VARYING CUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL 
-                             CUT-TRACE-FIELD-INDEX >
-                     CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
+           PERFORM VARYING CUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL
+              CUT-TRACE-FIELD-INDEX >
+              CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
                 
                 *>DISPLAY 'SECTION INDEX ' CUT-TRACE-SECTION-INDEX
                 *>DISPLAY 'FIELD INDEX ' CUT-TRACE-FIELD-INDEX
@@ -469,71 +554,78 @@
                 *>   CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
                 
                 
-                IF CUT-TEMP-FIELD-NAME = CUT-RT-SECTION-FIELD-NAME(
-                       CUT-TRACE-SECTION-INDEX CUT-TRACE-FIELD-INDEX)
-                    MOVE CUT-RT-SECTION-FIELD-VALUE(
-                                               CUT-TRACE-SECTION-INDEX 
-                                               CUT-TRACE-FIELD-INDEX) 
-                    TO CUT-TEMP-FIELD-VALUE
-                    SET CUT-FIELD-FOUND TO TRUE 
-                    PERFORM CUT-EVALUATE-OPERATION
-                    EXIT PERFORM 
+               IF CUT-TEMP-FIELD-NAME = CUT-RT-SECTION-FIELD-NAME
+                  (CUT-TRACE-SECTION-INDEX CUT-TRACE-FIELD-INDEX)
+                   MOVE CUT-RT-SECTION-FIELD-VALUE
+                      (CUT-TRACE-SECTION-INDEX
+                      CUT-TRACE-FIELD-INDEX)
+                      TO CUT-TEMP-FIELD-VALUE
+                   SET CUT-FIELD-FOUND TO TRUE 
+                   PERFORM CUT-EVALUATE-OPERATION
+                   EXIT PERFORM 
 
-                END-IF 
+               END-IF 
            END-PERFORM
            IF NOT CUT-FIELD-FOUND
-              STRING 'FATAL ERROR: '
-                     'UNABLE TO FIND FIELD NAME '
-                     FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
-                     'FOR SECTION '
-                     FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-              END-STRING
-              PERFORM CUT-ERROR
+               STRING 'FATAL ERROR: '
+                      'UNABLE TO FIND FIELD NAME '
+                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
+                      'FOR SECTION '
+                      FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-ERROR
            END-IF
-       .
+           .
 
+
+      * USAGE: INTERNAL
+      * DESCRIPTION: CLEARS THE EXECUTION TRACE INCLUDING WITH FIELDS
+      * USUALLY DONE TO PREPARE FOR A FRESH TEST CASE
        CUT-CLEAR-TRACE SECTION.
-           PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
-                          CUT-TRACE-SECTION-INDEX > CUT-RT-SECTION-COUNT
+           PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL
+              CUT-TRACE-SECTION-INDEX > CUT-RT-SECTION-COUNT
               
-              MOVE 1 TO CUT-RT-SECTION-FIELD-COUNT(
-               CUT-TRACE-SECTION-INDEX)
-              MOVE SPACES TO
-                           CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
-               PERFORM VARYING CUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL 
-               CUT-TRACE-FIELD-INDEX > 
-               CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
-                   MOVE SPACES TO CUT-RT-SECTION-FIELDS(
-                     CUT-TRACE-SECTION-INDEX 
-                     CUT-TRACE-FIELD-INDEX 
-                   )
+               MOVE 1 TO CUT-RT-SECTION-FIELD-COUNT
+                  (CUT-TRACE-SECTION-INDEX)
+               MOVE SPACES TO
+                  CUT-RT-SECTION-NAME(CUT-TRACE-SECTION-INDEX)
+               PERFORM VARYING CUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL
+                  CUT-TRACE-FIELD-INDEX >
+                  CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
+                   MOVE SPACES TO CUT-RT-SECTION-FIELDS
+                      (CUT-TRACE-SECTION-INDEX
+                      CUT-TRACE-FIELD-INDEX)
                END-PERFORM
-               MOVE 1 TO CUT-RT-SECTION-FIELD-COUNT(
+               MOVE 1 TO CUT-RT-SECTION-FIELD-COUNT
+                  (
                   CUT-TRACE-SECTION-INDEX)
            END-PERFORM
            MOVE 1 TO CUT-RT-SECTION-COUNT                       
            MOVE SPACES TO CUT-TRACE
-       .
+           .
 
 
-
+      * USAGE: INTERNAL
+      * DESCRIPTION: EVALUATES THE CONDITION FOR EACH FIELD VALUE IN 
+      * THE WITH BLOCK, INVERTING THE RESULTS IF THE ASSERTION STATEMENT
+      * IS A NOT STATEMENT
       * TODO: LESS THAN AND GREATER THAN?
       * TODO: HANDLE FIELD NAMES VS LITERALS? e.g WS-NUM-1 = WS-NUM-2
        CUT-EVALUATE-OPERATION SECTION.
            EVALUATE CUT-TEMP-FIELD-OPERATOR
            WHEN '='
-              IF CUT-TEMP-FIELD-VALUE = CUT-TEMP-FIELD-EXPECTED
-                 SET CUT-TEST-PASS TO TRUE 
-              ELSE
-                 SET CUT-TEST-FAIL TO TRUE 
-              END-IF 
+               IF CUT-TEMP-FIELD-VALUE = CUT-TEMP-FIELD-EXPECTED
+                   SET CUT-TEST-PASS TO TRUE 
+               ELSE
+                   SET CUT-TEST-FAIL TO TRUE 
+               END-IF 
            WHEN '!='
-              IF CUT-TEMP-FIELD-VALUE NOT = CUT-TEMP-FIELD-EXPECTED
-                 SET CUT-TEST-PASS TO TRUE 
-              ELSE
-                 SET CUT-TEST-FAIL TO TRUE 
-              END-IF 
+               IF CUT-TEMP-FIELD-VALUE NOT = CUT-TEMP-FIELD-EXPECTED
+                   SET CUT-TEST-PASS TO TRUE 
+               ELSE
+                   SET CUT-TEST-FAIL TO TRUE 
+               END-IF 
            END-EVALUATE 
 
 
@@ -547,90 +639,115 @@
                
 
            IF CUT-TEST-FAIL
-              STRING 'OPERATION EVALUATION FAILED FOR ' 
-                     FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
-                     ' ON SECTION '
-                     CUT-TEMP-SECTION-NAME
-              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              PERFORM CUT-FAIL 
+               STRING 'OPERATION EVALUATION FAILED FOR '
+                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
+                      ' ON SECTION '
+                      CUT-TEMP-SECTION-NAME
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+               PERFORM CUT-FAIL 
       
-              STRING 'ASSERTED ' 
+               STRING 'ASSERTED '
                       FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
                       ' '
                       CUT-TEMP-FIELD-OPERATOR
                       ' '
                       FUNCTION TRIM(CUT-TEMP-FIELD-EXPECTED)
-                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM CUT-FAIL 
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+               END-STRING
+               PERFORM CUT-FAIL 
       
-              STRING 'AND GOT '
-                     FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
-                     ' = '
-                     FUNCTION TRIM(CUT-TEMP-FIELD-VALUE)
-                     DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-              END-STRING
-              PERFORM CUT-FAIL
+               STRING 'AND GOT '
+                      FUNCTION TRIM(CUT-TEMP-FIELD-NAME)
+                      ' = '
+                      FUNCTION TRIM(CUT-TEMP-FIELD-VALUE)
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+               END-STRING
+               PERFORM CUT-FAIL
            ELSE 
-              CONTINUE 
+               CONTINUE 
            END-IF 
-       .
+           .
 
+      * USGAE: AUTO INSTRUMENT
       *****************************************************************
       * ADD CURRENT SECTION TO THE TRACE STACK
       * THIS SECTION SHOULD BE INSTANTIATED AT THE TOP OF EACH SECTION
       * BY THE TEST PRECOMPILER
       *****************************************************************
        CUT-ADD-TRACE-SECTION SECTION.
-           MOVE CUT-TEMP-SECTION-NAME TO 
-                             CUT-RT-SECTION-NAME(CUT-RT-SECTION-COUNT)
+           MOVE CUT-TEMP-SECTION-NAME TO
+              CUT-RT-SECTION-NAME(CUT-RT-SECTION-COUNT)
            PERFORM CUT-TRACE-FIELDS
            ADD 1 TO CUT-RT-SECTION-COUNT
-       .
+           .
 
+      * USAGE: EXTERNAL
+      * DESCRIPTION: A DEBUG SECTION THAT ALLOWS THE USER TO SEE THE 
+      * RAW EXECUTION TRACE DATA
+      * TODO - MAKE THIS DISPLAY LOOK NICER, PERHAPS A TABLE?
        CUT-DEBUG-DISPLAY-TRACE SECTION.
            DISPLAY 'DISPLAYING TRACE'
            *>DISPLAY 'SECTION INDEX ' CUT-TRACE-SECTION-INDEX
-           PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL 
-                         CUT-TRACE-SECTION-INDEX >= CUT-RT-SECTION-COUNT
-              DISPLAY 'SECTION NAME: ' CUT-RT-SECTION-NAME(
-                       CUT-TRACE-SECTION-INDEX)
+           PERFORM VARYING CUT-TRACE-SECTION-INDEX FROM 1 BY 1 UNTIL
+              CUT-TRACE-SECTION-INDEX >= CUT-RT-SECTION-COUNT
+               DISPLAY 'SECTION NAME: '
+                       CUT-RT-SECTION-NAME(
+                  CUT-TRACE-SECTION-INDEX)
 
               
-              PERFORM VARYING CUT-TRACE-FIELD-INDEX  FROM 1 BY 1 UNTIL 
-                          CUT-TRACE-FIELD-INDEX >= 
-                     CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
+               PERFORM VARYING CUT-TRACE-FIELD-INDEX FROM 1 BY 1 UNTIL
+                  CUT-TRACE-FIELD-INDEX >=
+                  CUT-RT-SECTION-FIELD-COUNT(CUT-TRACE-SECTION-INDEX)
 
-                 DISPLAY 'FIELD: ' CUT-RT-SECTION-FIELD-NAME(
-                                            CUT-TRACE-SECTION-INDEX
-                                            CUT-TRACE-FIELD-INDEX)
-                 DISPLAY 'VALUE: ' CUT-RT-SECTION-FIELD-VALUE(
-                           CUT-TRACE-SECTION-INDEX
-                           CUT-TRACE-FIELD-INDEX)
+                   DISPLAY 'FIELD: '
+                           CUT-RT-SECTION-FIELD-NAME
+                      (CUT-TRACE-SECTION-INDEX
+                      CUT-TRACE-FIELD-INDEX)
+                   DISPLAY 'VALUE: '
+                           CUT-RT-SECTION-FIELD-VALUE
+                      (CUT-TRACE-SECTION-INDEX
+                      CUT-TRACE-FIELD-INDEX)
 
-              END-PERFORM
+               END-PERFORM
            END-PERFORM
-       .
+           .
 
+      * USAGE: INTERNAL + EXTERNAL?
+      * DESCRIPTION: THE ERROR ROUTINE, RUN WHEN A TEST CASE CANNOT 
+      * COMPLETE FOR ANY REASON.
+      * CURRENTLY ONLY THE CUT- FRAMEWORK USES THIS, HOWEVER PERHAPS
+      * THERE IS A CASE FOR A TEST PROGRAM TO INVOKE THIS DIRECTLY?
        CUT-ERROR SECTION.
            SET CUT-TEST-ERROR TO TRUE
            MOVE CUT-DISPLAY-ERROR TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD 
            MOVE SPACES TO CUT-DISPLAY-ERROR-MSG
-       .
+           .
 
+      * USAGE: INTERNAL + EXTERNAL
+      * DESCRIPTION: THE CUT-FAIL ROUTINE RUNS WHEN AN ASSERTION HAS
+      * FAILED OR WHEN THE USER WANTS TO MANUALLY FAIL A CASE BASED ON
+      * A CONDITION SET IN THE TEST PROGRAM
        CUT-FAIL SECTION.
            SET CUT-TEST-FAIL TO TRUE 
            MOVE CUT-DISPLAY-FAIL TO CUT-OUT-RECORD
            PERFORM CUT-WRITE-UT-RECORD
            MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: ALL CASES ARE ASSUMED TO HAVE PASSED AND ASSERTIONS 
+      * FIND REASONS TO FAIL THEM
+      * CURRENTLY THIS DOESN'T DO MUCH, COULD CHANGE IN THE FUTURE
        CUT-PASS SECTION.
            *> No display on CUT-PASS 
            MOVE SPACES TO CUT-DISPLAY-PASS-MSG
-       .
+           .
 
+      * USGAE: AUTO INSTRUMENT
+      * DESCRIPTION: NEVER DIRECTLY INVOKED BY THE USER OR CUT-
+      * THIS SECTION IS AUTO INSTRUMENTED IF A TEST CASES BEGINS WITH
+      * SKIP- AND NOT TEST-
        CUT-SKIP SECTION.
            SET CUT-TEST-SKIP TO TRUE
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG 
@@ -644,8 +761,12 @@
            MOVE SPACES TO CUT-DISPLAY-SKIP-MSG
            ADD 1 TO CUT-TEST-SKIP-COUNT
 
-       .
+           .
 
+
+      * USAGE: AUTO INSTRUMENT
+      * DESCRIPTION: NEVER DIRECTLY INVOKED BY THE USER OR CUT-, IS AUTO
+      * INSTRUMENTED BY THE HARNESS TO SETUP THE CUT- TEST CASE
        CUT-TEST-INIT SECTION.
            PERFORM CUT-CLEAR-TRACE
            SET CUT-TEST-PASS TO TRUE
@@ -654,17 +775,21 @@
            MOVE SPACES TO CUT-DISPLAY-FAIL-MSG
            PERFORM CUT-DISPLAY-TEST-CASE-NAME 
            PERFORM BEFORE-EACH
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: WRITES THE UT BUFFER TO THE OUTPUT FILE
        CUT-WRITE-UT-RECORD SECTION.
            WRITE CUT-OUT-RECORD
            MOVE SPACES TO CUT-OUT-RECORD
-       .
+           .
 
+      * USAGE: INTERNAL
+      * DESCRIPTION: CALLED DURING TEST CASE INIT TO SHOW THE CASE NAME
        CUT-DISPLAY-TEST-CASE-NAME SECTION.
-           STRING 'TEST CASE - ' CUT-TEST-NAME DELIMITED BY 
-           SIZE INTO CUT-OUT-RECORD
+           STRING 'TEST CASE - ' CUT-TEST-NAME DELIMITED BY
+              SIZE INTO CUT-OUT-RECORD
 
            PERFORM CUT-WRITE-UT-RECORD
            EXIT SECTION
-       .
+           .
