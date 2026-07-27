@@ -1419,7 +1419,9 @@
                DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
                PERFORM CUT-FAIL
            END-IF
-       
+           
+           PERFORM CUT-DEBUG-DISPLAY-TRACE
+
            PERFORM CUT-END-TEST 
        .
 
@@ -1427,7 +1429,6 @@
 
               
        END-TEST-SUITE SECTION.
-           PERFORM DISPLAY-COVERAGE 
            PERFORM CUT-END-TEST-SUITE
        .
       *****************************************************************
