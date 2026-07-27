@@ -48,7 +48,41 @@
            05 CUT-DISPLAY-ERROR.
                10 FILLER                PIC X(8)       VALUE '[ERROR] '.
                10 CUT-DISPLAY-ERROR-MSG PIC X(150).
-
+       
+      * DEBUG TRACE TABLE - ONE ROW HELD IN WS AT A TIME
+       01 CUT-DEBUG-DISPLAY.
+           05 CUT-DEBUG-TRACE-ROW         PIC X(4000).
+           05 CUT-DEBUG-ROW-POINTER       PIC 9(4)       VALUE 1.
+           05 CUT-DEBUG-ROW-LENGTH        PIC 9(4)       VALUE 0.
+           05 CUT-DEBUG-COLUMN-TRACKING.
+               10 CUT-DEBUG-UNIQUE-FIELD-COUNT PIC 9(3) VALUE 0.
+               10 CUT-DEBUG-SECTION-NAME-WIDTH PIC 9(3) VALUE 0.
+      *> DEDICATED LOOP INDICES - MUST NOT ALIAS THE CUT-TRACE-* INDICES
+      *> AS THE DEBUG ROUTINES NEST LOOPS THAT WOULD CLOBBER EACH OTHER
+               10 CUT-DEBUG-SECTION-IDX       PIC 9(3) VALUE 1.
+               10 CUT-DEBUG-FIELD-IDX         PIC 9(3) VALUE 1.
+               10 CUT-DEBUG-COLUMN-IDX        PIC 9(3) VALUE 1.
+               10 CUT-DEBUG-PAD-COUNT         PIC 9(4) VALUE 0.
+               10 CUT-DEBUG-CELL-LENGTH       PIC 9(4) VALUE 0.
+      *> COLUMN CAPACITY - THE GUARD IN CUT-DEBUG-REGISTER-FIELD MUST
+      *> MATCH THIS OCCURS COUNT
+               10 CUT-DEBUG-FIELD-TRACKING OCCURS 100 TIMES.
+                   15 CUT-DEBUG-FIELD-NAME    PIC X(30) VALUE SPACES.
+                   15 CUT-DEBUG-FIELD-WIDTH   PIC 9(3)  VALUE 0.
+           05 CUT-DEBUG-CELL-VALUE       PIC X(30)      VALUE SPACES.
+           05 CUT-DEBUG-CELL-WIDTH       PIC 9(3)       VALUE 0.
+      *> THE SECTION-NAME HEADER LABEL. THE SECTION COLUMN IS FLOORED AT
+      *> THIS WIDTH SO THE LABEL ALWAYS FITS - DERIVED, NOT HARD-CODED
+           05 CUT-DEBUG-SECTION-HEADER   PIC X(12)      VALUE
+                                                        'SECTION-NAME'.
+           05 CUT-DEBUG-FOUND-FLAG       PIC X          VALUE 'N'.
+               88 CUT-DEBUG-FOUND                       VALUE 'Y'.
+               88 CUT-DEBUG-NOT-FOUND                   VALUE 'N'.
+      *> SET WHEN THE TRACE HAS MORE UNIQUE FIELDS THAN THE COLUMN TABLE
+      *> CAN HOLD - USED TO WARN THE USER THAT COLUMNS WERE OMITTED
+           05 CUT-DEBUG-COLS-TRUNC-FLAG  PIC X          VALUE 'N'.
+               88 CUT-DEBUG-COLS-TRUNCATED              VALUE 'Y'.
+               88 CUT-DEBUG-COLS-OK                     VALUE 'N'.
 
        01 CUT-EXEC-TRACE.
            05 CUT-TRACE                 PIC X(1000).

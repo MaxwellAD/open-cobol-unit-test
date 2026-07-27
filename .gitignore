@@ -1,3 +1,11 @@
 coverage/
 tmp/
 zapp.yaml
+
+# Compiled test binaries
+testpgm
+test-pgm-out
+
+# Test run output
+CUT-RPTO
+UTRPTO
