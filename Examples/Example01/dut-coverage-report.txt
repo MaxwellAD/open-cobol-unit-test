@@ -696,6 +696,12 @@
 [+]            PERFORM DUT-DEBUG-COLLECT-FIELDS
 [+]            PERFORM DUT-DEBUG-DISPLAY-TABLE
     
+          *> NOTE: THIS WARNING BRANCH IS NOT COVERED BY THE SELF-TEST.
+          *> REACHING IT NEEDS A RENDERED 100+ COLUMN TABLE, BUT RENDERING
+          *> THAT MANY COLUMNS PERFORMS INSTRUMENTED HELPERS >100 TIMES AND
+          *> OVERFLOWS THE FRAMEWORK'S OWN 100-SLOT EXECUTION TRACE. THE
+          *> TRUNCATION LOGIC IS TESTED BY DRIVING DUT-DEBUG-REGISTER-FIELD
+          *> DIRECTLY WITH THE COLUMN TABLE PRE-FILLED INSTEAD.
                IF DUT-DEBUG-COLS-TRUNCATED
 [-]                DISPLAY '[WARN] OVER 100 UNIQUE FIELDS - '
                       'SOME COLUMNS OMITTED FROM TRACE TABLE'
@@ -764,7 +770,7 @@
           *> GUARD AGAINST OVERFLOWING THE COLUMN TABLE (OCCURS 100). ONCE
           *> FULL, FLAG IT AND STOP ADDING COLUMNS RATHER THAN CORRUPT WS
                    IF DUT-DEBUG-UNIQUE-FIELD-COUNT >= 100
-[-]                    SET DUT-DEBUG-COLS-TRUNCATED TO TRUE
+[+]                    SET DUT-DEBUG-COLS-TRUNCATED TO TRUE
                    ELSE
 [+]                    ADD 1 TO DUT-DEBUG-UNIQUE-FIELD-COUNT
 [+]                    MOVE DUT-DEBUG-UNIQUE-FIELD-COUNT
@@ -791,7 +797,7 @@
                   (DUT-DEBUG-SECTION-IDX DUT-DEBUG-FIELD-IDX)
                    TO DUT-DEBUG-CELL-VALUE
                IF DUT-DEBUG-CELL-VALUE = SPACES
-[-]                MOVE 0 TO DUT-DEBUG-CELL-LENGTH
+[+]                MOVE 0 TO DUT-DEBUG-CELL-LENGTH
                ELSE
 [+]                MOVE FUNCTION LENGTH(FUNCTION TRIM
                       (DUT-DEBUG-CELL-VALUE))
@@ -854,7 +860,7 @@
 [+]            MOVE DUT-DEBUG-ROW-POINTER TO DUT-DEBUG-ROW-LENGTH
 [+]            SUBTRACT 1 FROM DUT-DEBUG-ROW-LENGTH
                IF DUT-DEBUG-ROW-LENGTH < 1
-[-]                MOVE 1 TO DUT-DEBUG-ROW-LENGTH
+[+]                MOVE 1 TO DUT-DEBUG-ROW-LENGTH
                END-IF
 [+]            DISPLAY DUT-DEBUG-TRACE-ROW (1:DUT-DEBUG-ROW-LENGTH)
                .
@@ -1073,8 +1079,8 @@
     SUMMARY STATISTICS                           
 ****************************************************************************************
     TOTAL STATEMENTS: 0274
-    COVERED STATEMENTS: 0266
-    STATEMENT COVERAGE: 097.08%
+    COVERED STATEMENTS: 0269
+    STATEMENT COVERAGE: 098.17%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************
