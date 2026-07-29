@@ -109,6 +109,9 @@ TEST CASE - TEST-DEBUG-EMIT-EMPTY-ROW
 TEST CASE - TEST-DEBUG-COLUMN-OVERFLOW
 [PASS]
 
+TEST CASE - TEST-DEBUG-EMPTY-TRACE
+[PASS]
+
 TEST CASE - TEST-END-TEST-SUITE-ERROR
 [PASS]
 
@@ -154,7 +157,7 @@ TEST CASE - TEST-NOT-FB-SIMPLE-FAIL-LONG
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 51
+PASS : 52
 FAIL : 0
 SKIP : 0
 ===================================================
