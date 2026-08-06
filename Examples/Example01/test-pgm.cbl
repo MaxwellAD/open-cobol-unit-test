@@ -548,9 +548,7 @@
                   *> MOVING ONTO NEXT VERB
                   'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
                   *>'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
-                  'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
                   *> BB000-PROCESS-HEADER-RECORD
-                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
                   *> WITH WS-NUMBER = 10
                   'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-WITH '
                   'FOLLOWED-BY DUT-FIND-WITH-IN-TRACE '
@@ -561,7 +559,6 @@
                   INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE 
-           
            
            PERFORM CUT-END-TEST 
        .
