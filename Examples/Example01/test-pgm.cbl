@@ -548,9 +548,7 @@
                   *> MOVING ONTO NEXT VERB
                   'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
                   *>'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
-                  'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
                   *> BB000-PROCESS-HEADER-RECORD
-                  'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-VERBS '
                   *> WITH WS-NUMBER = 10
                   'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-WITH '
                   'FOLLOWED-BY DUT-FIND-WITH-IN-TRACE '
@@ -561,7 +559,6 @@
                   INTO CUT-TRACE 
            END-STRING
            PERFORM CUT-ASSERT-TRACE 
-           
            
            PERFORM CUT-END-TEST 
        .
@@ -1542,7 +1539,9 @@
                   'FOLLOWED-BY DUT-ASSERT-TRACE-HANDLE-NOT '
                   'FOLLOWED-BY DUT-FIND-FOLLOWED-BY '
                   'WITH ' 
-                      'DUT-TRACE-SECTION-INDEX = 002 '
+                      *> ANCHOR IS AT 002; FOLLOWED-BY SEARCHES ONE PAST
+                      *> IT, SO THE CURSOR HERE IS 003
+                      'DUT-TRACE-SECTION-INDEX = 003 '
                   'END-WITH '
                   'FOLLOWED-BY DUT-ASSERT-TRACE-RESET-NOT '
                   'FOLLOWED-BY DUT-FIND-DIRECTLY-FOLLOWED-BY '
@@ -1620,6 +1619,34 @@
 
 
               
+       TEST-ASSERT-TRACE-BASIC-DOUBLE SECTION.
+           *> A SECTION FOLLOWED-BY ITSELF MUST FAIL WHEN IT ONLY
+           *> OCCURS ONCE - THE MATCHER MUST ADVANCE PAST THE ANCHOR
+           *> SO THE SAME TRACE ENTRY CANNOT SATISFY BOTH TOKENS
+
+           *> GIVEN
+           PERFORM FIXTURE-BASIC-ADD-EXEC
+
+           *> WHEN
+           STRING 'BA000-MAIN-PROCESSING '
+                  'FOLLOWED-BY BA000-MAIN-PROCESSING '
+                  DELIMITED BY SIZE
+                  INTO DUT-TRACE
+           END-STRING
+           PERFORM DUT-ASSERT-TRACE
+
+           *> THEN
+           IF DUT-TEST-PASS
+               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED '
+                      'AS BA000 DOESNT FOLLOW BA000'
+               DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+               PERFORM CUT-FAIL
+           END-IF
+
+           PERFORM CUT-END-TEST
+       .
+
+
        END-TEST-SUITE SECTION.
            PERFORM DISPLAY-COVERAGE
            PERFORM CUT-END-TEST-SUITE
