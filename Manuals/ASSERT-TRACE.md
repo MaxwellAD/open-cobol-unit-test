@@ -119,9 +119,25 @@ END-WITH
 
 Asserts that when `SECTION-A` beings execution, `FIELD-A` must have the value of "0.00"
 
-#### Assertion Error Outut
+Only `=` and `!=` are supported operators
+
+#### Assertion Error Output
 ```
 [FAIL] OPERATION EVALUATION FAILED FOR FIELD-A ON SECTION SECTION-A
-[FAIL] EXPECTED 0.00 
-[FAIL] BUT GOT <actual value of FIELD-A>
+[FAIL] ASSERTED FIELD-A =  0.00
+[FAIL] AND GOT FIELD-A = <actual value of FIELD-A>
 ```
+
+#### Values Compare As Fixed-Width Text
+
+A `WITH` clause compares the captured text, not the number it represents. A
+`PIC 9(5)` field holding 25 is captured as `00025`:
+
+```
+WITH WS-REQ-QTY = 25 END-WITH        *> FAILS - actual is "00025"
+WITH WS-REQ-QTY = 00025 END-WITH     *> PASSES
+```
+
+If you are unsure what was captured, `PERFORM CUT-DEBUG-DISPLAY-TRACE` before
+the assertion and read the table — the values it prints are the exact text a
+`WITH` clause is compared against
