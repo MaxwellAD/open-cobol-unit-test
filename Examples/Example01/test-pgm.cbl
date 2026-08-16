@@ -1646,6 +1646,52 @@
            PERFORM CUT-END-TEST
        .
 
+       TEST-ASSERT-EQUALS-NUM-NEG SECTION.
+           *> TEST THAT CUT ASSERT EQUALS NUM CAN HANDLE NEGATIVE NUMBER
+       
+           *> GIVEN
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE -5 TO DUT-ASSERT-ACTUAL-N
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM
+           
+           *> THEN
+           IF DUT-TEST-PASS
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              PERFORM CUT-FAIL
+           END-IF
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-EQUALS-NUM-NEG-LNG SECTION.
+           *> ENSURE THAT CUT CAN STILL FAIL CASES WITH ROUNDING
+       
+           *> GIVEN
+           MOVE -5.998 TO DUT-ASSERT-TARGET-N 
+           MOVE -5.997 TO DUT-ASSERT-ACTUAL-N
+       
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM 
+           
+           *> THEN
+           IF DUT-TEST-PASS  
+              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
+              PERFORM CUT-FAIL
+           END-IF 
+           *> TODO ADD A CUT-ASSERT-CONTINS TO THIS SHOWING THAT 1
+           *> FIELD NEEDS TO HAVE A SIGN ON IT
+
+       
+           PERFORM CUT-END-TEST 
+       .
+
+
+
 
        END-TEST-SUITE SECTION.
            PERFORM DISPLAY-COVERAGE

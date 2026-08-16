@@ -157,10 +157,16 @@ TEST CASE - TEST-NOT-FB-SIMPLE-FAIL-LONG
 TEST CASE - TEST-ASSERT-TRACE-BASIC-DOUBLE
 [PASS]
 
+TEST CASE - TEST-ASSERT-EQUALS-NUM-NEG
+[PASS]
+
+TEST CASE - TEST-ASSERT-EQUALS-NUM-NEG-LNG
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 53
+PASS : 55
 FAIL : 0
 SKIP : 0
 ===================================================
