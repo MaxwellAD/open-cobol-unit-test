@@ -164,15 +164,15 @@
            *> And it's more than likely, if there's some issue with the 
            *> result then it'll be wrong by more than 2 decimal places
 
-           05 DUT-ASSERT-TARGET-DIS-N   PIC Z(34)9.99.
-           05 DUT-ASSERT-ACTUAL-DIS-N   PIC Z(34)9.99.
+           05 DUT-ASSERT-TARGET-DIS-N   PIC -(34)9.99.
+           05 DUT-ASSERT-ACTUAL-DIS-N   PIC -(34)9.99.
 
            *> If the above gets a rounding error then fallback to these
            *> fields which are less pretty but provide the full context
            05 DUT-ASSERT-TARGET-DIS-N-LONG
-                                        PIC Z(17)9.9(18).
+                                        PIC -(17)9.9(18).
            05 DUT-ASSERT-ACTUAL-DIS-N-LONG
-                                        PIC Z(17)9.9(18).
+                                        PIC -(17)9.9(18).
 
        PROCEDURE DIVISION.
       * COBOL UT HELPER FUNCTIONS 
