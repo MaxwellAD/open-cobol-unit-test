@@ -138,8 +138,8 @@
        01 CUT-ASSERT-FIELDS.
            05 CUT-ASSERT-TARGET         PIC X(256)     VALUE SPACES. 
            05 CUT-ASSERT-ACTUAL         PIC X(256)     VALUE SPACES.
-           05 CUT-ASSERT-TARGET-N       PIC 9(18)V9(18).
-           05 CUT-ASSERT-ACTUAL-N       PIC 9(18)V9(18).
+           05 CUT-ASSERT-TARGET-N       PIC S9(18)V9(18).
+           05 CUT-ASSERT-ACTUAL-N       PIC S9(18)V9(18).
            *> Before displaying the TARGET and ACTUALS are moved to 
            *> THE DISPLAY-OUT mirrors
 
