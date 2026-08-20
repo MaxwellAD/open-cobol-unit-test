@@ -597,9 +597,11 @@
                    END-STRING
                    PERFORM DUT-ERROR
                WHEN OTHER
+                   *> ACTUAL ASSERT-CONTAINS VALIDATION
                    INSPECT DUT-ASSERT-ACTUAL
                       TALLYING DUT-ASSERT-CONTAINS-TALLY
                       FOR ALL FUNCTION TRIM(DUT-ASSERT-TARGET)
+                   *> IF TARGET WAS FOUND AT LEAST ONCE
                    IF DUT-ASSERT-CONTAINS-TALLY > 0
                        PERFORM DUT-PASS
                    ELSE
@@ -614,6 +616,7 @@
                        PERFORM DUT-FAIL
                    END-IF
            END-EVALUATE
+           *> RESET TARGET FLAGS
            MOVE SPACES TO DUT-ASSERT-TARGET
                           DUT-ASSERT-ACTUAL
            .
