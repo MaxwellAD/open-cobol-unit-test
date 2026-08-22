@@ -585,14 +585,14 @@
            EVALUATE TRUE
                WHEN DUT-ASSERT-TARGET-N NOT = 0
                WHEN DUT-ASSERT-ACTUAL-N NOT = 0
-                   STRING 'DUT-ASSERT-CONTAINS only evaluates strings'
+                   STRING 'DUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
                       DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
                    END-STRING
                    PERFORM DUT-ERROR
                    MOVE ZEROS TO DUT-ASSERT-TARGET-N
                                  DUT-ASSERT-ACTUAL-N
                WHEN DUT-ASSERT-TARGET = SPACES
-                   STRING 'DUT-ASSERT-CONTAINS needs a TARGET value'
+                   STRING 'DUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
                       DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
                    END-STRING
                    PERFORM DUT-ERROR

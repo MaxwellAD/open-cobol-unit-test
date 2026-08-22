@@ -403,14 +403,14 @@
            EVALUATE TRUE
                WHEN CUT-ASSERT-TARGET-N NOT = 0
                WHEN CUT-ASSERT-ACTUAL-N NOT = 0
-                   STRING 'CUT-ASSERT-CONTAINS only evaluates strings'
+                   STRING 'CUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
                       DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                    END-STRING
                    PERFORM CUT-ERROR
                    MOVE ZEROS TO CUT-ASSERT-TARGET-N
                                  CUT-ASSERT-ACTUAL-N
                WHEN CUT-ASSERT-TARGET = SPACES
-                   STRING 'CUT-ASSERT-CONTAINS needs a TARGET value'
+                   STRING 'CUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
                       DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
                    END-STRING
                    PERFORM CUT-ERROR

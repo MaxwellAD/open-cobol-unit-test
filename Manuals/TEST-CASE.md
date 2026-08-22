@@ -118,7 +118,8 @@ Both fields are cleared automatically afterwards, so a case can hold as many ass
 Asserts that two **numeric** values are equal. Use this for anything with decimal places or high precision.
 
 ### Fields Used
-`CUT-ASSERT-TARGET-N` `PIC 9(18)V9(18)` - the expected value `CUT-ASSERT-ACTUAL-N` `PIC 9(18)V9(18)` - the actual value
+`CUT-ASSERT-TARGET-N` `PIC S9(18)V9(18)` - the expected value
+`CUT-ASSERT-ACTUAL-N` `PIC S9(18)V9(18)` - the actual value
 
 ```COBOL
            MOVE 70 TO CUT-ASSERT-TARGET-N
@@ -147,6 +148,61 @@ The two assertions are not interchangeable, and using the wrong one is caught an
 ```
 
 An `[ERROR]` means the case never really ran. Treat it as a broken test, not a failing one.
+
+---
+
+## CUT-ASSERT-CONTAINS
+
+Asserts that a **text** value contains another. Use it when only part of a value matters — a code inside a message, a name inside a formatted line — so the assertion does not break every time an unrelated part of the text changes.
+
+### Fields Used
+`CUT-ASSERT-TARGET` `PIC X(256)` - the value you expect to find
+`CUT-ASSERT-ACTUAL` `PIC X(256)` - the value your program produced
+
+The case passes when **`CUT-ASSERT-TARGET` is contained within `CUT-ASSERT-ACTUAL`**. The fields mean the same as they do for `CUT-ASSERT-EQUALS` — the target is what you expected, the actual is what the code gave you.
+
+```COBOL
+           MOVE 'REJECT' TO CUT-ASSERT-TARGET
+           MOVE WS-RESPONSE-TEXT TO CUT-ASSERT-ACTUAL
+           PERFORM CUT-ASSERT-CONTAINS
+```
+
+That passes when `WS-RESPONSE-TEXT` holds `REQUEST REJECTED - NO STOCK`, and keeps passing if the wording either side of `REJECT` is reworked later.
+
+Both fields are cleared automatically afterwards, so a case can hold as many assertions as it needs.
+
+### Assertion Error Output
+```
+[FAIL] Expected to contain REJECT but got REQUEST ACCEPTED
+```
+
+### What Counts As A Match
+
+- **Position does not matter.** The target may sit at the start, in the middle, at the end, or be the whole value.
+- **The match is case sensitive.** `smith` is *not* found in `JOHN SMITH`.
+- **Spaces around the target are ignored.** A `PIC X(256)` field is mostly padding, so the target is trimmed before searching — at both ends, so `' SMITH'` and `'SMITH'` behave the same.
+- **Spaces inside the target are kept.** `'SMITH JR'` is found in `'JOHN SMITH JR TOO'`.
+- **A target longer than the actual simply fails.**
+
+### An Empty Target Is An Error
+
+Leaving `CUT-ASSERT-TARGET` as spaces is reported as an `[ERROR]`, not a pass:
+
+```
+[ERROR] CUT-ASSERT-CONTAINS NEEDS A TARGET VALUE
+```
+
+Every value contains nothing, so an empty target would be an assertion that can never fail — a test that looks green and checks nothing. It is treated as a broken test instead.
+
+### There Is No Numeric Contains
+
+Populating the numeric fields is reported the same way:
+
+```
+[ERROR] CUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS
+```
+
+To check part of a number, move it to a text field first and assert on that — bearing in mind that how it is written (leading zeros, a sign, a decimal point) is then part of what you are matching.
 
 ---
 
@@ -270,7 +326,7 @@ Consequences worth knowing:
 
 - Cases are assumed to have passed, and assertions look for reasons to fail them. **An empty test case passes.** So does one whose assertions were never reached.
 - A failure is **sticky**. Once a case has failed, a later passing assertion in the same case cannot flip it back to passing.
-- Every `CUT-ASSERT-EQUALS` and `CUT-ASSERT-EQUALS-NUM` in a case still runs and still reports after an earlier failure, so one case can print several `[FAIL]` lines:
+- Every `CUT-ASSERT-EQUALS`, `CUT-ASSERT-EQUALS-NUM` and `CUT-ASSERT-CONTAINS` in a case still runs and still reports after an earlier failure, so one case can print several `[FAIL]` lines:
 
 ```
 TEST CASE - TEST-TWO-FAILURES
