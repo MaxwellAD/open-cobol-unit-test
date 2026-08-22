@@ -174,6 +174,11 @@
            05 DUT-ASSERT-ACTUAL-DIS-N-LONG
                                         PIC -(17)9.9(18).
 
+           *> COUNTS HOW MANY TIMES THE TARGET APPEARS IN THE ACTUAL
+           *> ONLY ZERO / NOT ZERO IS USED TODAY, BUT THE COUNT IS WHAT
+           *> A FUTURE "CONTAINS N TIMES" ASSERTION WOULD NEED
+           05 DUT-ASSERT-CONTAINS-TALLY  PIC 9(4)       VALUE 0.
+
        PROCEDURE DIVISION.
       * COBOL UT HELPER FUNCTIONS 
       * SPDX-License-Identifier: GPL-3.0-or-later
@@ -562,6 +567,57 @@
               FUNCTION TRIM(DUT-ASSERT-ACTUAL-DIS-N-LONG)
               DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
            END-STRING
+           .
+
+      * USAGE: EXTERNAL
+      * DESCRIPTION:
+      * Asserts that DUT-ASSERT-ACTUAL contains DUT-ASSERT-TARGET
+      * The TARGET is the value you expect to find, the ACTUAL is the
+      * value your program produced
+      * The TARGET is trimmed before searching, so the X(256) padding
+      * is not part of the match.
+      * The match is case sensitive
+      * An empty TARGET is an error, not a pass. Every value contains
+      * nothing, so passing would be a silent false green
+       DUT-ASSERT-CONTAINS SECTION.
+           MOVE ZERO TO DUT-ASSERT-CONTAINS-TALLY
+           EVALUATE TRUE
+               WHEN DUT-ASSERT-TARGET-N NOT = 0
+               WHEN DUT-ASSERT-ACTUAL-N NOT = 0
+                   STRING 'DUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                   END-STRING
+                   PERFORM DUT-ERROR
+                   MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                                 DUT-ASSERT-ACTUAL-N
+               WHEN DUT-ASSERT-TARGET = SPACES
+                   STRING 'DUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+                   END-STRING
+                   PERFORM DUT-ERROR
+               WHEN OTHER
+                   *> ACTUAL ASSERT-CONTAINS VALIDATION
+                   INSPECT DUT-ASSERT-ACTUAL
+                      TALLYING DUT-ASSERT-CONTAINS-TALLY
+                      FOR ALL FUNCTION TRIM(DUT-ASSERT-TARGET)
+                   *> IF TARGET WAS FOUND AT LEAST ONCE
+                   IF DUT-ASSERT-CONTAINS-TALLY > 0
+                       PERFORM DUT-PASS
+                   ELSE
+                       SET DUT-TEST-FAIL TO TRUE
+                       STRING
+                          'Expected to contain '
+                          FUNCTION TRIM(DUT-ASSERT-TARGET)
+                          ' but got '
+                          FUNCTION TRIM(DUT-ASSERT-ACTUAL)
+                          DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                       END-STRING
+                       PERFORM DUT-FAIL
+                   END-IF
+           END-EVALUATE
+           *> RESET TARGET FLAGS
+           MOVE SPACES TO DUT-ASSERT-TARGET
+                          DUT-ASSERT-ACTUAL
            .
 
       * USAGE: EXTERNAL

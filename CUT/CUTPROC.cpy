@@ -388,6 +388,57 @@
            .
 
       * USAGE: EXTERNAL
+      * DESCRIPTION:
+      * Asserts that CUT-ASSERT-ACTUAL contains CUT-ASSERT-TARGET
+      * The TARGET is the value you expect to find, the ACTUAL is the
+      * value your program produced
+      * The TARGET is trimmed before searching, so the X(256) padding
+      * is not part of the match.
+      * The match is case sensitive
+      * An empty TARGET is an error, not a pass. Every value contains
+      * nothing, so passing would be a silent false green
+       CUT-ASSERT-CONTAINS SECTION.
+           MOVE ZERO TO CUT-ASSERT-CONTAINS-TALLY
+           EVALUATE TRUE
+               WHEN CUT-ASSERT-TARGET-N NOT = 0
+               WHEN CUT-ASSERT-ACTUAL-N NOT = 0
+                   STRING 'CUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                   END-STRING
+                   PERFORM CUT-ERROR
+                   MOVE ZEROS TO CUT-ASSERT-TARGET-N
+                                 CUT-ASSERT-ACTUAL-N
+               WHEN CUT-ASSERT-TARGET = SPACES
+                   STRING 'CUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+                   END-STRING
+                   PERFORM CUT-ERROR
+               WHEN OTHER
+                   *> ACTUAL ASSERT-CONTAINS VALIDATION
+                   INSPECT CUT-ASSERT-ACTUAL
+                      TALLYING CUT-ASSERT-CONTAINS-TALLY
+                      FOR ALL FUNCTION TRIM(CUT-ASSERT-TARGET)
+                   *> IF TARGET WAS FOUND AT LEAST ONCE
+                   IF CUT-ASSERT-CONTAINS-TALLY > 0
+                       PERFORM CUT-PASS
+                   ELSE
+                       SET CUT-TEST-FAIL TO TRUE
+                       STRING
+                          'Expected to contain '
+                          FUNCTION TRIM(CUT-ASSERT-TARGET)
+                          ' but got '
+                          FUNCTION TRIM(CUT-ASSERT-ACTUAL)
+                          DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                       END-STRING
+                       PERFORM CUT-FAIL
+                   END-IF
+           END-EVALUATE
+           *> RESET TARGET FLAGS
+           MOVE SPACES TO CUT-ASSERT-TARGET
+                          CUT-ASSERT-ACTUAL
+           .
+
+      * USAGE: EXTERNAL
       * DESCRIPTION: WHEN CUT-TEMP-FIELD-NAME & CUT-TEMP-FIELD-VALUE ARE
       * POPULATED THIS SECTION IS INVOKED TO ADD THOSE FIELDS TO THE
       * EXECUTION TRACE, ASSOCIATED WITH THE SECTION BEING EXECUTED

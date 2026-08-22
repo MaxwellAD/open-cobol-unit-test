@@ -29,6 +29,16 @@
       *> USED TO BUILD UNIQUE FIELD-NNN NAMES
            05 WS-OVERFLOW-IDX          PIC 9(3) VALUE 1.
            05 WS-OVERFLOW-IDX-D        PIC 9(3) VALUE 0.
+
+      *> OPTIONAL EXTRA CONTEXT FOR THE EXPECT-DUT-* HELPERS. SET
+      *> EXPECT-DETAIL ON THE LINE BEFORE THE PERFORM AND IT IS APPENDED
+      *> TO THE FAILURE MESSAGE. THE HELPERS CLEAR IT EITHER WAY, SO IT
+      *> CANNOT LEAK INTO A LATER ASSERTION.
+      *> THE SEPARATOR MARKS WHERE THE STANDARD MESSAGE ENDS AND
+      *> THE CASE SPECIFIC PART BEGINS
+       01 EXPECT-DETAIL-AREA.
+           05 EXPECT-SEPARATOR        PIC X(3)  VALUE SPACES.
+           05 EXPECT-DETAIL           PIC X(80) VALUE SPACES.
       
       
        PROCEDURE DIVISION.
@@ -1655,7 +1665,7 @@
        
            *> WHEN
            PERFORM DUT-ASSERT-EQUALS-NUM
-           
+
            *> THEN
            IF DUT-TEST-PASS
               STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED'
@@ -1663,8 +1673,8 @@
               PERFORM CUT-FAIL
            END-IF
 
-       
-           PERFORM CUT-END-TEST 
+
+           PERFORM CUT-END-TEST
        .
 
        TEST-ASSERT-EQUALS-NUM-NEG-LNG SECTION.
@@ -1678,25 +1688,397 @@
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-PASS  
-              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED'
-              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
-              PERFORM CUT-FAIL
-           END-IF 
-           *> TODO ADD A CUT-ASSERT-CONTINS TO THIS SHOWING THAT 1
-           *> FIELD NEEDS TO HAVE A SIGN ON IT
+           MOVE 'INPUT VALUES WERE NOT EQUALS TO EACH OTHER' TO 
+              EXPECT-DETAIL 
+           PERFORM EXPECT-DUT-FAILED 
 
-       
-           PERFORM CUT-END-TEST 
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-EQUALS-NUM-FAIL-MSG-SIGN SECTION.
+           *> THE CASES ABOVE PROVE THE *VERDICT* IS RIGHT FOR NEGATIVE
+           *> NUMBERS. THIS ONE PROVES THE MINUS SIGN SURVIVES INTO THE
+           *> MESSAGE THE USER ACTUALLY READS
+
+           *> THE -FAIL SECTION IS CALLED DIRECTLY RATHER THAN THROUGH
+           *> DUT-ASSERT-EQUALS-NUM, BECAUSE EQUALS-NUM CLEANS UP AFTER
+           *> ITSELF - PERHAPS A TASK FOR ASSERT-TRACE ONE DAY
+
+           *> GIVEN ONE SIGNED AND ONE UNSIGNED VALUE
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE -5 TO DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+
+           *> THEN
+           MOVE '-5.00' TO CUT-ASSERT-TARGET
+           MOVE DUT-DISPLAY-FAIL-MSG TO CUT-ASSERT-ACTUAL
+           PERFORM CUT-ASSERT-CONTAINS
+
+           *> AND AGAIN FOR THE LONG DISPLAY FALLBACK - THESE TWO ARE
+           *> IDENTICAL AT TWO DECIMAL PLACES, SO THE FULL PRECISION
+           *> BRANCH RENDERS THEM AND MUST KEEP THE SIGN TOO
+           MOVE -5.998 TO DUT-ASSERT-TARGET-N
+           MOVE -5.997 TO DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+
+           MOVE '-5.998' TO CUT-ASSERT-TARGET
+           MOVE DUT-DISPLAY-FAIL-MSG TO CUT-ASSERT-ACTUAL
+           PERFORM CUT-ASSERT-CONTAINS
+
+           *> LEAVE NOTHING BEHIND - THE -FAIL SECTION DOES NOT CLEAR
+           *> THE NUMERIC FIELDS, AND A LATER ASSERTION WOULD REPORT
+           *> THEM AS THE WRONG ASSERTION BEING USED
+           MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                         DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           *> TODO:
+           *> The resetting of the above fields both proves the 
+           *> usefullness of this test suite but also it's limits.
+           *> ASSERT-TRACE exists to catch things like this, where
+           *> the code leave no trace of its execution in the final
+           *> output.
+           *> CONTAINS is a very important capability and likely
+           *> needs an implementation in ASSERT-TRACE
+           *> perhaps something along the lines of SQL style
+           *> WITH 
+           *>    DISPLAY-FAIL-MSG LIKE "-5.998"
+           *> END-WITH
+           *> or maybe a ~= ? however it looks like this can sometimes
+           *> mean NOT EQUAL TO
+
+           *> Even so, having the ability to get right into
+           *> the output logic of this pathway in the code allows for
+           *> very isolated logic verification.
+           *> If this case ever fails, you know for a fact that the 
+           *> fail is within DUT-ASSERT-EQUALS-NUM-FAIL and not
+           *> the higher ASSERT-EQUALS-NUM
+           *> which makes finding and fixing the bug easier.
+           *> Perhaps this is down to opinion, but I still think 
+           *> ASSERT-TRACE needs some kind of LIKE / CONTAINS.
+           *> Could even just be WITH DISPLAY-FAIL-MSG CONTAINS "-5.998"
+           *> Which aligns less to SQL but more to this test framework
+
+           *> Ramble over
+           
+
+           PERFORM CUT-END-TEST
        .
 
 
 
+
+       TEST-ASSERT-CONTAINS-BASIC SECTION.
+           *> A TARGET SITTING IN THE MIDDLE OF THE ACTUAL IS FOUND
+
+           *> GIVEN
+           MOVE 'SMITH' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           PERFORM EXPECT-DUT-PASSED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-FAIL SECTION.
+           *> A TARGET THAT IS NOT IN THE ACTUAL FAILS THE CASE
+
+           *> GIVEN
+           MOVE 'JONES' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           STRING 'DUT-ASSERT-CONTAINS '
+                  'FOLLOWED-BY DUT-FAIL '
+                  DELIMITED BY SIZE
+                  INTO CUT-TRACE
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+
+           PERFORM EXPECT-DUT-FAILED 
+
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-EXACT SECTION.
+           *> A VALUE CONTAINS ITSELF - THE WHOLE FIELD IS A MATCH
+
+           *> GIVEN
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-TEST-INIT
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           PERFORM EXPECT-DUT-PASSED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-BOUNDARY SECTION.
+           *> THE TARGET IS FOUND AT THE VERY START OF THE ACTUAL AND
+           *> AT THE VERY END OF IT - THE TWO POSITIONS MOST LIKELY TO
+           *> BE LOST TO AN OFF BY ONE
+
+           *> WHEN
+           PERFORM DUT-TEST-INIT
+
+           MOVE 'JOHN' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+           PERFORM DUT-ASSERT-CONTAINS
+
+           MOVE 'JR' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           *> EITHER ASSERTION FAILING LEAVES THE DUT CASE FAILED AS
+           *> FAILS ARE STICKY
+           PERFORM EXPECT-DUT-PASSED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-SPACED SECTION.
+           *> TRIMMING THE TARGET MUST NOT DISTURB ITS INNER SPACES,
+           *> SO A MULTI WORD TARGET STILL MATCHES
+
+           *> GIVEN
+           MOVE 'SMITH JR' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR TOO' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           PERFORM EXPECT-DUT-PASSED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-CASE SECTION.
+           *> THE MATCH IS CASE SENSITIVE
+
+           *> GIVEN
+           MOVE 'smith' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           PERFORM EXPECT-DUT-FAILED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-LONGER SECTION.
+           *> A TARGET LONGER THAN THE ACTUAL CANNOT BE INSIDE IT.
+           *> THIS IS THE CASE THAT WOULD ABEND IF THE SEARCH EVER RAN
+           *> OFF THE END OF THE ACTUAL
+
+           *> GIVEN
+           MOVE 'JOHN SMITH JR AND SOME MORE' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           PERFORM EXPECT-DUT-FAILED
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-NO-TARGET SECTION.
+           *> AN EMPTY TARGET IS A BROKEN TEST, NOT A PASSING ONE.
+           *> IF THIS GUARD IS EVER REMOVED THE SUITE WILL HANG RATHER
+           *> THAN FAIL - INSPECT NEVER TERMINATES ON A ZERO LENGTH
+           *> SEARCH VALUE
+
+           *> GIVEN
+           PERFORM DUT-TEST-INIT
+           MOVE SPACES TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           *> ASSERTED AS "NOT A PASS" ON PURPOSE. IT IS AN ERROR TODAY,
+           *> BUT DOWNGRADING THE GUARD TO A FAIL WOULD BE A FAIR
+           *> DESIGN CHANGE - SILENTLY PASSING NEVER WOULD BE
+           MOVE 'AN EMPTY TARGET MUST NEVER SILENTLY PASS'
+              TO EXPECT-DETAIL
+           PERFORM EXPECT-DUT-NOT-PASSED
+
+           *> CLAMP TO THE ERROR PROCESS FOR NOW JUST SO IT FLAGS
+           STRING 'DUT-ASSERT-CONTAINS '
+                  'FOLLOWED-BY DUT-ERROR '
+                  DELIMITED BY SIZE
+                  INTO CUT-TRACE
+           END-STRING
+
+           PERFORM CUT-ASSERT-TRACE
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-NUM-SET SECTION.
+           *> THERE IS NO NUMERIC CONTAINS, SO POPULATING THE NUMERIC
+           *> FIELDS IS THE WRONG ASSERTION RATHER THAN A FAILING ONE
+
+           *> GIVEN
+           PERFORM DUT-TEST-INIT
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           STRING 'USING TARGET-N IS IMPROPER USE OF THE ASSERTION'
+                  ' AND MUST ERROR'
+              DELIMITED BY SIZE INTO EXPECT-DETAIL
+           PERFORM EXPECT-DUT-ERRORED 
+
+           *> AND THE NUMERIC FIELD IS CLEARED, SO THE NEXT ASSERTION
+           *> IS NOT ALSO REPORTED AS THE WRONG ONE
+           IF DUT-ASSERT-TARGET-N NOT = 0
+              STRING 'DUT LEFT THE NUMERIC TARGET POPULATED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              PERFORM CUT-FAIL
+           END-IF
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-ASSERT-CONTAINS-CLEARS SECTION.
+           *> THE TARGET AND ACTUAL ARE CLEARED AFTERWARDS SO A CASE
+           *> CAN HOLD AS MANY ASSERTIONS AS IT NEEDS
+
+           *> GIVEN
+           MOVE 'SMITH' TO DUT-ASSERT-TARGET
+           MOVE 'JOHN SMITH JR' TO DUT-ASSERT-ACTUAL
+
+           *> WHEN
+           PERFORM DUT-ASSERT-CONTAINS
+
+           *> THEN
+           IF DUT-ASSERT-TARGET NOT = SPACES
+              STRING 'DUT LEFT THE TARGET POPULATED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              PERFORM CUT-FAIL
+           END-IF
+
+           IF DUT-ASSERT-ACTUAL NOT = SPACES
+              STRING 'DUT LEFT THE ACTUAL POPULATED'
+              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              PERFORM CUT-FAIL
+           END-IF
+
+           PERFORM CUT-END-TEST
+       .
 
        END-TEST-SUITE SECTION.
            PERFORM DISPLAY-COVERAGE
            PERFORM CUT-END-TEST-SUITE
        .
+
+      *****************************************************************
+      * EXPECTATION HELPERS
+      *
+      * THIS SUITE CONSTANTLY CHECKS THE DUT MIRROR'S OWN VERDICT.
+      * THESE NAME THAT INTENT IN ONE LINE AND REPORT THE STATUS
+      * ACTUALLY SEEN, RATHER THAN JUST SAYING IT WAS WRONG.
+      *
+      * SET EXPECT-DETAIL FIRST TO APPEND CASE SPECIFIC CONTEXT.
+      *
+      * ONLY THE NEW CUT-ASSERT-CONTAINS CASES USE THESE SO FAR - THE
+      * OLDER CASES STILL SPELL THE CHECK OUT BY HAND. RETROFITTING
+      * THEM IS A SEPARATE JOB
+      *****************************************************************
+      *> BUILDS THE OPTIONAL DETAIL WITH A SEPARATOR, OR LEAVES IT
+      *> BLANK - KEEPS EACH HELPER TO A SINGLE STRING STATEMENT
+       EXPECT-SET-SEPARATOR SECTION.
+           IF EXPECT-DETAIL = SPACES
+              MOVE SPACES TO EXPECT-SEPARATOR
+           ELSE
+              MOVE ' - ' TO EXPECT-SEPARATOR
+           END-IF
+           .
+
+       EXPECT-DUT-PASSED SECTION.
+           PERFORM EXPECT-SET-SEPARATOR
+           IF NOT DUT-TEST-PASS
+              STRING 'EXPECTED THE DUT CASE TO PASS BUT STATUS WAS '
+                     DUT-TEST-STATUS EXPECT-DETAIL-AREA
+                 DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              END-STRING
+              PERFORM CUT-FAIL
+           END-IF
+           MOVE SPACES TO EXPECT-DETAIL-AREA
+           .
+
+       EXPECT-DUT-FAILED SECTION.
+           PERFORM EXPECT-SET-SEPARATOR
+           IF NOT DUT-TEST-FAIL
+              STRING 'EXPECTED THE DUT CASE TO FAIL BUT STATUS WAS '
+                     DUT-TEST-STATUS EXPECT-DETAIL-AREA
+                 DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              END-STRING
+              PERFORM CUT-FAIL
+           END-IF
+           MOVE SPACES TO EXPECT-DETAIL-AREA
+           .
+
+       EXPECT-DUT-ERRORED SECTION.
+           PERFORM EXPECT-SET-SEPARATOR
+           IF NOT DUT-TEST-ERROR
+              STRING 'EXPECTED THE DUT CASE TO ERROR BUT STATUS WAS '
+                     DUT-TEST-STATUS EXPECT-DETAIL-AREA
+                 DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              END-STRING
+              PERFORM CUT-FAIL
+           END-IF
+           MOVE SPACES TO EXPECT-DETAIL-AREA
+           .
+
+      *> THE ONLY NEGATIVE WORTH HAVING. PASS IS THE ONE STATUS MEANING
+      *> "THE FRAMEWORK WAS SATISFIED" - THE OTHER THREE ALL MEAN IT
+      *> REFUSED. USE THIS WHERE THE *WAY* IT REFUSES IS TODAY'S
+      *> BEHAVIOUR RATHER THAN THE CONTRACT, SO AN ERROR THAT LATER
+      *> BECOMES A FAIL DOES NOT BREAK THE TEST - BUT A PASS ALWAYS DOES
+      *> "NOT FAILED" AND "NOT ERRORED" ARE DELIBERATELY ABSENT: BOTH
+      *> ARE SATISFIED BY A PASS, SO NEITHER ASSERTS ANYTHING USEFUL
+       EXPECT-DUT-NOT-PASSED SECTION.
+           PERFORM EXPECT-SET-SEPARATOR
+           IF DUT-TEST-PASS
+              STRING 'EXPECTED THE DUT CASE NOT TO PASS BUT STATUS WAS '
+                     DUT-TEST-STATUS EXPECT-DETAIL-AREA
+                 DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+              END-STRING
+              PERFORM CUT-FAIL
+           END-IF
+           MOVE SPACES TO EXPECT-DETAIL-AREA
+           .
       *****************************************************************
       * RUNS AT THE TOP OF EACH SECTION IN THE SOURCE CODE
       * ADDS THE SPECIFIED FIELDS TO THE TRACE

@@ -161,3 +161,8 @@
                                         PIC -(17)9.9(18).
            05 CUT-ASSERT-ACTUAL-DIS-N-LONG
                                         PIC -(17)9.9(18).
+
+           *> COUNTS HOW MANY TIMES THE TARGET APPEARS IN THE ACTUAL
+           *> ONLY ZERO / NOT ZERO IS USED TODAY, BUT THE COUNT IS WHAT
+           *> A FUTURE "CONTAINS N TIMES" ASSERTION WOULD NEED
+           05 CUT-ASSERT-CONTAINS-TALLY  PIC 9(4)       VALUE 0.
