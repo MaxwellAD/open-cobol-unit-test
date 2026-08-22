@@ -393,8 +393,7 @@
       * The TARGET is the value you expect to find, the ACTUAL is the
       * value your program produced
       * The TARGET is trimmed before searching, so the X(256) padding
-      * is not part of the match. Leading spaces are trimmed too, for
-      * consistency
+      * is not part of the match.
       * The match is case sensitive
       * An empty TARGET is an error, not a pass. Every value contains
       * nothing, so passing would be a silent false green
