@@ -1688,16 +1688,87 @@
            PERFORM DUT-ASSERT-EQUALS-NUM 
            
            *> THEN
-           IF DUT-TEST-PASS  
-              STRING 'DUT PASSED THE CASE WHEN IT SHOULD HAVE FAILED'
-              DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG 
-              PERFORM CUT-FAIL
-           END-IF 
-           *> TODO ADD A CUT-ASSERT-CONTINS TO THIS SHOWING THAT 1
-           *> FIELD NEEDS TO HAVE A SIGN ON IT
+           MOVE 'INPUT VALUES WERE NOT EQUALS TO EACH OTHER' TO 
+              EXPECT-DETAIL 
+           PERFORM EXPECT-DUT-FAILED 
 
-       
-           PERFORM CUT-END-TEST 
+
+           PERFORM CUT-END-TEST
+       .
+
+       TEST-EQUALS-NUM-FAIL-MSG-SIGN SECTION.
+           *> THE CASES ABOVE PROVE THE *VERDICT* IS RIGHT FOR NEGATIVE
+           *> NUMBERS. THIS ONE PROVES THE MINUS SIGN SURVIVES INTO THE
+           *> MESSAGE THE USER ACTUALLY READS
+
+           *> THE -FAIL SECTION IS CALLED DIRECTLY RATHER THAN THROUGH
+           *> DUT-ASSERT-EQUALS-NUM, BECAUSE EQUALS-NUM CLEANS UP AFTER
+           *> ITSELF - PERHAPS A TASK FOR ASSERT-TRACE ONE DAY
+
+           *> GIVEN ONE SIGNED AND ONE UNSIGNED VALUE
+           MOVE 5 TO DUT-ASSERT-TARGET-N
+           MOVE -5 TO DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           *> WHEN
+           PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+
+           *> THEN
+           MOVE '-5.00' TO CUT-ASSERT-TARGET
+           MOVE DUT-DISPLAY-FAIL-MSG TO CUT-ASSERT-ACTUAL
+           PERFORM CUT-ASSERT-CONTAINS
+
+           *> AND AGAIN FOR THE LONG DISPLAY FALLBACK - THESE TWO ARE
+           *> IDENTICAL AT TWO DECIMAL PLACES, SO THE FULL PRECISION
+           *> BRANCH RENDERS THEM AND MUST KEEP THE SIGN TOO
+           MOVE -5.998 TO DUT-ASSERT-TARGET-N
+           MOVE -5.997 TO DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           PERFORM DUT-ASSERT-EQUALS-NUM-FAIL
+
+           MOVE '-5.998' TO CUT-ASSERT-TARGET
+           MOVE DUT-DISPLAY-FAIL-MSG TO CUT-ASSERT-ACTUAL
+           PERFORM CUT-ASSERT-CONTAINS
+
+           *> LEAVE NOTHING BEHIND - THE -FAIL SECTION DOES NOT CLEAR
+           *> THE NUMERIC FIELDS, AND A LATER ASSERTION WOULD REPORT
+           *> THEM AS THE WRONG ASSERTION BEING USED
+           MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                         DUT-ASSERT-ACTUAL-N
+           MOVE SPACES TO DUT-DISPLAY-FAIL-MSG
+
+           *> TODO:
+           *> The resetting of the above fields both proves the 
+           *> usefullness of this test suite but also it's limits.
+           *> ASSERT-TRACE exists to catch things like this, where
+           *> the code leave no trace of its execution in the final
+           *> output.
+           *> CONTAINS is a very important capability and likely
+           *> needs an implementation in ASSERT-TRACE
+           *> perhaps something along the lines of SQL style
+           *> WITH 
+           *>    DISPLAY-FAIL-MSG LIKE "-5.998"
+           *> END-WITH
+           *> or maybe a ~= ? however it looks like this can sometimes
+           *> mean NOT EQUAL TO
+
+           *> Even so, having the ability to get right into
+           *> the output logic of this pathway in the code allows for
+           *> very isolated logic verification.
+           *> If this case ever fails, you know for a fact that the 
+           *> fail is within DUT-ASSERT-EQUALS-NUM-FAIL and not
+           *> the higher ASSERT-EQUALS-NUM
+           *> which makes finding and fixing the bug easier.
+           *> Perhaps this is down to opinion, but I still think 
+           *> ASSERT-TRACE needs some kind of LIKE / CONTAINS.
+           *> Could even just be WITH DISPLAY-FAIL-MSG CONTAINS "-5.998"
+           *> Which aligns less to SQL but more to this test framework
+
+           *> Ramble over
+           
+
+           PERFORM CUT-END-TEST
        .
 
 
