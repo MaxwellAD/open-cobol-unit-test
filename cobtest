@@ -1,3 +1,4 @@
+#!/bin/sh
 printf "Stage 0 - Instrumenting Code Coverage\n"
 printf "===================================================\n"
 # If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
@@ -17,7 +18,7 @@ printf "===================================================\n"
 
 printf "\n"
 
-grep -E -B 1 -A 1 '^\[(FAIL|ERROR)\]' CUT-RPTO
+grep -E -B 1 -A 1 '^\[(FAIL|ERROR|SKIP|DEBUG)\]' CUT-RPTO
 
 printf "\n"
 
