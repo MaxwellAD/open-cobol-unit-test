@@ -7,6 +7,9 @@ TEST CASE - TEST-ADD-TRACE-CALLS-TRACE
 TEST CASE - TEST-ASSERT-TRACE-BASIC-POS
 [PASS]
 
+TEST CASE - SKIP-ASSERT-TRACE-WITH-FIRST
+[SKIP]
+
 TEST CASE - TEST-ASSERT-TRACE-MISSING-LAST
 [PASS]
 
@@ -201,5 +204,5 @@ TEST EXECUTION RESULTS
 ===================================================
 PASS : 66
 FAIL : 0
-SKIP : 0
+SKIP : 1
 ===================================================
