@@ -746,7 +746,8 @@
           * DESCRIPTION: A DEBUG SECTION THAT DISPLAYS THE EXECUTION TRACE
           * AS A FORMATTED TABLE WITH SECTION NAMES AND FIELD VALUES
            DUT-DEBUG-DISPLAY-TRACE SECTION.
-[+]            DISPLAY 'EXECUTION TRACE TABLE'
+[+]            MOVE '[DEBUG] EXECUTION TRACE TABLE' TO DUT-OUT-RECORD
+[+]            PERFORM DUT-WRITE-UT-RECORD 
 [+]            MOVE 0 TO DUT-DEBUG-UNIQUE-FIELD-COUNT
 [+]            SET DUT-DEBUG-COLS-OK TO TRUE
     
@@ -919,7 +920,12 @@
                IF DUT-DEBUG-ROW-LENGTH < 1
 [+]                MOVE 1 TO DUT-DEBUG-ROW-LENGTH
                END-IF
-[+]            DISPLAY DUT-DEBUG-TRACE-ROW (1:DUT-DEBUG-ROW-LENGTH)
+[+]            STRING '[DEBUG] ' 
+                  DUT-DEBUG-TRACE-ROW (1:DUT-DEBUG-ROW-LENGTH)
+                  DELIMITED BY SIZE INTO DUT-OUT-RECORD
+               END-STRING
+                
+[+]            PERFORM DUT-WRITE-UT-RECORD
                .
     
           * USAGE: INTERNAL
@@ -1110,8 +1116,8 @@
           * USAGE: INTERNAL
           * DESCRIPTION: WRITES THE UT BUFFER TO THE OUTPUT FILE
            DUT-WRITE-UT-RECORD SECTION.
-[+]            DISPLAY DUT-OUT-RECORD
-[+]            MOVE SPACES TO DUT-OUT-RECORD
+[-]            DISPLAY DUT-OUT-RECORD
+[-]            MOVE SPACES TO DUT-OUT-RECORD
                .
     
           * USAGE: INTERNAL
@@ -1135,9 +1141,9 @@
 ****************************************************************************************
     SUMMARY STATISTICS                           
 ****************************************************************************************
-    TOTAL STATEMENTS: 0287
+    TOTAL STATEMENTS: 0289
     COVERED STATEMENTS: 0282
-    STATEMENT COVERAGE: 098.25%
+    STATEMENT COVERAGE: 097.57%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            
 ****************************************************************************************
