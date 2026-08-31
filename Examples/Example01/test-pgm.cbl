@@ -107,6 +107,30 @@
 
        .
 
+       SKIP-ASSERT-TRACE-WITH-FIRST SECTION.
+           *> TEST THAT ASSERT-TRACE CAN EVALUATE A WITH ON THE FIRST 
+           *> VERB
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+           STRING 'AB000-INITIALIZATION '
+                  'WITH '
+                    'WS-NUMBER = 11 '
+                  'END-WITH '
+                  'FOLLOWED-BY BA000-MAIN-PROCESSING'
+                  DELIMITED BY SIZE INTO DUT-TRACE 
+           END-STRING
+            
+           *> WHEN
+           PERFORM DUT-ASSERT-TRACE 
+           *> THEN
+           
+           PERFORM EXPECT-DUT-FAILED 
+           PERFORM CUT-DEBUG-DISPLAY-TRACE 
+       
+           PERFORM CUT-END-TEST 
+       .
+
        TEST-ASSERT-TRACE-MISSING-LAST SECTION.
            *> ASSERT TRACE SHOULD FAIL IF THE LAST SECTION IS MISSING
 
@@ -1998,7 +2022,12 @@
        .
 
        END-TEST-SUITE SECTION.
+      * DISPLAY-COVERAGE ONLY EXISTS WHEN THE COVERAGE PRECOMPILER HAS
+      * RUN. THE GUARD REMOVES THE PERFORM AT COMPILE TIME OTHERWISE,
+      * SO ONE SOURCE BUILDS BOTH WITH AND WITHOUT COVERAGE.
+      * >>IF COVERAGE DEFINED
            PERFORM DISPLAY-COVERAGE
+      * >>END-IF
            PERFORM CUT-END-TEST-SUITE
        .
 
@@ -2106,6 +2135,10 @@
            EXIT SECTION
        .
 
+       MOCK-DUT-WRITE-UT-RECORD SECTION.
+           EXIT SECTION 
+       .
+
 
       *****************************************************************
       * RUNS BEFORE EACH TEST CASE
@@ -2116,6 +2149,7 @@
       *****************************************************************
        BEFORE-EACH SECTION.
            SET DUT-TEST-PASS TO TRUE 
+           MOVE SPACES TO DUT-OUT-RECORD
            EXIT SECTION  
        .
 

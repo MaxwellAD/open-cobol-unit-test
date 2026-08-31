@@ -188,3 +188,4 @@ SKIP : 0
 Use `cobc -x test-pgm-out.cbl -o testpgm -I "tmp" -I "CUT"` to compile the unit test program
 
 
+A new addition is `cobtest`. `cobtest` combines the code coverage, harness, compile and execution into 1 step, it also prints an overview of the test results and any [FAIL]s or [DEBUG] lines to the output
