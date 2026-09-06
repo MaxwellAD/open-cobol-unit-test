@@ -90,7 +90,7 @@
       *> THE SECTION-NAME HEADER LABEL. THE SECTION COLUMN IS FLOORED AT
       *> THIS WIDTH SO THE LABEL ALWAYS FITS - DERIVED, NOT HARD-CODED
            05 DUT-DEBUG-SECTION-HEADER   PIC X(12)      VALUE
-                                                        'SECTION-NAME'.
+                   'SECTION-NAME'.
            05 DUT-DEBUG-FOUND-FLAG       PIC X          VALUE 'N'.
                88 DUT-DEBUG-FOUND                       VALUE 'Y'.
                88 DUT-DEBUG-NOT-FOUND                   VALUE 'N'.
@@ -286,6 +286,7 @@
            MOVE 1 TO DUT-TRACE-POINTER
            MOVE 0 TO DUT-TRACE-WORD-COUNT
            MOVE 1 TO DUT-TRACE-SECTION-INDEX
+           MOVE 1 TO DUT-EXEC-TRACE-INDEX
            
            PERFORM UNTIL DUT-TRACE-POINTER > LENGTH OF DUT-TRACE
               OR DUT-TRACE-WORD-COUNT >= 50
@@ -294,11 +295,34 @@
 
            *> FIRST ITEM WILL ALWAYS BE A SECTION NAME
 
-           MOVE DUT-EXEC-TRACE-WORD(1) TO DUT-TEMP-SECTION-NAME
+           MOVE DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX)
+              TO DUT-TEMP-SECTION-NAME
            *> NEED TO SCAN THROUGH TRACE TO FIND FIRST SECTION NAME
            *> AND GO FROM THERE
            PERFORM DUT-FIND-FOLLOWED-BY 
-           PERFORM VARYING DUT-EXEC-TRACE-INDEX FROM 2 BY 1 UNTIL
+           *> IF THE FIRST VERB IS A WITH THEN CHECK THE WITH FIELDS
+           MOVE 2 TO DUT-EXEC-TRACE-INDEX
+           *> TODO: THIS DOESN'T LOOK GREAT
+           *> BUT I DON'T WANT HANDLE-VERBS TO HAVE A 'WITH' BLOCK
+           *> AS WITH IS ONLY VALID WHEN IT'S ALREADY A PART OF AN
+           *> INSTRUCTION
+           *> IDEALLY THE DUT-FIND-FOLLOWED-BY SHOULD BE A 
+           *> DUT-HANDLE-FOLLOWED-BY
+           *> BUT I CAN'T GET THAT TO PASS RIGHT NOW, SO THIS WILL DO
+           *> TODO: THIS ONLY "ACCIDENTALLY" WORKS, IF FIND-FOLLOWED-BY
+           *> ABOVE FAILS, WE DON'T REALLY WANT TO DO THIS AT ALL
+           *> IT ACCIDENTALLY WORKS BECAUSE IF FIND-FOLLOWED-BY
+           *> CAN'T FIND IT, THE TRACE-INDEX WILL BE HIGH, SO IT 
+           *> NEVER FALLS INTO THE PERFORM VARYING, BUT IT FEELS 
+           *> FLIMSY - I GUESS I DON'T LIKE THAT THERE'S NO EARLY EXIT
+           *> IF SOMETHING FAILS, IT STILL TRIES TO PROCESS EVERYTHING
+           *> ELSE, IT JUST CAN'T
+           IF DUT-EXEC-TRACE-WORD(2) = 'WITH'
+               PERFORM DUT-ASSERT-TRACE-HANDLE-WITH 
+               ADD 1 TO DUT-EXEC-TRACE-INDEX
+           END-IF
+           PERFORM VARYING DUT-EXEC-TRACE-INDEX FROM
+              DUT-EXEC-TRACE-INDEX BY 1 UNTIL
               DUT-EXEC-TRACE-WORD(DUT-EXEC-TRACE-INDEX) = ' '
               OR DUT-TEST-FAIL
                PERFORM DUT-ASSERT-TRACE-HANDLE-VERBS 
@@ -582,38 +606,38 @@
        DUT-ASSERT-CONTAINS SECTION.
            MOVE ZERO TO DUT-ASSERT-CONTAINS-TALLY
            EVALUATE TRUE
-               WHEN DUT-ASSERT-TARGET-N NOT = 0
-               WHEN DUT-ASSERT-ACTUAL-N NOT = 0
-                   STRING 'DUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
-                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
-                   END-STRING
-                   PERFORM DUT-ERROR
-                   MOVE ZEROS TO DUT-ASSERT-TARGET-N
-                                 DUT-ASSERT-ACTUAL-N
-               WHEN DUT-ASSERT-TARGET = SPACES
-                   STRING 'DUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
-                      DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
-                   END-STRING
-                   PERFORM DUT-ERROR
-               WHEN OTHER
+           WHEN DUT-ASSERT-TARGET-N NOT = 0
+           WHEN DUT-ASSERT-ACTUAL-N NOT = 0
+               STRING 'DUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
+                  DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM DUT-ERROR
+               MOVE ZEROS TO DUT-ASSERT-TARGET-N
+                             DUT-ASSERT-ACTUAL-N
+           WHEN DUT-ASSERT-TARGET = SPACES
+               STRING 'DUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
+                  DELIMITED BY SIZE INTO DUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM DUT-ERROR
+           WHEN OTHER
                    *> ACTUAL ASSERT-CONTAINS VALIDATION
-                   INSPECT DUT-ASSERT-ACTUAL
-                      TALLYING DUT-ASSERT-CONTAINS-TALLY
-                      FOR ALL FUNCTION TRIM(DUT-ASSERT-TARGET)
+               INSPECT DUT-ASSERT-ACTUAL
+                  TALLYING DUT-ASSERT-CONTAINS-TALLY
+                  FOR ALL FUNCTION TRIM(DUT-ASSERT-TARGET)
                    *> IF TARGET WAS FOUND AT LEAST ONCE
-                   IF DUT-ASSERT-CONTAINS-TALLY > 0
-                       PERFORM DUT-PASS
-                   ELSE
-                       SET DUT-TEST-FAIL TO TRUE
-                       STRING
-                          'Expected to contain '
-                          FUNCTION TRIM(DUT-ASSERT-TARGET)
-                          ' but got '
-                          FUNCTION TRIM(DUT-ASSERT-ACTUAL)
-                          DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
-                       END-STRING
-                       PERFORM DUT-FAIL
-                   END-IF
+               IF DUT-ASSERT-CONTAINS-TALLY > 0
+                   PERFORM DUT-PASS
+               ELSE
+                   SET DUT-TEST-FAIL TO TRUE
+                   STRING
+                      'Expected to contain '
+                      FUNCTION TRIM(DUT-ASSERT-TARGET)
+                      ' but got '
+                      FUNCTION TRIM(DUT-ASSERT-ACTUAL)
+                      DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM DUT-FAIL
+               END-IF
            END-EVALUATE
            *> RESET TARGET FLAGS
            MOVE SPACES TO DUT-ASSERT-TARGET
@@ -940,7 +964,7 @@
       *> DIRECTLY WITH THE COLUMN TABLE PRE-FILLED INSTEAD.
            IF DUT-DEBUG-COLS-TRUNCATED
                DISPLAY '[WARN] OVER 100 UNIQUE FIELDS - '
-                  'SOME COLUMNS OMITTED FROM TRACE TABLE'
+                       'SOME COLUMNS OMITTED FROM TRACE TABLE'
            END-IF
            .
 
@@ -952,7 +976,7 @@
       *> HEADER LABEL SO THE HEADER TEXT ALWAYS FITS
            MOVE FUNCTION LENGTH(FUNCTION TRIM
               (DUT-DEBUG-SECTION-HEADER))
-               TO DUT-DEBUG-SECTION-NAME-WIDTH
+              TO DUT-DEBUG-SECTION-NAME-WIDTH
            PERFORM VARYING DUT-DEBUG-SECTION-IDX FROM 1 BY 1 UNTIL
               DUT-DEBUG-SECTION-IDX >= DUT-RT-SECTION-COUNT
 
@@ -961,11 +985,11 @@
                IF DUT-TEMP-SECTION-NAME NOT = SPACES
                    MOVE FUNCTION LENGTH(FUNCTION TRIM
                       (DUT-TEMP-SECTION-NAME))
-                       TO DUT-DEBUG-CELL-LENGTH
+                      TO DUT-DEBUG-CELL-LENGTH
                    IF DUT-DEBUG-CELL-LENGTH >
                       DUT-DEBUG-SECTION-NAME-WIDTH
                        MOVE DUT-DEBUG-CELL-LENGTH
-                           TO DUT-DEBUG-SECTION-NAME-WIDTH
+                          TO DUT-DEBUG-SECTION-NAME-WIDTH
                    END-IF
                END-IF
 
@@ -1013,12 +1037,12 @@
                       TO DUT-DEBUG-COLUMN-IDX
                    MOVE DUT-RT-SECTION-FIELD-NAME
                       (DUT-DEBUG-SECTION-IDX DUT-DEBUG-FIELD-IDX)
-                       TO DUT-DEBUG-FIELD-NAME(DUT-DEBUG-COLUMN-IDX)
+                      TO DUT-DEBUG-FIELD-NAME(DUT-DEBUG-COLUMN-IDX)
                    MOVE DUT-DEBUG-FIELD-NAME(DUT-DEBUG-COLUMN-IDX)
                       TO DUT-DEBUG-CELL-VALUE
                    MOVE FUNCTION LENGTH(FUNCTION TRIM
                       (DUT-DEBUG-CELL-VALUE))
-                       TO DUT-DEBUG-FIELD-WIDTH(DUT-DEBUG-COLUMN-IDX)
+                      TO DUT-DEBUG-FIELD-WIDTH(DUT-DEBUG-COLUMN-IDX)
                    PERFORM DUT-DEBUG-UPDATE-FIELD-WIDTH
                END-IF
            END-IF
@@ -1031,13 +1055,13 @@
        DUT-DEBUG-UPDATE-FIELD-WIDTH SECTION.
            MOVE DUT-RT-SECTION-FIELD-VALUE
               (DUT-DEBUG-SECTION-IDX DUT-DEBUG-FIELD-IDX)
-               TO DUT-DEBUG-CELL-VALUE
+              TO DUT-DEBUG-CELL-VALUE
            IF DUT-DEBUG-CELL-VALUE = SPACES
                MOVE 0 TO DUT-DEBUG-CELL-LENGTH
            ELSE
                MOVE FUNCTION LENGTH(FUNCTION TRIM
                   (DUT-DEBUG-CELL-VALUE))
-                   TO DUT-DEBUG-CELL-LENGTH
+                  TO DUT-DEBUG-CELL-LENGTH
            END-IF
            IF DUT-DEBUG-CELL-LENGTH >
               DUT-DEBUG-FIELD-WIDTH(DUT-DEBUG-COLUMN-IDX)
@@ -1071,7 +1095,7 @@
            ELSE
                MOVE FUNCTION LENGTH(FUNCTION TRIM
                   (DUT-DEBUG-CELL-VALUE))
-                   TO DUT-DEBUG-CELL-LENGTH
+                  TO DUT-DEBUG-CELL-LENGTH
                STRING FUNCTION TRIM(DUT-DEBUG-CELL-VALUE)
                   DELIMITED BY SIZE
                   INTO DUT-DEBUG-TRACE-ROW
@@ -1098,7 +1122,7 @@
            IF DUT-DEBUG-ROW-LENGTH < 1
                MOVE 1 TO DUT-DEBUG-ROW-LENGTH
            END-IF
-           STRING '[DEBUG] ' 
+           STRING '[DEBUG] '
               DUT-DEBUG-TRACE-ROW (1:DUT-DEBUG-ROW-LENGTH)
               DELIMITED BY SIZE INTO DUT-OUT-RECORD
            END-STRING
@@ -1220,7 +1244,7 @@
                   DUT-DEBUG-FIELD-NAME(DUT-DEBUG-COLUMN-IDX)
                    MOVE DUT-RT-SECTION-FIELD-VALUE
                       (DUT-DEBUG-SECTION-IDX DUT-DEBUG-FIELD-IDX)
-                       TO DUT-TEMP-FIELD-VALUE
+                      TO DUT-TEMP-FIELD-VALUE
                    EXIT PERFORM
                END-IF
            END-PERFORM
