@@ -104,6 +104,7 @@
            MOVE 1 TO CUT-TRACE-POINTER
            MOVE 0 TO CUT-TRACE-WORD-COUNT
            MOVE 1 TO CUT-TRACE-SECTION-INDEX
+           MOVE 1 TO CUT-EXEC-TRACE-INDEX
            
            PERFORM UNTIL CUT-TRACE-POINTER > LENGTH OF CUT-TRACE
               OR CUT-TRACE-WORD-COUNT >= 50
@@ -112,11 +113,34 @@
 
            *> FIRST ITEM WILL ALWAYS BE A SECTION NAME
 
-           MOVE CUT-EXEC-TRACE-WORD(1) TO CUT-TEMP-SECTION-NAME
+           MOVE CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX)
+              TO CUT-TEMP-SECTION-NAME
            *> NEED TO SCAN THROUGH TRACE TO FIND FIRST SECTION NAME
            *> AND GO FROM THERE
            PERFORM CUT-FIND-FOLLOWED-BY 
-           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM 2 BY 1 UNTIL
+           *> IF THE FIRST VERB IS A WITH THEN CHECK THE WITH FIELDS
+           MOVE 2 TO CUT-EXEC-TRACE-INDEX
+           *> TODO: THIS DOESN'T LOOK GREAT
+           *> BUT I DON'T WANT HANDLE-VERBS TO HAVE A 'WITH' BLOCK
+           *> AS WITH IS ONLY VALID WHEN IT'S ALREADY A PART OF AN
+           *> INSTRUCTION
+           *> IDEALLY THE CUT-FIND-FOLLOWED-BY SHOULD BE A 
+           *> CUT-HANDLE-FOLLOWED-BY
+           *> BUT I CAN'T GET THAT TO PASS RIGHT NOW, SO THIS WILL DO
+           *> TODO: THIS ONLY "ACCIDENTALLY" WORKS, IF FIND-FOLLOWED-BY
+           *> ABOVE FAILS, WE DON'T REALLY WANT TO DO THIS AT ALL
+           *> IT ACCIDENTALLY WORKS BECAUSE IF FIND-FOLLOWED-BY
+           *> CAN'T FIND IT, THE TRACE-INDEX WILL BE HIGH, SO IT 
+           *> NEVER FALLS INTO THE PERFORM VARYING, BUT IT FEELS 
+           *> FLIMSY - I GUESS I DON'T LIKE THAT THERE'S NO EARLY EXIT
+           *> IF SOMETHING FAILS, IT STILL TRIES TO PROCESS EVERYTHING
+           *> ELSE, IT JUST CAN'T
+           IF CUT-EXEC-TRACE-WORD(2) = 'WITH'
+               PERFORM CUT-ASSERT-TRACE-HANDLE-WITH 
+               ADD 1 TO CUT-EXEC-TRACE-INDEX
+           END-IF
+           PERFORM VARYING CUT-EXEC-TRACE-INDEX FROM
+              CUT-EXEC-TRACE-INDEX BY 1 UNTIL
               CUT-EXEC-TRACE-WORD(CUT-EXEC-TRACE-INDEX) = ' '
               OR CUT-TEST-FAIL
                PERFORM CUT-ASSERT-TRACE-HANDLE-VERBS 
@@ -400,38 +424,38 @@
        CUT-ASSERT-CONTAINS SECTION.
            MOVE ZERO TO CUT-ASSERT-CONTAINS-TALLY
            EVALUATE TRUE
-               WHEN CUT-ASSERT-TARGET-N NOT = 0
-               WHEN CUT-ASSERT-ACTUAL-N NOT = 0
-                   STRING 'CUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
-                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-                   END-STRING
-                   PERFORM CUT-ERROR
-                   MOVE ZEROS TO CUT-ASSERT-TARGET-N
-                                 CUT-ASSERT-ACTUAL-N
-               WHEN CUT-ASSERT-TARGET = SPACES
-                   STRING 'CUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
-                      DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
-                   END-STRING
-                   PERFORM CUT-ERROR
-               WHEN OTHER
+           WHEN CUT-ASSERT-TARGET-N NOT = 0
+           WHEN CUT-ASSERT-ACTUAL-N NOT = 0
+               STRING 'CUT-ASSERT-CONTAINS ONLY EVALUATES STRINGS'
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-ERROR
+               MOVE ZEROS TO CUT-ASSERT-TARGET-N
+                             CUT-ASSERT-ACTUAL-N
+           WHEN CUT-ASSERT-TARGET = SPACES
+               STRING 'CUT-ASSERT-CONTAINS NEEDS A TARGET VALUE'
+                  DELIMITED BY SIZE INTO CUT-DISPLAY-ERROR-MSG
+               END-STRING
+               PERFORM CUT-ERROR
+           WHEN OTHER
                    *> ACTUAL ASSERT-CONTAINS VALIDATION
-                   INSPECT CUT-ASSERT-ACTUAL
-                      TALLYING CUT-ASSERT-CONTAINS-TALLY
-                      FOR ALL FUNCTION TRIM(CUT-ASSERT-TARGET)
+               INSPECT CUT-ASSERT-ACTUAL
+                  TALLYING CUT-ASSERT-CONTAINS-TALLY
+                  FOR ALL FUNCTION TRIM(CUT-ASSERT-TARGET)
                    *> IF TARGET WAS FOUND AT LEAST ONCE
-                   IF CUT-ASSERT-CONTAINS-TALLY > 0
-                       PERFORM CUT-PASS
-                   ELSE
-                       SET CUT-TEST-FAIL TO TRUE
-                       STRING
-                          'Expected to contain '
-                          FUNCTION TRIM(CUT-ASSERT-TARGET)
-                          ' but got '
-                          FUNCTION TRIM(CUT-ASSERT-ACTUAL)
-                          DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
-                       END-STRING
-                       PERFORM CUT-FAIL
-                   END-IF
+               IF CUT-ASSERT-CONTAINS-TALLY > 0
+                   PERFORM CUT-PASS
+               ELSE
+                   SET CUT-TEST-FAIL TO TRUE
+                   STRING
+                      'Expected to contain '
+                      FUNCTION TRIM(CUT-ASSERT-TARGET)
+                      ' but got '
+                      FUNCTION TRIM(CUT-ASSERT-ACTUAL)
+                      DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
+                   END-STRING
+                   PERFORM CUT-FAIL
+               END-IF
            END-EVALUATE
            *> RESET TARGET FLAGS
            MOVE SPACES TO CUT-ASSERT-TARGET
@@ -758,7 +782,7 @@
       *> DIRECTLY WITH THE COLUMN TABLE PRE-FILLED INSTEAD.
            IF CUT-DEBUG-COLS-TRUNCATED
                DISPLAY '[WARN] OVER 100 UNIQUE FIELDS - '
-                  'SOME COLUMNS OMITTED FROM TRACE TABLE'
+                       'SOME COLUMNS OMITTED FROM TRACE TABLE'
            END-IF
            .
 
@@ -770,7 +794,7 @@
       *> HEADER LABEL SO THE HEADER TEXT ALWAYS FITS
            MOVE FUNCTION LENGTH(FUNCTION TRIM
               (CUT-DEBUG-SECTION-HEADER))
-               TO CUT-DEBUG-SECTION-NAME-WIDTH
+              TO CUT-DEBUG-SECTION-NAME-WIDTH
            PERFORM VARYING CUT-DEBUG-SECTION-IDX FROM 1 BY 1 UNTIL
               CUT-DEBUG-SECTION-IDX >= CUT-RT-SECTION-COUNT
 
@@ -779,11 +803,11 @@
                IF CUT-TEMP-SECTION-NAME NOT = SPACES
                    MOVE FUNCTION LENGTH(FUNCTION TRIM
                       (CUT-TEMP-SECTION-NAME))
-                       TO CUT-DEBUG-CELL-LENGTH
+                      TO CUT-DEBUG-CELL-LENGTH
                    IF CUT-DEBUG-CELL-LENGTH >
                       CUT-DEBUG-SECTION-NAME-WIDTH
                        MOVE CUT-DEBUG-CELL-LENGTH
-                           TO CUT-DEBUG-SECTION-NAME-WIDTH
+                          TO CUT-DEBUG-SECTION-NAME-WIDTH
                    END-IF
                END-IF
 
@@ -831,12 +855,12 @@
                       TO CUT-DEBUG-COLUMN-IDX
                    MOVE CUT-RT-SECTION-FIELD-NAME
                       (CUT-DEBUG-SECTION-IDX CUT-DEBUG-FIELD-IDX)
-                       TO CUT-DEBUG-FIELD-NAME(CUT-DEBUG-COLUMN-IDX)
+                      TO CUT-DEBUG-FIELD-NAME(CUT-DEBUG-COLUMN-IDX)
                    MOVE CUT-DEBUG-FIELD-NAME(CUT-DEBUG-COLUMN-IDX)
                       TO CUT-DEBUG-CELL-VALUE
                    MOVE FUNCTION LENGTH(FUNCTION TRIM
                       (CUT-DEBUG-CELL-VALUE))
-                       TO CUT-DEBUG-FIELD-WIDTH(CUT-DEBUG-COLUMN-IDX)
+                      TO CUT-DEBUG-FIELD-WIDTH(CUT-DEBUG-COLUMN-IDX)
                    PERFORM CUT-DEBUG-UPDATE-FIELD-WIDTH
                END-IF
            END-IF
@@ -849,13 +873,13 @@
        CUT-DEBUG-UPDATE-FIELD-WIDTH SECTION.
            MOVE CUT-RT-SECTION-FIELD-VALUE
               (CUT-DEBUG-SECTION-IDX CUT-DEBUG-FIELD-IDX)
-               TO CUT-DEBUG-CELL-VALUE
+              TO CUT-DEBUG-CELL-VALUE
            IF CUT-DEBUG-CELL-VALUE = SPACES
                MOVE 0 TO CUT-DEBUG-CELL-LENGTH
            ELSE
                MOVE FUNCTION LENGTH(FUNCTION TRIM
                   (CUT-DEBUG-CELL-VALUE))
-                   TO CUT-DEBUG-CELL-LENGTH
+                  TO CUT-DEBUG-CELL-LENGTH
            END-IF
            IF CUT-DEBUG-CELL-LENGTH >
               CUT-DEBUG-FIELD-WIDTH(CUT-DEBUG-COLUMN-IDX)
@@ -889,7 +913,7 @@
            ELSE
                MOVE FUNCTION LENGTH(FUNCTION TRIM
                   (CUT-DEBUG-CELL-VALUE))
-                   TO CUT-DEBUG-CELL-LENGTH
+                  TO CUT-DEBUG-CELL-LENGTH
                STRING FUNCTION TRIM(CUT-DEBUG-CELL-VALUE)
                   DELIMITED BY SIZE
                   INTO CUT-DEBUG-TRACE-ROW
@@ -916,7 +940,7 @@
            IF CUT-DEBUG-ROW-LENGTH < 1
                MOVE 1 TO CUT-DEBUG-ROW-LENGTH
            END-IF
-           STRING '[DEBUG] ' 
+           STRING '[DEBUG] '
               CUT-DEBUG-TRACE-ROW (1:CUT-DEBUG-ROW-LENGTH)
               DELIMITED BY SIZE INTO CUT-OUT-RECORD
            END-STRING
@@ -1038,7 +1062,7 @@
                   CUT-DEBUG-FIELD-NAME(CUT-DEBUG-COLUMN-IDX)
                    MOVE CUT-RT-SECTION-FIELD-VALUE
                       (CUT-DEBUG-SECTION-IDX CUT-DEBUG-FIELD-IDX)
-                       TO CUT-TEMP-FIELD-VALUE
+                      TO CUT-TEMP-FIELD-VALUE
                    EXIT PERFORM
                END-IF
            END-PERFORM
