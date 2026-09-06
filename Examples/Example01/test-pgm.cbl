@@ -107,7 +107,7 @@
 
        .
 
-       SKIP-ASSERT-TRACE-WITH-FIRST SECTION.
+       TEST-ASSERT-TRACE-WITH-FIRST SECTION.
            *> TEST THAT ASSERT-TRACE CAN EVALUATE A WITH ON THE FIRST 
            *> VERB
        
@@ -126,7 +126,29 @@
            *> THEN
            
            PERFORM EXPECT-DUT-FAILED 
-           PERFORM CUT-DEBUG-DISPLAY-TRACE 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-TRACE-WITH-FIRST-P SECTION.
+           *> TEST THAT ASSERT-TRACE CAN FAIL ON FIRST SECTION
+           *> EVEN WITH A WITH
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+           STRING 'AB000-DOESNT-EXIST '
+                  'WITH '
+                    'WS-NUMBER = 11 '
+                  'END-WITH '
+                  'FOLLOWED-BY BA000-MAIN-PROCESSING'
+                  DELIMITED BY SIZE INTO DUT-TRACE 
+           END-STRING
+            
+           *> WHEN
+           PERFORM DUT-ASSERT-TRACE 
+           *> THEN
+           
+           PERFORM EXPECT-DUT-FAILED 
        
            PERFORM CUT-END-TEST 
        .
