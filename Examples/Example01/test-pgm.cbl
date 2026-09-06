@@ -107,7 +107,7 @@
 
        .
 
-       SKIP-ASSERT-TRACE-WITH-FIRST SECTION.
+       TEST-ASSERT-TRACE-WITH-FIRST SECTION.
            *> TEST THAT ASSERT-TRACE CAN EVALUATE A WITH ON THE FIRST 
            *> VERB
        
@@ -126,7 +126,6 @@
            *> THEN
            
            PERFORM EXPECT-DUT-FAILED 
-           PERFORM CUT-DEBUG-DISPLAY-TRACE 
        
            PERFORM CUT-END-TEST 
        .
