@@ -1140,7 +1140,7 @@
           * USAGE: INTERNAL
           * DESCRIPTION: WRITES THE UT BUFFER TO THE OUTPUT FILE
            DUT-WRITE-UT-RECORD SECTION.
-[-]            DISPLAY DUT-OUT-RECORD
+[-]            WRITE DUT-OUT-RECORD
 [-]            MOVE SPACES TO DUT-OUT-RECORD
                .
     
