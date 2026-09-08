@@ -574,7 +574,7 @@
                           FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
                           ' DIRECTLY AFTER '
                           FUNCTION TRIM(CUT-RT-SECTION-NAME
-                      (CUT-TRACE-SECTION-INDEX))
+                      (CUT-TRACE-SECTION-INDEX - 1))
                           ' IN EXECUTION TRACE'
                       DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                    END-STRING
@@ -589,7 +589,7 @@
                           FUNCTION TRIM(CUT-TEMP-SECTION-NAME)
                           ' DIRECTLY AFTER '
                           FUNCTION TRIM(CUT-RT-SECTION-NAME
-                      (CUT-TRACE-SECTION-INDEX))
+                      (CUT-TRACE-SECTION-INDEX - 1))
                           ' IN EXECUTION TRACE '
                       DELIMITED BY SIZE INTO CUT-DISPLAY-FAIL-MSG
                    END-STRING

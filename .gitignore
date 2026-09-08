@@ -1,6 +1,7 @@
 coverage/
 tmp/
 zapp.yaml
+test-pgm-out.cbl
 
 # Compiled test binaries
 testpgm

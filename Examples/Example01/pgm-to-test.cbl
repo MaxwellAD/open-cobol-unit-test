@@ -756,7 +756,7 @@
                           FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
                           ' DIRECTLY AFTER '
                           FUNCTION TRIM(DUT-RT-SECTION-NAME
-                      (DUT-TRACE-SECTION-INDEX))
+                      (DUT-TRACE-SECTION-INDEX - 1))
                           ' IN EXECUTION TRACE'
                       DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                    END-STRING
@@ -771,7 +771,7 @@
                           FUNCTION TRIM(DUT-TEMP-SECTION-NAME)
                           ' DIRECTLY AFTER '
                           FUNCTION TRIM(DUT-RT-SECTION-NAME
-                      (DUT-TRACE-SECTION-INDEX))
+                      (DUT-TRACE-SECTION-INDEX - 1))
                           ' IN EXECUTION TRACE '
                       DELIMITED BY SIZE INTO DUT-DISPLAY-FAIL-MSG
                    END-STRING
