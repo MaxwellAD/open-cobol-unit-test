@@ -70,6 +70,13 @@
            05 DUT-DEBUG-TRACE-ROW         PIC X(4000).
            05 DUT-DEBUG-ROW-POINTER       PIC 9(4)       VALUE 1.
            05 DUT-DEBUG-ROW-LENGTH        PIC 9(4)       VALUE 0.
+           *> THIS CONTROLS IF THE TRACE IS SHOWN ON ASSERT-TRACE FAIL
+           *> WHEN DUT-DEBUG-SHOW THE TRACE TABLE IS SHOWN ON FAIL
+           *> WHEN DUT-DEBUG-NO-SHOW THE TABLE MUST MANUALLY BE 
+           *> PERFORMED
+           05 DUT-DEBUG-SHOW-ON-FAIL      PIC X         VALUE 'N'.
+               88 DUT-DEBUG-SHOW                        VALUE 'Y'.
+               88 DUT-DEBUG-NO-SHOW                     VALUE 'N'.
            05 DUT-DEBUG-COLUMN-TRACKING.
                10 DUT-DEBUG-UNIQUE-FIELD-COUNT PIC 9(3) VALUE 0.
                10 DUT-DEBUG-SECTION-NAME-WIDTH PIC 9(3) VALUE 0.
@@ -125,7 +132,7 @@
            05 DUT-EXEC-TRACE-OCCURS. *> THE COMMAND SPLIT INTO WORDS
                10 DUT-EXEC-TRACE-WORD   PIC X(30) OCCURS 50 TIMES.
 
-           05 DUT-RT-TRACE OCCURS 100 TIMES. *> UP TO 100 SECTIONS
+           05 DUT-RT-TRACE OCCURS 200 TIMES. *> UP TO 100 SECTIONS
                10 DUT-RT-SECTION-NAME   PIC X(30)      VALUE SPACES.
                10 DUT-RT-SECTION-FIELD-COUNT
                                         PIC 9(3)       VALUE 1.
@@ -327,6 +334,9 @@
               OR DUT-TEST-FAIL
                PERFORM DUT-ASSERT-TRACE-HANDLE-VERBS 
            END-PERFORM
+           IF DUT-TEST-FAIL AND DUT-DEBUG-SHOW 
+              PERFORM DUT-DEBUG-DISPLAY-TRACE
+           END-IF
            MOVE SPACES TO DUT-EXEC-TRACE-OCCURS
            .
 

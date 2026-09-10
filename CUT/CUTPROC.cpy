@@ -145,6 +145,9 @@
               OR CUT-TEST-FAIL
                PERFORM CUT-ASSERT-TRACE-HANDLE-VERBS 
            END-PERFORM
+           IF CUT-TEST-FAIL AND CUT-DEBUG-SHOW 
+              PERFORM CUT-DEBUG-DISPLAY-TRACE
+           END-IF
            MOVE SPACES TO CUT-EXEC-TRACE-OCCURS
            .
 
