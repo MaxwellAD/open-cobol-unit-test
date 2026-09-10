@@ -149,6 +149,9 @@
                   OR DUT-TEST-FAIL
 [+]                PERFORM DUT-ASSERT-TRACE-HANDLE-VERBS 
                END-PERFORM
+               IF DUT-TEST-FAIL AND DUT-DEBUG-SHOW 
+[+]               PERFORM DUT-DEBUG-DISPLAY-TRACE
+               END-IF
 [+]            MOVE SPACES TO DUT-EXEC-TRACE-OCCURS
                .
     
@@ -1165,8 +1168,8 @@
 ****************************************************************************************
     SUMMARY STATISTICS                           
 ****************************************************************************************
-    TOTAL STATEMENTS: 0293
-    COVERED STATEMENTS: 0286
+    TOTAL STATEMENTS: 0294
+    COVERED STATEMENTS: 0287
     STATEMENT COVERAGE: 097.61%
 ****************************************************************************************
     END OF REPORT - DUTPGM                                            

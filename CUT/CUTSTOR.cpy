@@ -58,6 +58,13 @@
            05 CUT-DEBUG-TRACE-ROW         PIC X(4000).
            05 CUT-DEBUG-ROW-POINTER       PIC 9(4)       VALUE 1.
            05 CUT-DEBUG-ROW-LENGTH        PIC 9(4)       VALUE 0.
+           *> THIS CONTROLS IF THE TRACE IS SHOWN ON ASSERT-TRACE FAIL
+           *> WHEN CUT-DEBUG-SHOW THE TRACE TABLE IS SHOWN ON FAIL
+           *> WHEN CUT-DEBUG-NO-SHOW THE TABLE MUST MANUALLY BE 
+           *> PERFORMED
+           05 CUT-DEBUG-SHOW-ON-FAIL      PIC X         VALUE 'N'.
+               88 CUT-DEBUG-SHOW                        VALUE 'Y'.
+               88 CUT-DEBUG-NO-SHOW                     VALUE 'N'.
            05 CUT-DEBUG-COLUMN-TRACKING.
                10 CUT-DEBUG-UNIQUE-FIELD-COUNT PIC 9(3) VALUE 0.
                10 CUT-DEBUG-SECTION-NAME-WIDTH PIC 9(3) VALUE 0.
@@ -78,7 +85,7 @@
       *> THE SECTION-NAME HEADER LABEL. THE SECTION COLUMN IS FLOORED AT
       *> THIS WIDTH SO THE LABEL ALWAYS FITS - DERIVED, NOT HARD-CODED
            05 CUT-DEBUG-SECTION-HEADER   PIC X(12)      VALUE
-                                                        'SECTION-NAME'.
+                   'SECTION-NAME'.
            05 CUT-DEBUG-FOUND-FLAG       PIC X          VALUE 'N'.
                88 CUT-DEBUG-FOUND                       VALUE 'Y'.
                88 CUT-DEBUG-NOT-FOUND                   VALUE 'N'.
@@ -113,7 +120,7 @@
            05 CUT-EXEC-TRACE-OCCURS. *> THE COMMAND SPLIT INTO WORDS
                10 CUT-EXEC-TRACE-WORD   PIC X(30) OCCURS 50 TIMES.
 
-           05 CUT-RT-TRACE OCCURS 100 TIMES. *> UP TO 100 SECTIONS
+           05 CUT-RT-TRACE OCCURS 200 TIMES. *> UP TO 100 SECTIONS
                10 CUT-RT-SECTION-NAME   PIC X(30)      VALUE SPACES.
                10 CUT-RT-SECTION-FIELD-COUNT
                                         PIC 9(3)       VALUE 1.

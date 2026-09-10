@@ -42,6 +42,12 @@
       
       
        PROCEDURE DIVISION.
+       
+       BEFORE-ALL SECTION.
+           *> THIS SECTION RUNS ONCE AT THE START OF THE TEST SUITE
+           CONTINUE 
+       .
+
        TEST-INIT-CLEARS-TRACE SECTION.
            
            *> WHEN
@@ -185,6 +191,53 @@
            PERFORM CUT-END-TEST 
        .
        
+       TEST-ASSERT-TRACE-TBL-ON-FAIL SECTION.
+           *> TEST THAT ASSERT-TRACE DISPLAYS THE TRACE TABLE
+           *> ON TEST FAIL WHEN ENABLED
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+           SET DUT-DEBUG-SHOW TO TRUE
+
+           *> WHEN
+           STRING 'A-FAKE-SECTION ' DELIMITED BY SIZE INTO DUT-TRACE 
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+           STRING 'DUT-ASSERT-TRACE '
+                  'FOLLOWED-BY DUT-FAIL '
+                  'FOLLOWED-BY DUT-DEBUG-DISPLAY-TRACE '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-ASSERT-TRACE-NTBL-ON-FAIL SECTION.
+           *> TEST THAT ASSERT-TRACE DOESN'T DISPLAY THE TABLE
+           *> ON TEST FAIL WHEN THE FLAG IS NOT SET
+       
+           *> GIVEN
+           PERFORM FIXTURE-ADD-EXEC-WITH-FIELD 
+           SET DUT-DEBUG-NO-SHOW TO TRUE
+
+           *> WHEN
+           STRING 'A-FAKE-SECTION ' DELIMITED BY SIZE INTO DUT-TRACE 
+           PERFORM DUT-ASSERT-TRACE 
+           
+           *> THEN
+           STRING 'DUT-ASSERT-TRACE '
+                  'FOLLOWED-BY DUT-FAIL '
+                  'NOT FOLLOWED-BY DUT-DEBUG-DISPLAY-TRACE '
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+       
+           PERFORM CUT-END-TEST 
+       .       
 
        TEST-ASSERT-EQUALS-FAIL SECTION.
            *> BASIC TEST OF DUT-ASSERT-EQUALS
@@ -2139,13 +2192,6 @@
       * DEFINE A FIELD TO BE TRACKED BY *WS-FIELD-NAME
       *****************************************************************
        CUT-TRACE-FIELDS SECTION.
-           MOVE 'FIELD-A' TO CUT-TEMP-FIELD-NAME 
-           MOVE 1000 TO CUT-TEMP-FIELD-VALUE
-           PERFORM CUT-REGISTER-FIELD 
-
-           MOVE 'FIELD-B' TO CUT-TEMP-FIELD-NAME 
-           MOVE "example" TO CUT-TEMP-FIELD-VALUE
-           PERFORM CUT-REGISTER-FIELD 
 
            MOVE 'DUT-TRACE-SECTION-INDEX' TO CUT-TEMP-FIELD-NAME 
            MOVE DUT-TRACE-SECTION-INDEX TO CUT-TEMP-FIELD-VALUE 
