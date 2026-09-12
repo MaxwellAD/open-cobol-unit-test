@@ -9,9 +9,9 @@ business_pgm=$1
 test_pgm=src/test/cobol/testlib/pgm-to-test/test-pgm.cbl
 test_pgm=$2
 
-VERBOSE="false"
+VERBOSE="true"
 
-[[ "$VERBOSE" == "true" ]] && printf "Stage 0 - Instrumenting Code Coverage\n"
+[[ "$VERBOSE" == "true" ]] && printf "Instrumenting Code Coverage\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
 
 # If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
@@ -19,15 +19,15 @@ mkdir coverage
 tmp_coverage_pgm=coverage/pgm-to-test.cbl
 code-coverage-precompiler.sh $business_pgm $tmp_coverage_pgm 1> /dev/null &&
 
-[[ "$VERBOSE" == "true" ]] && printf "\nStage 1 - Running the harness\n"
+[[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
 ./harness.sh $tmp_coverage_pgm $test_pgm &&
 
-[[ "$VERBOSE" == "true" ]] && printf "\nStage 2 - Compile\n"
+[[ "$VERBOSE" == "true" ]] && printf "\nCompile\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-cobc -x test-pgm-out.cbl -o testpgm -I "CUT" -I "tmp" 2> /dev/null &&
+cobc -x test-pgm-out.cbl -o testpgm -I "CUT" -I "tmp" &&
 
-[[ "$VERBOSE" == "true" ]] && printf "\nStage 3 - Execute\n"
+[[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
 ./testpgm > Reports/dut-coverage-report.txt; 
 test_return_code=$?

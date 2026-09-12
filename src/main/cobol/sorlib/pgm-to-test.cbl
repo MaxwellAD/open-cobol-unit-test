@@ -282,6 +282,18 @@
       * END-TEST-SUITE.
        DUT-SHUT-DOWN-TEST-SUITE SECTION.
            CLOSE DUT-OUT 
+           *> SKIPS AREN'T A FAIL, BUT THEY SHOULDN'T "SILENTLY" PASS
+           *> BUT A DEV SHOULDN'T BE FORCED INTO REMOVING THEM
+           *> JUST TO GET A CI TO PASS - PERHAPS A "MAXIMUM SKIP AMOUNT"
+           *> TO AVOID SKIP TEST CREEP
+           IF DUT-TEST-SKIP-COUNT > 0
+               *> TODO figure out a nice way of handling skips for CICD
+               CONTINUE
+           END-IF
+           *> IF THERE ARE ANY FAILS OR ERRORS, OVERRIDE AND FAIL
+           IF DUT-TEST-FAIL-COUNT > 0 OR DUT-TEST-ERROR-COUNT > 0
+               MOVE 16 TO RETURN-CODE
+           END-IF
            STOP RUN
            .
 
