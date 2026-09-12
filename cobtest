@@ -1,0 +1,64 @@
+#!/bin/bash
+
+num_test_files=0
+num_suite_fail=0
+num_suite_pass=0
+
+failed_suites=""
+
+for source in `find src/main/cobol/sorlib/ -name "**.cbl" 2> /dev/null`; do
+    echo "Discovered source file: $source"
+    path=${source%.*}
+
+    test_directory="${path/src\/main\/cobol\/sorlib/src\/test\/cobol\/testlib}"
+    
+    expression=$test_directory"/**.cbl"
+    test_files=`find $expression 2> /dev/null`
+    for test_program in $test_files; do
+        num_test_files=$(($num_test_files+1))
+        echo "    Found test program:" $test_program
+        echo ""
+        
+        if ! ./cobtestrun $source $test_program; then
+            #echo "TEST FAILS DETECTED IN" $test_program
+            failed_suites+="${test_program}\n"
+            num_suite_fail=$(($num_suite_fail+1))
+        else
+            num_suite_pass=$(($num_suite_pass+1))
+        fi
+
+    done
+
+    if [[ $test_files == "" ]]; then
+        echo "    No test programs found:"
+    fi
+    echo ""
+    echo ""
+done
+
+printf "\n\n"
+echo "==================================================="
+if [[ $num_suite_fail = 0 ]]; then
+    echo "COBOL Unit Test Complete"
+else
+    echo "COBOL Unit Test Failed"
+fi
+echo "==================================================="
+echo ""
+echo "Detected " $num_test_files " test suites(s)"
+echo ""
+echo "==================================================="
+echo "Failed Suite(s): $num_suite_fail"
+echo "Passed Suite(s): $num_suite_pass"
+echo "==================================================="
+
+
+
+
+if [[ num_suite_fail -gt 0 ]]; then
+    echo ""
+    echo "Failed Suites:"
+    printf $failed_suites
+    
+    exit 1
+fi
