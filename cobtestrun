@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Business program is identified by: src/main/cobol/sorlib/**.cbl
+business_pgm=src/main/cobol/sorlib/pgm-to-test.cbl
+business_pgm=$1
+
+# For every business program
+# Test program is: src/test/cobol/testlib/<directory-to-source-code>/*.cbl
+test_pgm=src/test/cobol/testlib/pgm-to-test/test-pgm.cbl
+test_pgm=$2
+
+VERBOSE="true"
+
+[[ "$VERBOSE" == "true" ]] && printf "Instrumenting Code Coverage\n"
+[[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
+
+# If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
+mkdir coverage
+tmp_coverage_pgm=coverage/pgm-to-test.cbl
+code-coverage-precompiler.sh $business_pgm $tmp_coverage_pgm 1> /dev/null &&
+
+[[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
+[[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
+#./harness.sh $business_pgm $test_pgm && # <-- no code coverage 
+./harness.sh $tmp_coverage_pgm $test_pgm && # <-- code coverage
+
+[[ "$VERBOSE" == "true" ]] && printf "\nCompile\n"
+[[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
+cobc -x test-pgm-out.cbl -o testpgm -I "CUT" -I "tmp" &&
+
+[[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
+[[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
+./testpgm > Reports/dut-coverage-report.txt; 
+test_return_code=$?
+cp CUT-RPTO "Reports/Unit Test Report.txt" &&
+
+[[ "$VERBOSE" == "true" ]] && printf "\n"
+
+grep -E -B 1 -A 1 '^\[(FAIL|ERROR|SKIP|DEBUG)\]' CUT-RPTO
+
+[[ "$VERBOSE" == "true" ]] && printf "\n"
+
+cat CUT-RPTO | tail -7
+
+rm -r coverage CUT-RPTO test-pgm-out.cbl
+
+exit $test_return_code

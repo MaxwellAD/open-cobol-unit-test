@@ -2096,6 +2096,79 @@
            PERFORM CUT-END-TEST
        .
 
+       TEST-SET-RETURN-FAIL SECTION.
+           *> TEST THAT THE RETURN CODE IS HIGH FOR A TEST FAIL
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-FAIL-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SET-RETURN-CODE 
+           
+           *> THEN
+           MOVE 16 TO CUT-ASSERT-TARGET-N
+           MOVE RETURN-CODE TO CUT-ASSERT-ACTUAL-N 
+           MOVE 0 TO RETURN-CODE
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-SET-RETURN-ERROR SECTION.
+           *> TEST THAT THE RETURN CODE IS HIGH FOR A TEST ERROR
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-ERROR-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SET-RETURN-CODE 
+           
+           *> THEN
+           MOVE 16 TO CUT-ASSERT-TARGET-N
+           MOVE RETURN-CODE TO CUT-ASSERT-ACTUAL-N 
+           MOVE 0 TO RETURN-CODE
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-SET-RETURN-PASS SECTION.
+           *> TEST THAT THE RETURN CODE IS ZERO FOR A TEST PASS
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-PASS-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SET-RETURN-CODE 
+           
+           *> THEN
+           MOVE 0 TO CUT-ASSERT-TARGET-N
+           MOVE RETURN-CODE TO CUT-ASSERT-ACTUAL-N 
+           MOVE 0 TO RETURN-CODE
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
+       TEST-SET-RETURN-SKIP SECTION.
+           *> TEST THAT THE RETURN CODE IS ZERO FOR A TEST SKIP
+           *> Note - could change in the future
+       
+           *> GIVEN
+           MOVE 1 TO DUT-TEST-SKIP-COUNT 
+       
+           *> WHEN
+           PERFORM DUT-SET-RETURN-CODE 
+           
+           *> THEN
+           MOVE 0 TO CUT-ASSERT-TARGET-N
+           MOVE RETURN-CODE TO CUT-ASSERT-ACTUAL-N 
+           MOVE 0 TO RETURN-CODE
+           PERFORM CUT-ASSERT-EQUALS-NUM 
+       
+           PERFORM CUT-END-TEST 
+       .
+
        END-TEST-SUITE SECTION.
       * DISPLAY-COVERAGE ONLY EXISTS WHEN THE COVERAGE PRECOMPILER HAS
       * RUN. THE GUARD REMOVES THE PERFORM AT COMPILE TIME OTHERWISE,
@@ -2218,6 +2291,11 @@
        BEFORE-EACH SECTION.
            SET DUT-TEST-PASS TO TRUE 
            MOVE SPACES TO DUT-OUT-RECORD
+           MOVE 0 TO DUT-TEST-PASS-COUNT 
+                     DUT-TEST-FAIL-COUNT
+                     DUT-TEST-ERROR-COUNT 
+                     DUT-TEST-SKIP-COUNT 
+
            EXIT SECTION  
        .
 
