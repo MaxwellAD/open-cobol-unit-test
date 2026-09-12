@@ -21,7 +21,8 @@ code-coverage-precompiler.sh $business_pgm $tmp_coverage_pgm 1> /dev/null &&
 
 [[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-./harness.sh $tmp_coverage_pgm $test_pgm &&
+#./harness.sh $business_pgm $test_pgm && # <-- no code coverage 
+./harness.sh $tmp_coverage_pgm $test_pgm && # <-- code coverage
 
 [[ "$VERBOSE" == "true" ]] && printf "\nCompile\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
