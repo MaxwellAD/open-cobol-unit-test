@@ -5,11 +5,12 @@ BUSINESS_PGM=$1 # PGM TO TEST
 TEST_PGM=$2 # TEST PGM
 PREFIX="MOCK-"
 
-# Where the generated copybooks go. Outside the project by default, so running
-# the harness in someone else's repo doesn't litter it with build output, and
-# so nothing here depends on the working directory. COBTEST_WORK overrides it -
-# cobtestrun sets it so a whole run shares one directory.
-WORK_DIR="${COBTEST_WORK:-${TMPDIR:-/tmp}/cobtest-$(id -u)}"
+# Where the generated copybooks go - build output, inside the project under
+# test, next to the source it was generated from. Editor tooling resolves a
+# workspace-relative path, which an absolute one in /tmp can't be, and a
+# per-project directory can't collide when two projects build at once.
+# COBTEST_WORK overrides it - cobtestrun sets it so a whole run shares one.
+WORK_DIR="${COBTEST_WORK:-target}"
 mkdir -p "$WORK_DIR"
 # Get everything post precedure division piped into adding section tracing
 

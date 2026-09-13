@@ -6,8 +6,9 @@
 # COBTEST_HOME to point somewhere else.
 COBTEST_HOME="${COBTEST_HOME:-$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)}"
 
-# One working directory for the whole run, shared with harness.sh
-COBTEST_WORK="${COBTEST_WORK:-${TMPDIR:-/tmp}/cobtest-$(id -u)}"
+# One working directory for the whole run, shared with harness.sh. Build output,
+# so it lives in the project under test - see harness.sh for why.
+COBTEST_WORK="${COBTEST_WORK:-target}"
 export COBTEST_WORK
 mkdir -p "$COBTEST_WORK"
 
