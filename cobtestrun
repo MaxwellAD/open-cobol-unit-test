@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Where the framework itself lives - the CUT copybooks and harness.sh. Defaults
+# to the directory holding this script (symlinks resolved), so it works from a
+# checkout or installed on PATH without anyone setting anything; export
+# COBTEST_HOME to point somewhere else.
+COBTEST_HOME="${COBTEST_HOME:-$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)}"
+
+# One working directory for the whole run, shared with harness.sh
+COBTEST_WORK="${COBTEST_WORK:-${TMPDIR:-/tmp}/cobtest-$(id -u)}"
+export COBTEST_WORK
+mkdir -p "$COBTEST_WORK"
+
 # Business program is identified by: src/main/cobol/sorlib/**.cbl
 business_pgm=src/main/cobol/sorlib/pgm-to-test.cbl
 business_pgm=$1
@@ -15,24 +26,38 @@ VERBOSE="true"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
 
 # If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
-mkdir coverage
-tmp_coverage_pgm=coverage/pgm-to-test.cbl
-code-coverage-precompiler.sh $business_pgm $tmp_coverage_pgm 1> /dev/null &&
+mkdir -p "$COBTEST_WORK/coverage"
+tmp_coverage_pgm="$COBTEST_WORK/coverage/$(basename "$business_pgm")"
+code-coverage-precompiler.sh $business_pgm "$tmp_coverage_pgm" 1> /dev/null &&
 
 [[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-#./harness.sh $business_pgm $test_pgm && # <-- no code coverage 
-./harness.sh $tmp_coverage_pgm $test_pgm && # <-- code coverage
+#"$COBTEST_HOME/harness.sh" $business_pgm $test_pgm && # <-- no code coverage 
+"$COBTEST_HOME/harness.sh" "$tmp_coverage_pgm" $test_pgm && # <-- code coverage
 
 [[ "$VERBOSE" == "true" ]] && printf "\nCompile\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-cobc -x test-pgm-out.cbl -o testpgm -I "CUT" -I "tmp" &&
+# Copybook search path: the framework's own CUT members, the copybooks the
+# harness just generated, and src/main/cobol/copylib - the project's copybook
+# library, which is how a COPY the harness relocated out of the business
+# program's linkage or working storage still resolves
+cobc -x test-pgm-out.cbl -o testpgm \
+     -I "$COBTEST_HOME/CUT" \
+     -I "$COBTEST_WORK" \
+     -I "src/main/cobol/copylib" &&
 
 [[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-./testpgm > Reports/dut-coverage-report.txt; 
+# Mirror the testlib layout under Reports/ - cobtest runs every suite in turn,
+# and one flat set of names meant each suite clobbered the one before it.
+# src/test/cobol/testlib/pgm-to-test/test-pgm.cbl
+#   -> Reports/pgm-to-test/test-pgm-unit-test-report.txt
+report_dir="Reports/$(basename "$(dirname "$test_pgm")")"
+report=$(basename "${test_pgm%.*}")
+mkdir -p "$report_dir"
+./testpgm > "${report_dir}/${report}-coverage-report.txt"; 
 test_return_code=$?
-cp CUT-RPTO "Reports/Unit Test Report.txt" &&
+cp CUT-RPTO "${report_dir}/${report}-unit-test-report.txt" &&
 
 [[ "$VERBOSE" == "true" ]] && printf "\n"
 
@@ -42,6 +67,6 @@ grep -E -B 1 -A 1 '^\[(FAIL|ERROR|SKIP|DEBUG)\]' CUT-RPTO
 
 cat CUT-RPTO | tail -7
 
-rm -r coverage CUT-RPTO test-pgm-out.cbl
+rm -r "$COBTEST_WORK/coverage" CUT-RPTO test-pgm-out.cbl
 
 exit $test_return_code

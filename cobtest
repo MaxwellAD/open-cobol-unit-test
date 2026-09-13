@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Run the suites through the runner that sits beside this script, not whatever
+# happens to be in the working directory - the project under test is the CWD,
+# the framework lives elsewhere. See cobtestrun for COBTEST_HOME.
+COBTEST_HOME="${COBTEST_HOME:-$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)}"
+export COBTEST_HOME
+
 num_test_files=0
 num_suite_fail=0
 num_suite_pass=0
@@ -19,7 +25,7 @@ for source in `find src/main/cobol/sorlib/ -name "**.cbl" 2> /dev/null`; do
         echo "    Found test program:" $test_program
         echo ""
         
-        if ! ./cobtestrun $source $test_program; then
+        if ! "$COBTEST_HOME/cobtestrun" $source $test_program; then
             #echo "TEST FAILS DETECTED IN" $test_program
             failed_suites+="${test_program}\n"
             num_suite_fail=$(($num_suite_fail+1))
