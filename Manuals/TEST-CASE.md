@@ -431,6 +431,16 @@ Two keywords extend this beyond what a value check can reach: `NOT` proves an ab
 
 This applies to the whole name including the `TEST-` or `SKIP-` prefix. Longer names are accepted by some compilers and rejected by others.
 
+## A section that returns to the caller ends the whole run
+
+`GOBACK` and `STOP RUN` in a business section are not scoped to that section. `PERFORM` it from a TEST-CASE and the test program stops there, mid-suite — the cases after it never run, and the report is written as far as it got.
+
+Keep the return verb in a section of its own and mock that section out, which is what `src/test/cobol/testlib/linkage-pgm/` does with `MOCK-BZ-RETURN-TO-CALLER`. The remaining logic is then reachable from a case, including the mainline.
+
+## `ANY LENGTH` linkage items are not supported
+
+`PIC X ANY LENGTH` is only legal in a `LINKAGE SECTION`. The harness relocates linkage items into working storage, where the compiler rejects it. Everything else that is legal in linkage — condition names, `OCCURS`, `REDEFINES` — carries over unchanged.
+
 ---
 
 # See Also

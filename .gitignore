@@ -1,6 +1,5 @@
 coverage/
 tmp/
-zapp.yaml
 test-pgm-out.cbl
 
 # Compiled test binaries
@@ -10,3 +9,5 @@ test-pgm-out
 # Test run output
 CUT-RPTO
 UTRPTO
+
+target

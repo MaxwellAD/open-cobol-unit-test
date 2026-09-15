@@ -11,6 +11,18 @@ PREFIX="MOCK-"
 # per-project directory can't collide when two projects build at once.
 # COBTEST_WORK overrides it - cobtestrun sets it so a whole run shares one.
 WORK_DIR="${COBTEST_WORK:-target}"
+
+# The generated members go in a library of their own, one per business program,
+# so two programs' STORAGE can't collide and a test program says which one it
+# means: COPY STORAGE OF LINKAGE-PGM. GnuCOBOL resolves the library name as a
+# directory under the copy path, so the library IS the directory name.
+#
+# cobtestrun sets COBTEST_LIB, because by the time the harness runs it has been
+# handed a precompiled copy of the program and can no longer see where the
+# original sat in the tree. Standalone, fall back to the file's own name.
+LIB="${COBTEST_LIB:-$(basename "$BUSINESS_PGM")}"
+LIB="$(printf '%s' "${LIB%.*}" | tr '[:lower:]' '[:upper:]')"
+WORK_DIR="$WORK_DIR/$LIB"
 mkdir -p "$WORK_DIR"
 # Get everything post precedure division piped into adding section tracing
 

@@ -1,0 +1,29 @@
+name: Generated ZAPP document
+description: 'This zapp document includes the syslib
+ locations to the unit test framework copybooks (CUT/) and
+ the project level copylib (in src/main/cobol/copylib).
+ 
+ This document also exposes the harness generated libraries
+ of each of the business programs which get imported as 
+ COPY XXXXXXXX OF <business name> in the test programs.'
+author: IBM Z Open Editor
+propertyGroups:
+  - name: search-all
+    libraries:
+      - name: syslib
+        type: local
+        locations:
+          - "CUT/**"
+          - "src/main/cobol/copylib/**"
+      - name: PGM-TO-TEST
+        type: local
+        locations:
+          - "target/PGM-TO-TEST"
+      - name: LINKAGE-PGM
+        type: local
+        locations:
+          - "target/LINKAGE-PGM"
+      - name: CALCULATOR
+        type: local
+        locations:
+          - "target/CALCULATOR"

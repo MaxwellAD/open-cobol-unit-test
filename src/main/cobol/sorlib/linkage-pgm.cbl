@@ -1,0 +1,102 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. LINKPGM.
+      *****************************************************************
+      * A CALLED SUBPROGRAM - IT TAKES ITS INPUT AND RETURNS ITS
+      * RESULT THROUGH THE LINKAGE SECTION RATHER THAN THROUGH FILES
+      * OR ACCEPT.
+      *
+      * IT EXISTS TO PROVE THE HARNESS RELOCATES LOCAL-STORAGE AND
+      * LINKAGE ITEMS - FIELDS AND COPY MEMBERS ALIKE - INTO
+      * STORAGE.CPY, SO A SUBPROGRAM WITH A PARAMETER LIST CAN BE
+      * UNIT TESTED AT ALL. SEE SRC/TEST/COBOL/TESTLIB/LINKAGE-PGM.
+      *
+      * PRICES AN ORDER: GROSS = QTY * UNIT PRICE, LESS A BULK
+      * DISCOUNT ONCE THE QUANTITY REACHES THE THRESHOLD.
+      *****************************************************************
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+      * TRUE WORKING STORAGE - OUTLIVES A SINGLE CALL
+       01 WS-CONSTANTS.
+           05 WS-BULK-THRESHOLD         PIC 9(3)    VALUE 100.
+           05 WS-BULK-DISCOUNT-RATE     PIC 9V99    VALUE 0.10.
+
+       LOCAL-STORAGE SECTION.
+      * SCRATCH WORKINGS, RE-INITIALISED ON EVERY CALL OF THIS PROGRAM.
+      * THE HARNESS FOLDS THESE INTO WORKING STORAGE, SO IN A TEST RUN
+      * THEY PERSIST BETWEEN CASES - RESET THEM IN BEFORE-EACH.
+       01 LS-WORK-AREA.
+           05 LS-GROSS-AMOUNT           PIC 9(9)V99 VALUE ZERO.
+           05 LS-DISCOUNT-AMOUNT        PIC 9(9)V99 VALUE ZERO.
+
+       LINKAGE SECTION.
+      * THE REQUEST SIDE ARRIVES AS A COPY MEMBER, THE RESPONSE SIDE IS
+      * DECLARED INLINE - BOTH ROUTES HAVE TO SURVIVE THE HARNESS
+       COPY LKPARM.
+       01 LK-RESPONSE.
+           05 LK-RETURN-CODE            PIC X(2).
+               88 LK-OK                             VALUE '00'.
+               88 LK-INVALID-QTY                    VALUE '10'.
+               88 LK-INVALID-PRICE                  VALUE '20'.
+           05 LK-MESSAGE                PIC X(40).
+           05 LK-NET-AMOUNT             PIC 9(9)V99.
+
+       PROCEDURE DIVISION USING LK-REQUEST LK-RESPONSE.
+      *****************************************************************
+      * THE RETURN TO THE CALLER IS ITS OWN SECTION SO A TEST CAN MOCK
+      * IT OUT. IN A TEST RUN THERE IS NO CALLER, SO RETURNING WOULD
+      * END THE WHOLE TEST PROGRAM MID SUITE.
+      *****************************************************************
+       AA-MAINLINE SECTION.
+           PERFORM BA-VALIDATE-REQUEST
+           IF LK-OK
+               PERFORM BB-CALCULATE-CHARGE
+           END-IF
+           PERFORM BC-BUILD-RESPONSE
+           PERFORM BZ-RETURN-TO-CALLER
+           .
+
+      * SETS THE RETURN CODE FROM THE REQUEST FIELDS
+       BA-VALIDATE-REQUEST SECTION.
+           SET LK-OK TO TRUE
+           IF LK-ORDER-QTY = ZERO
+               SET LK-INVALID-QTY TO TRUE
+           END-IF
+           IF LK-UNIT-PRICE = ZERO
+               SET LK-INVALID-PRICE TO TRUE
+           END-IF
+           .
+
+      * PRICES THE ORDER THROUGH THE LOCAL-STORAGE WORKINGS
+       BB-CALCULATE-CHARGE SECTION.
+           COMPUTE LS-GROSS-AMOUNT = LK-ORDER-QTY * LK-UNIT-PRICE
+           MOVE ZERO TO LS-DISCOUNT-AMOUNT
+           IF LK-ORDER-QTY >= WS-BULK-THRESHOLD
+               COMPUTE LS-DISCOUNT-AMOUNT =
+                  LS-GROSS-AMOUNT * WS-BULK-DISCOUNT-RATE
+           END-IF
+           COMPUTE LK-NET-AMOUNT =
+              LS-GROSS-AMOUNT - LS-DISCOUNT-AMOUNT
+           .
+
+      * FILLS IN THE HUMAN READABLE HALF OF THE RESPONSE
+       BC-BUILD-RESPONSE SECTION.
+           EVALUATE TRUE
+               WHEN LK-INVALID-QTY
+                   MOVE 'ORDER QUANTITY MUST NOT BE ZERO'
+                      TO LK-MESSAGE
+               WHEN LK-INVALID-PRICE
+                   MOVE 'UNIT PRICE MUST NOT BE ZERO'
+                      TO LK-MESSAGE
+               WHEN OTHER
+                   MOVE SPACES TO LK-MESSAGE
+                   STRING 'ORDER PRICED FOR '
+                          LK-CUSTOMER-NAME
+                          DELIMITED BY SIZE
+                          INTO LK-MESSAGE
+           END-EVALUATE
+           .
+
+      * HANDS CONTROL BACK TO WHOEVER CALLED THIS PROGRAM
+       BZ-RETURN-TO-CALLER SECTION.
+           GOBACK
+           .

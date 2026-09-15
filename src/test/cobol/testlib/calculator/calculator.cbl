@@ -6,7 +6,7 @@
        COPY CUTDATA.
        WORKING-STORAGE SECTION. 
 
-       COPY STORAGE.
+       COPY STORAGE OF CALCULATOR.
        COPY CUTSTOR.
 
        01 MOCKS.
@@ -295,5 +295,5 @@
        .
 
 
-       COPY PROGRAM.
+       COPY PROGRAM OF CALCULATOR.
        COPY CUTPROC.
