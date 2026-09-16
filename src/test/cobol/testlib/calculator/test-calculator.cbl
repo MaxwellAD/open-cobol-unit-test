@@ -315,7 +315,7 @@
        .
 
        MOCK-CA-DISPLAY-ERROR SECTION.
-           EXIT
+           EXIT PARAGRAPH
        .
 
       *****************************************************************
