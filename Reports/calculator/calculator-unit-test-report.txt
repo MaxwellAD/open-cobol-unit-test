@@ -31,10 +31,13 @@ TEST CASE - TEST-ACCEPT-INPUT-SINGLE
 TEST CASE - TEST-INPUT-EVAL-ADD
 [PASS]
 
+TEST CASE - TEST-INPUT-INVALID
+[PASS]
+
 
 TEST EXECUTION RESULTS
 ===================================================
-PASS : 11
+PASS : 12
 FAIL : 0
 SKIP : 0
 ===================================================

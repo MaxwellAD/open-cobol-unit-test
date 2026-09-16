@@ -230,6 +230,30 @@
            PERFORM CUT-END-TEST 
        .
 
+       TEST-INPUT-INVALID SECTION.
+           *> TEST THE INPUT EVALUATOR FOR AN INVALID INPUT
+       
+           *> GIVEN
+           MOVE 'INV' TO WS-INPUT 
+           MOVE 5 TO WS-NUM-1 
+           MOVE 6 TO WS-NUM-2 
+       
+           *> WHEN
+           PERFORM DA-EVALUATE-INPUT.
+
+       INVALID-INPUT-RETURN.
+           
+           *> THEN
+           STRING 'DA-EVALUATE-INPUT '
+                  'FOLLOWED-BY ZA-EXIT'
+               DELIMITED BY SIZE
+               INTO CUT-TRACE 
+           END-STRING
+           PERFORM CUT-ASSERT-TRACE
+
+           PERFORM CUT-END-TEST 
+       .
+
 
        END-TEST-SUITE SECTION.
            PERFORM DISPLAY-COVERAGE 
@@ -280,6 +304,14 @@
        MOCK-AE-ACCEPT-NUM1 SECTION.
            MOVE MOCK-WS-NUM-1 TO WS-NUM-1 
            EXIT PARAGRAPH 
+       .
+
+       MOCK-ZA-EXIT SECTION.
+           EVALUATE CUT-TEST-NAME
+           WHEN 'TEST-INPUT-INVALID'
+              GO TO INVALID-INPUT-RETURN
+           END-EVALUATE
+           EXIT SECTION
        .
 
       *****************************************************************

@@ -51,8 +51,6 @@
 
        .
 
-       
-
        AE-ACCEPT-NUM1.
            DISPLAY 'NUMBER 1: '
            ACCEPT WS-NUM-1 
@@ -114,6 +112,8 @@
               PERFORM BE-SQUARE-NUMBERS
            WHEN 'SQRT'
               PERFORM BF-SQUARE-ROOT-NUMBERS
+           WHEN OTHER
+              GO TO ZA-EXIT
            END-EVALUATE 
 
        .

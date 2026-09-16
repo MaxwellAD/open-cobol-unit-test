@@ -41,8 +41,6 @@ CANNOT DIVIDE BY ZERO!
     
            .
     
-           
-    
            AE-ACCEPT-NUM1.
 [-]            DISPLAY 'NUMBER 1: '
 [-]            ACCEPT WS-NUM-1 
@@ -104,6 +102,8 @@ CANNOT DIVIDE BY ZERO!
 [-]               PERFORM BE-SQUARE-NUMBERS
                WHEN 'SQRT'
 [-]               PERFORM BF-SQUARE-ROOT-NUMBERS
+               WHEN OTHER
+[+]               GO TO ZA-EXIT
                END-EVALUATE 
     
            .
@@ -120,9 +120,9 @@ CANNOT DIVIDE BY ZERO!
 ****************************************************************************************
     SUMMARY STATISTICS                           
 ****************************************************************************************
-    TOTAL STATEMENTS: 0043
-    COVERED STATEMENTS: 0012
-    STATEMENT COVERAGE: 027.90%
+    TOTAL STATEMENTS: 0044
+    COVERED STATEMENTS: 0013
+    STATEMENT COVERAGE: 029.54%
 ****************************************************************************************
     END OF REPORT - CALCULATOR                                            
 ****************************************************************************************
