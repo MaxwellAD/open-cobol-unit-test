@@ -6,10 +6,8 @@ TEST_PGM=$2 # TEST PGM
 PREFIX="MOCK-"
 
 # Where the generated copybooks go - build output, inside the project under
-# test, next to the source it was generated from. Editor tooling resolves a
-# workspace-relative path, which an absolute one in /tmp can't be, and a
-# per-project directory can't collide when two projects build at once.
-# COBTEST_WORK overrides it - cobtestrun sets it so a whole run shares one.
+# test, next to the source it was generated from. This lets editor tooling 
+# resolves a workspace-relative path.
 WORK_DIR="${COBTEST_WORK:-target}"
 
 # The generated members go in a library of their own, one per business program,
