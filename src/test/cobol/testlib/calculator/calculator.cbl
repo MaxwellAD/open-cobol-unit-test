@@ -314,6 +314,10 @@
            EXIT SECTION
        .
 
+       MOCK-CA-DISPLAY-ERROR SECTION.
+           EXIT
+       .
+
       *****************************************************************
       * RUNS BEFORE EACH TEST CASE
       * USE THIS SECTION TO SETUP AND TEARDOWN YOUR TEST DATA AND 
