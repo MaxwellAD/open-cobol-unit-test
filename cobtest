@@ -20,9 +20,6 @@ fi
 # Make this generally available for use
 export COBTEST_HOME
 
-# Suites run through the runner in COBTEST_HOME, never whatever happens to be
-# in the working directory - the project under test is the CWD.
-
 num_test_files=0
 num_suite_fail=0
 num_suite_pass=0
