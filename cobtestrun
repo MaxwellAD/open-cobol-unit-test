@@ -93,8 +93,7 @@ cobc -x test-pgm-out.cbl -o testpgm \
 
 [[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-# Mirror the testlib layout under Reports/ - cobtest runs every suite in turn,
-# and one flat set of names meant each suite clobbered the one before it.
+# Mirror the testlib layout under Reports/
 # src/test/cobol/testlib/pgm-to-test/test-pgm.cbl
 #   -> Reports/pgm-to-test/test-pgm-unit-test-report.txt
 report_dir="Reports/$(basename "$(dirname "$test_pgm")")"
