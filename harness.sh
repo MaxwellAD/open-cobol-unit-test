@@ -96,8 +96,7 @@ awk '
 # The generated program PERFORMs sections, it never CALLs the business program,
 # so there is no caller to supply the parameters and no invocation boundary to
 # re-initialise on. LOCAL-STORAGE and LINKAGE items therefore become ordinary
-# working storage - the test case sets them itself in its GIVEN, and BEFORE-EACH
-# is the place to reset them between cases.
+# working storage
 # Both blocks append to STORAGE.cpy, which the test program COPYs inside its own
 # WORKING-STORAGE SECTION. Lines pass through verbatim, so a COPY member declared
 # in either section is relocated as-is and left for the compiler to resolve.

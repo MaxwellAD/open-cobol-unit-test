@@ -1,4 +1,4 @@
-name: Generated ZAPP document
+name: Open COBOL Unit Test zapp.yaml
 description: 'This zapp document includes the syslib
  locations to the unit test framework copybooks (CUT/) and
  the project level copylib (in src/main/cobol/copylib).
@@ -6,7 +6,7 @@ description: 'This zapp document includes the syslib
  This document also exposes the harness generated libraries
  of each of the business programs which get imported as 
  COPY XXXXXXXX OF <business name> in the test programs.'
-author: IBM Z Open Editor
+author: MaxwellAD
 propertyGroups:
   - name: search-all
     libraries:
