@@ -1,0 +1,76 @@
+****************************************************************************************
+    COVERAGE REPORT - LINKPGM                                            
+****************************************************************************************
+           PROCEDURE DIVISION USING LK-REQUEST LK-RESPONSE.
+          *****************************************************************
+          * THE RETURN TO THE CALLER IS ITS OWN SECTION SO A TEST CAN MOCK
+          * IT OUT. IN A TEST RUN THERE IS NO CALLER, SO RETURNING WOULD
+          * END THE WHOLE TEST PROGRAM MID SUITE.
+          *****************************************************************
+           AA-MAINLINE SECTION.
+[+]            PERFORM BA-VALIDATE-REQUEST
+               IF LK-OK
+[+]                PERFORM BB-CALCULATE-CHARGE
+               END-IF
+[+]            PERFORM BC-BUILD-RESPONSE
+[+]            PERFORM BZ-RETURN-TO-CALLER
+               .
+    
+          * SETS THE RETURN CODE FROM THE REQUEST FIELDS
+           BA-VALIDATE-REQUEST SECTION.
+[+]            SET LK-OK TO TRUE
+               IF LK-ORDER-QTY = ZERO
+[+]                SET LK-INVALID-QTY TO TRUE
+               END-IF
+               IF LK-UNIT-PRICE = ZERO
+[+]                SET LK-INVALID-PRICE TO TRUE
+               END-IF
+               .
+    
+          * PRICES THE ORDER THROUGH THE LOCAL-STORAGE WORKINGS
+           BB-CALCULATE-CHARGE SECTION.
+[+]            COMPUTE LS-GROSS-AMOUNT = LK-ORDER-QTY * LK-UNIT-PRICE
+[+]            MOVE ZERO TO LS-DISCOUNT-AMOUNT
+               IF LK-ORDER-QTY >= WS-BULK-THRESHOLD
+[+]                COMPUTE LS-DISCOUNT-AMOUNT =
+                      LS-GROSS-AMOUNT * WS-BULK-DISCOUNT-RATE
+               END-IF
+[+]            COMPUTE LK-NET-AMOUNT =
+                  LS-GROSS-AMOUNT - LS-DISCOUNT-AMOUNT
+               .
+    
+          * FILLS IN THE HUMAN READABLE HALF OF THE RESPONSE
+           BC-BUILD-RESPONSE SECTION.
+               EVALUATE TRUE
+                   WHEN LK-INVALID-QTY
+[+]                    MOVE 'ORDER QUANTITY MUST NOT BE ZERO'
+                          TO LK-MESSAGE
+                   WHEN LK-INVALID-PRICE
+[+]                    MOVE 'UNIT PRICE MUST NOT BE ZERO'
+                          TO LK-MESSAGE
+                   WHEN OTHER
+[+]                    MOVE SPACES TO LK-MESSAGE
+[+]                    STRING 'ORDER PRICED FOR '
+                              LK-CUSTOMER-NAME
+                              DELIMITED BY SIZE
+                              INTO LK-MESSAGE
+               END-EVALUATE
+               .
+    
+          * HANDS CONTROL BACK TO WHOEVER CALLED THIS PROGRAM
+           BZ-RETURN-TO-CALLER SECTION.
+[-]            GOBACK
+               .
+****************************************************************************************
+    SUMMARY STATISTICS                           
+****************************************************************************************
+    TOTAL STATEMENTS: 0016
+    COVERED STATEMENTS: 0015
+    STATEMENT COVERAGE: 093.75%
+****************************************************************************************
+    END OF REPORT - LINKPGM                                            
+****************************************************************************************
+ 
+ 
+ 
+ 

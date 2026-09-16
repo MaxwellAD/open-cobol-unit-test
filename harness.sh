@@ -1,7 +1,27 @@
+#!/bin/bash
+
 # Define your source and target files
 BUSINESS_PGM=$1 # PGM TO TEST
 TEST_PGM=$2 # TEST PGM
 PREFIX="MOCK-"
+
+# Where the generated copybooks go - build output, inside the project under
+# test, next to the source it was generated from. This lets editor tooling 
+# resolves a workspace-relative path.
+WORK_DIR="${COBTEST_WORK:-target}"
+
+# The generated members go in a library of their own, one per business program,
+# so two programs' STORAGE can't collide and a test program says which one it
+# means: COPY STORAGE OF LINKAGE-PGM. GnuCOBOL resolves the library name as a
+# directory under the copy path, so the library IS the directory name.
+#
+# cobtestrun sets COBTEST_LIB, because by the time the harness runs it has been
+# handed a precompiled copy of the program and can no longer see where the
+# original sat in the tree. Standalone, fall back to the file's own name.
+LIB="${COBTEST_LIB:-$(basename "$BUSINESS_PGM")}"
+LIB="$(printf '%s' "${LIB%.*}" | tr '[:lower:]' '[:upper:]')"
+WORK_DIR="$WORK_DIR/$LIB"
+mkdir -p "$WORK_DIR"
 # Get everything post precedure division piped into adding section tracing
 
 #=====================
@@ -11,7 +31,7 @@ PREFIX="MOCK-"
 # Instantiate MOCKS
 # For any section in the TEST_PGM that starts with MOCK-XXX
 # Search for a corresponding XXX section in the BUSINESS_PGM
-# Output all to tmp/mocked.cbl <-- should make this a variable and configurable to go to /tmp/
+# Output all to $WORK_DIR/mocked.cbl
 awk -v p="$PREFIX" '
   # === PHASE 1: Parse the NEW_CODE file ===
   NR==FNR { 
@@ -51,7 +71,7 @@ awk -v p="$PREFIX" '
       printf "%s", code[name] 
     }
   }
-' $TEST_PGM $BUSINESS_PGM > tmp/mocked.cbl
+' $TEST_PGM $BUSINESS_PGM > "$WORK_DIR/mocked.cbl"
 
 # Get all working storage lines - output to STORAGE.cpy
 awk '
@@ -62,14 +82,62 @@ awk '
     next; # Skip printing the header line itself
   }
 
-  # 2. Match the stopping line: PROCEDURE DIVISION or LINKAGE SECTION starting at column 8
-  inside && (substr($0, 8, 18) ~ /^PROCEDURE DIVISION/ || substr($0, 8, 15) ~ /^LINKAGE SECTION/) {
+  # 2. Match the stopping lines starting at column 8
+  inside && (substr($0, 8, 18) ~ /^PROCEDURE DIVISION/        ||
+             substr($0, 8, 21) ~ /^LOCAL-STORAGE SECTION/     ||
+             substr($0, 8, 15) ~ /^LINKAGE SECTION/) {
     inside = 0;
   }
 
   # 3. Print lines while inside the block
   inside
-' tmp/mocked.cbl > tmp/STORAGE.cpy
+' "$WORK_DIR/mocked.cbl" > "$WORK_DIR/STORAGE.cpy"
+
+# The generated program PERFORMs sections, it never CALLs the business program,
+# so there is no caller to supply the parameters and no invocation boundary to
+# re-initialise on. LOCAL-STORAGE and LINKAGE items therefore become ordinary
+# working storage
+# Both blocks append to STORAGE.cpy, which the test program COPYs inside its own
+# WORKING-STORAGE SECTION. Lines pass through verbatim, so a COPY member declared
+# in either section is relocated as-is and left for the compiler to resolve.
+
+# Get all local storage lines - append to STORAGE.cpy
+awk '
+  # 1. Match the starting line: Column 8 starts with LOCAL-STORAGE SECTION.
+  substr($0, 8, 22) ~ /^LOCAL-STORAGE SECTION\./ {
+    inside = 1;
+    print "      * LOCAL-STORAGE SECTION RELOCATED BY THE HARNESS";
+    next; # Skip printing the header line itself
+  }
+
+  # 2. Match the stopping lines starting at column 8
+  inside && (substr($0, 8, 18) ~ /^PROCEDURE DIVISION/ ||
+             substr($0, 8, 15) ~ /^LINKAGE SECTION/) {
+    inside = 0;
+  }
+
+  # 3. Print lines while inside the block
+  inside
+' "$WORK_DIR/mocked.cbl" >> "$WORK_DIR/STORAGE.cpy"
+
+# Get all linkage section lines - append to STORAGE.cpy
+awk '
+  # 1. Match the starting line: Column 8 starts with LINKAGE SECTION.
+  substr($0, 8, 16) ~ /^LINKAGE SECTION\./ {
+    inside = 1;
+    print "      * LINKAGE SECTION RELOCATED BY THE HARNESS";
+    next; # Skip printing the header line itself
+  }
+
+  # 2. Match the stopping lines starting at column 8
+  inside && (substr($0, 8, 18) ~ /^PROCEDURE DIVISION/ ||
+             substr($0, 8, 21) ~ /^LOCAL-STORAGE SECTION/) {
+    inside = 0;
+  }
+
+  # 3. Print lines while inside the block
+  inside
+' "$WORK_DIR/mocked.cbl" >> "$WORK_DIR/STORAGE.cpy"
 
 # Get all procedure division lines, then add the section tracing to the sections and paragraphs - output to PROGRAM.cpy
 awk '
@@ -83,7 +151,7 @@ awk '
     next 
   }
   print_now
-' tmp/mocked.cbl | sed -E 's/(^.{6}[^*] {0,3}([A-Z|0-9|\-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > tmp/PROGRAM.cpy
+' "$WORK_DIR/mocked.cbl" | sed -E 's/(^.{6}[^*] {0,3}([A-Z|0-9|\-]+).*\.)/\1\n           MOVE "\2"\n           TO CUT-TEMP-SECTION-NAME\n           PERFORM CUT-ADD-TRACE-SECTION/' > "$WORK_DIR/PROGRAM.cpy"
 
 # Environment division and data division need to be incorporated to make the compiler happy, even if the files are never accessed at runtime
 
@@ -97,6 +165,7 @@ awk '
 
   # 2. Match the stopping lines starting at column 8
   inside && (substr($0, 8, 23) ~ /^WORKING-STORAGE SECTION/ || 
+             substr($0, 8, 21) ~ /^LOCAL-STORAGE SECTION/   ||
              substr($0, 8, 15) ~ /^LINKAGE SECTION/         || 
              substr($0, 8, 18) ~ /^PROCEDURE DIVISION/) {
     inside = 0;
@@ -104,7 +173,7 @@ awk '
 
   # 3. Print lines while inside the block
   inside
-' tmp/mocked.cbl > tmp/FILESEC.cpy
+' "$WORK_DIR/mocked.cbl" > "$WORK_DIR/FILESEC.cpy"
 
 # Get all environment division lines - output to ENVDIV.cpy
 awk '
@@ -117,6 +186,7 @@ awk '
   # 2. Match the stopping lines starting at column 8
   inside && (substr($0, 8, 14) ~ /^DATA DIVISION/            || 
              substr($0, 8, 23) ~ /^WORKING-STORAGE SECTION/ || 
+             substr($0, 8, 21) ~ /^LOCAL-STORAGE SECTION/   ||
              substr($0, 8, 15) ~ /^LINKAGE SECTION/         || 
              substr($0, 8, 18) ~ /^PROCEDURE DIVISION/) {
     inside = 0;
@@ -124,7 +194,7 @@ awk '
 
   # 3. Print lines while inside the block
   inside
-' tmp/mocked.cbl > tmp/FILECTL.cpy
+' "$WORK_DIR/mocked.cbl" > "$WORK_DIR/FILECTL.cpy"
 
 
 
