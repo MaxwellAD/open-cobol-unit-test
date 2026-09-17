@@ -1,5 +1,28 @@
 #!/bin/bash
 
+# Where the framework itself lives - the CUT copybooks and harness.sh.
+# COBTEST_HOME is the authority; the install sets it, alongside PATH:
+#     export COBTEST_HOME="$HOME/open-cobol-unit-test"
+#     export PATH="$PATH:$COBTEST_HOME"
+# Unset, fall back to the directory holding this script, so ./cobtest works in
+# a fresh checkout with nothing configured. Only dirname and cd -P are used -
+# readlink -f is a GNU extension and this has to run wherever a shell does,
+# which is why running the scripts through a symlink is not supported: set
+# COBTEST_HOME instead.
+COBTEST_HOME="${COBTEST_HOME:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
+if [[ ! -f "$COBTEST_HOME/CUT/CUTPROC.cpy" ]]; then
+    printf 'cobtest: no framework copybooks at %s\n' "$COBTEST_HOME/CUT" >&2
+    printf '         set COBTEST_HOME to your open-cobol-unit-test directory\n' >&2
+    exit 1
+fi
+
+# One working directory for the whole run, shared with harness.sh. Build output,
+# so it lives in the project under test - see harness.sh for why.
+COBTEST_WORK="${COBTEST_WORK:-target}"
+export COBTEST_WORK
+mkdir -p "$COBTEST_WORK"
+
 # Business program is identified by: src/main/cobol/sorlib/**.cbl
 business_pgm=src/main/cobol/sorlib/pgm-to-test.cbl
 business_pgm=$1
@@ -11,28 +34,74 @@ test_pgm=$2
 
 VERBOSE="true"
 
+# The copybook library the harness generates into, and the name a test program
+# qualifies its COPY statements with. It is the business program's FILE NAME,
+# without the extension, uppercased - the path is deliberately not part of it:
+#     src/main/cobol/sorlib/LEDGER.cbl        -> COPY STORAGE OF LEDGER.
+#     src/main/cobol/sorlib/CALC/OUTPUT.cbl   -> COPY STORAGE OF OUTPUT.
+#
+# sorlib and testlib may nest freely; target/ stays flat. A lone word after OF
+# is the only form every major COBOL compiler/linter accepts.
+# GnuCOBOL reads it as a directory under -I
+# IBM under JCL as a ddname
+# IBM under cob2 as an environment variable
+# Z Open Editor as a named library in zapp.
+#
+# Two programs with the same file name in different directories would share
+# a library. That stays invisible because cobtest runs suites ONE AT A TIME and
+# each compiles straight after its own generation - which is why the suites must
+# stay sequential, and why targeting a single program is the way out for a tree
+# that really does have duplicates.
+# If a tree has duplicate source program names in different folders, e.g:
+# ledger/OUTPUT.cbl and report/OUTPUT.cbl then your code editor will only lint
+# the most recently generated COPY XXXXXXXX OF OUTPUT
+COBTEST_LIB="$(basename "$business_pgm")"
+COBTEST_LIB="$(printf '%s' "${COBTEST_LIB%.*}" | tr '[:lower:]' '[:upper:]')"
+export COBTEST_LIB
+
+if [[ ${#COBTEST_LIB} -gt 30 ]]; then
+    printf 'cobtest: warning: library name %s is %d characters; COPY ... OF allows 30\n' \
+        "$COBTEST_LIB" "${#COBTEST_LIB}" >&2
+fi
+
 [[ "$VERBOSE" == "true" ]] && printf "Instrumenting Code Coverage\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
 
 # If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
-mkdir coverage
-tmp_coverage_pgm=coverage/pgm-to-test.cbl
-code-coverage-precompiler.sh $business_pgm $tmp_coverage_pgm 1> /dev/null &&
+mkdir -p "$COBTEST_WORK/coverage"
+tmp_coverage_pgm="$COBTEST_WORK/coverage/$(basename "$business_pgm")"
+code-coverage-precompiler.sh $business_pgm "$tmp_coverage_pgm" 1> /dev/null || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-#./harness.sh $business_pgm $test_pgm && # <-- no code coverage 
-./harness.sh $tmp_coverage_pgm $test_pgm && # <-- code coverage
+#"$COBTEST_HOME/harness.sh" $business_pgm $test_pgm || exit 1 # <-- no code coverage 
+"$COBTEST_HOME/harness.sh" "$tmp_coverage_pgm" $test_pgm || exit 1 # <-- code coverage
 
 [[ "$VERBOSE" == "true" ]] && printf "\nCompile\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-cobc -x test-pgm-out.cbl -o testpgm -I "CUT" -I "tmp" &&
+# Copybook search path: the framework's own CUT members, the work dir holding
+# the generated libraries (COPY STORAGE OF LEDGER resolves to LEDGER/STORAGE
+# beneath it), and src/main/cobol/copylib - the project's copybook library.
+
+# Drop any binary an earlier suite left behind first, so a failed compile can
+# never be followed by a run of the wrong program
+rm -f testpgm
+cobc -x test-pgm-out.cbl -o testpgm \
+     -I "$COBTEST_HOME/CUT" \
+     -I "$COBTEST_WORK" \
+     -I "src/main/cobol/copylib" || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
-./testpgm > Reports/dut-coverage-report.txt; 
+# Mirror the testlib layout under Reports/
+# src/test/cobol/testlib/pgm-to-test/test-pgm.cbl
+#   -> Reports/pgm-to-test/test-pgm-unit-test-report.txt
+report_dir="Reports/$(basename "$(dirname "$test_pgm")")"
+report=$(basename "${test_pgm%.*}")
+mkdir -p "$report_dir"
+./testpgm > "${report_dir}/${report}-coverage-report.txt"; 
 test_return_code=$?
-cp CUT-RPTO "Reports/Unit Test Report.txt" &&
+cp CUT-RPTO "${report_dir}/${report}-unit-test-report.txt" || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\n"
 
@@ -42,6 +111,6 @@ grep -E -B 1 -A 1 '^\[(FAIL|ERROR|SKIP|DEBUG)\]' CUT-RPTO
 
 cat CUT-RPTO | tail -7
 
-rm -r coverage CUT-RPTO test-pgm-out.cbl
+rm -r "$COBTEST_WORK/coverage" CUT-RPTO test-pgm-out.cbl
 
 exit $test_return_code
