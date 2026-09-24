@@ -309,7 +309,7 @@ EXECUTION TRACE TABLE
 
 It answers the two questions a failing trace assertion raises: which sections actually ran, and what the captured fields actually held. The values shown are the exact text a `WITH` clause is compared against.
 
-This goes to **stdout**, not to the test report, so run `./testpgm > out.txt` to capture it.
+This goes to the **test report**. So the table appears in `Reports/<suite>/<suite>-unit-test-report.txt` tagged `[DEBUG]`.
 
 ---
 
