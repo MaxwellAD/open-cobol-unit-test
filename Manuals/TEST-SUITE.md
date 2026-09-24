@@ -140,7 +140,7 @@ End it with `EXIT SECTION`.
 
 ### CUT-TRACE-FIELDS
 
-Registers the fields captured into the trace on entry to every business section. These are the fields a `WITH` clause can assert on and the columns `CUT-DEBUG-DISPLAY-TRACE` prints.
+Registers the fields captured into the trace on entry to every business section/paragraph. These are the fields a `WITH` clause can assert on and the columns `CUT-DEBUG-DISPLAY-TRACE` prints.
 
 ```cobol
        CUT-TRACE-FIELDS SECTION.
@@ -163,7 +163,7 @@ Three lines per field. If you are not asserting on the trace, leave it empty:
 
 ## BEFORE-ALL And END-TEST-SUITE
 
-`BEFORE-ALL` runs once. It has to be the **first** section under `PROCEDURE DIVISION`.
+`BEFORE-ALL` is optional and runs once. It has to be the **first** section under `PROCEDURE DIVISION`.
 
 ```cobol
        BEFORE-ALL SECTION.
@@ -179,7 +179,6 @@ Three lines per field. If you are not asserting on the trace, leave it empty:
            .
 ```
 
-If the totals come out one higher than the number of cases you wrote, or the run never finishes, that section is missing or is in the wrong place.
 
 ---
 
