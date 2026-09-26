@@ -1,7 +1,6 @@
 # Contributing to Open COBOL Unit Test
 
-`README.md` covers what this project is and why it exists. This file is the
-practical "how to work in the codebase" reference.
+`README.md` covers what this project is and why it exists. This file is the practical "how to work in the codebase" reference.
 
 ## Prerequisites
 
@@ -17,52 +16,34 @@ cd open-cobol-unit-test
 
 ## Design principles
 
-These explain most of the constraints below, and PRs are weighed against
-them:
+These explain most of the constraints below, and PRs are weighed against them:
 
-- **Portability is a feature, not a chore.** EBCDIC-safe output, the 30-char
-  word limit, MVS/IBM-strict gates. It must run wherever COBOL runs.
-- **It's just COBOL.** The developer only ever writes COBOL — no second
-  language, no YAML/XML test file, no external runner. The harness's text
-  extraction and instrumentation is machinery the user never touches.
-- **Test COBOL as it actually is** — stateful, sequenced. The
-  trace assertions embrace shared state and execution order rather than
-  demanding the code be refactored into something "testable" first.
-- **Readable by people who can't write it.** The trace DSL
-  (`A FOLLOWED-BY B WITH <field> = <value>`) is deliberately English-like
-  and COBOL-shaped, so a technical lead can grasp what a case asserts even
-  if they couldn't author it.
+- **Portability is a feature, not a chore.** EBCDIC-safe output, the 30-char word limit, MVS/IBM-strict gates. It must run wherever COBOL runs.
+- **It's just COBOL.** The developer only ever writes COBOL — no second language, no YAML/XML test file, no external runner.
+- **Encourage Better COBOL** Large monolithic sections and paragraphs are difficult to unit test, this feedback is crucial for a developer. 
+- **Test COBOL as it actually is** While the above is useful when starting from scratch; trace assertions empower large stateful processes to be tested without an implicit requirement to alter the way the codebase is written
+- **Readable by people who can't write it.** The trace DSL (`A FOLLOWED-BY B WITH <field> = <value>`) is deliberately English-like and COBOL-shaped, so a technical lead can grasp what a case asserts even if they couldn't author it.
 
 ## Optional build gates
 
-Both are good CI candidates and both currently pass clean.
-
 ### MVS / Unix compliance check
 
-The default `cobc` build is lenient. To validate that all user-defined words stay within the traditional 30-character COBOL limit (so the source is clean under strict/mainframe compilers and IBM Z Open Editor), compile with the word-length gate — it passes clean or names each offender with a line
-number:
+The default gnucobol `cobc` build is lenient. To validate that all user-defined words stay within the traditional 30-character COBOL limit (so the source is clean under strict/mainframe compilers and IBM Z Open Editor), compile with the word-length gate — it passes clean or names each offender with a line number:
 
 ```sh
 cobc -fsyntax-only -fword-length=30 test-pgm-out.cbl -I "tmp" -I "CUT"
 ```
 
-Add `-std=mvs-strict` (or `ibm-strict`) for a fuller dialect check. Keep
-this as a per-run option, not the default, so users who don't target the
-mainframe aren't forced through it.
+Add `-std=mvs-strict` (or `ibm-strict`) for a fuller dialect check. Keep this as a per-run option, not the default, so users who don't target the mainframe aren't forced through it.
 
 ### Bounds-checking build
 
-Build with `-debug` to turn on GnuCOBOL runtime checks (subscript /
-reference-modification bounds). The default build is lenient and lets an
-out-of-bounds subscript silently corrupt memory (you'll get a `SIGSEGV`
-somewhere unrelated); `-debug` fails fast and names the exact field, line,
-and offending subscript:
+Build with `-debug` to turn on GnuCOBOL runtime checks (subscript / reference-modification bounds). The default build is lenient and lets an out-of-bounds subscript silently corrupt memory.
 
 ```sh
 cobc -x -debug test-pgm-out.cbl -o testpgm_dbg -I "tmp" -I "CUT"
 ./testpgm_dbg
 ```
-
 
 ## Where output goes
 
@@ -100,15 +81,11 @@ These have all bitten real edits in this codebase:
 
 ## EBCDIC / portability
 
-Output is meant to survive an EBCDIC environment — avoid box-drawing
-characters; stick to `|` and `-` for tables.
+Output is meant to survive an EBCDIC environment — avoid box-drawing characters; stick to `|` and `-` for tables.
 
 ## Optional: coverage precompiler
 
-`open-cobol-code-coverage` provides `DISPLAY-COVERAGE`. If a test program
-`PERFORM DISPLAY-COVERAGE`s, it only resolves when built through that
-precompiler — a plain `cobc` build will fail with `'DISPLAY-COVERAGE' is not
-defined`. Remove or guard that call for a plain build.
+`open-cobol-code-coverage` provides `DISPLAY-COVERAGE`. If a test program `PERFORM DISPLAY-COVERAGE`s, it only resolves when built through that precompiler — a plain `cobc` build will fail with `'DISPLAY-COVERAGE' is not defined`. Remove or guard that call for a plain build.
 
 ## Before you submit
 
