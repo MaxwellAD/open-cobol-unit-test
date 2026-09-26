@@ -2,7 +2,7 @@
 
 An open source COBOL Unit Test library
 
-Allows the user to execute COBOL sections and paragraphs inside of a business program in a unit test environment
+Allows the user to execute COBOL sections and paragraphs in a unit test environment
 
 # Why
 The ability to isolate test cases down to the scale of sections and paragraphs enables:
@@ -10,7 +10,7 @@ The ability to isolate test cases down to the scale of sections and paragraphs e
 - **Immediate feedback:** When integrated into the compile step, developers catch bugs as soon as they appear
 - **Precise isolation:** Bugs that do happen have their exact scenario documented
 - **More deterministic results:** Zero external file, database or API dependancies
-- **Code structure improvements:** Baddly written code is difficult to unit test without refactoring
+- **Code structure improvements:** Baddly written code and mono-paragraphs are difficult to unit test without refactoring
 - **Higher code coverage:** Far easier to get deep into complex logic to test edge cases
 - **Higher quality assurance:** Code based unit tests are cheap, easy and reliable leading to higher QA
 
@@ -64,7 +64,7 @@ Often you need to validate how the code did something, not necessarily the end r
 
 COBOL lacks reflection so it has limited ability to know what its own execution has done
 
-So `harness.sh` will instrument a breadcrumb at the top of each section and paragraph of the business program to register which sections/paragraphs have run
+`harness.sh` will instrument a breadcrumb at the top of each section and paragraph of the business program to register which sections/paragraphs have run
 ```COBOL
        READ-NEXT-RECORD SECTION.
            MOVE "READ-NEXT-RECORD"        *> line inserted by inserted by harness.sh
