@@ -133,7 +133,7 @@ This case demonstrates the power of the `CUT-ASSERT-TRACE`, which allows you to 
 
 This case asserts that `BC-DIV-NUMBERS` must run, followed by `CA-DISPLAY-ERROR`. Demonstrating that the paragraph identified a divide by zero error
 
-If CA-DISPLAY-ERROR was not called the output of the test run would be
+If `CA-DISPLAY-ERROR` was not called the output of the test run would be
 ```
 TEST CASE - TEST-DIV-BY-ZERO-HANDLE
 [FAIL] UNABLE TO FIND CA-DISPLAY-ERROR IN EXECUTION TRACE
@@ -147,7 +147,7 @@ In my experience, yes
 ## It's Testing Itself
 The framework is already in a state where it can test itself
 
-Everything inside CUTSTOR and CUTPROC is prefix with "CUT-" (COBOL Unit Test) e.g `01  CUT-DATA.`. To avoid obvious naming conflicts, the framework is testing an imaginary program with "CUT-" replaced with "DUT-", for "Dummy Unit Test" e.g `01  DUT-DATA.`
+Everything inside CUTSTOR and CUTPROC is prefixed with "CUT-" (COBOL Unit Test) e.g `01  CUT-DATA.`. To avoid obvious naming conflicts, the framework is testing an imaginary program with "CUT-" replaced with "DUT-", for "Dummy Unit Test" e.g `01  DUT-DATA.`
 
 New features can be implemented into DUT and have their behaviours observed before being added to CUT. Making for a much easier development process
 

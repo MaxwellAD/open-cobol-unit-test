@@ -16,12 +16,12 @@ cd open-cobol-unit-test
 
 ## Design principles
 
-These explain most of the constraints below, and PRs are weighed against them:
+These explain most of the constraints below:
 
-- **Portability is a feature, not a chore.** EBCDIC-safe output, the 30-char word limit, MVS/IBM-strict gates. It must run wherever COBOL runs.
-- **It's just COBOL.** The developer only ever writes COBOL — no second language, no YAML/XML test file, no external runner.
-- **Encourage Better COBOL** Large monolithic sections and paragraphs are difficult to unit test, this feedback is crucial for a developer. 
-- **Test COBOL as it actually is** While the above is useful when starting from scratch; trace assertions empower large stateful processes to be tested without an implicit requirement to alter the way the codebase is written
+- **Portability.** EBCDIC-safe output, the 30-char word limit, MVS/IBM-strict gates. It must run wherever COBOL runs
+- **It's just COBOL.** The developer only ever writes COBOL — no second language, no YAML/XML test file.
+- **Encourage Better COBOL** Large monolithic sections and paragraphs are difficult to unit test, this feedback is crucial for a developer. The framework shouldn't make it easier to continue bad habbits 
+- **Test COBOL as it actually is** However it's naive to assume a developer has a pristine piece of code to start with. Trace assertions should empower large stateful processes to be tested without an implicit requirement to alter the way the codebase is written
 - **Readable by people who can't write it.** The trace DSL (`A FOLLOWED-BY B WITH <field> = <value>`) is deliberately English-like and COBOL-shaped, so a technical lead can grasp what a case asserts even if they couldn't author it.
 
 ## Optional build gates
