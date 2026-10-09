@@ -75,9 +75,7 @@ Please refer to Manuals/ to understand how the various aspects of the unit test 
 
 ## COBOL fixed-format gotchas
 
-These have all bitten real edits in this codebase:
-
-- **User-defined words ≤ 30 characters.** Section, paragraph, and data names must fit the traditional 30-char COBOL limit — GnuCOBOL's default allows longer, but strict/mainframe compilers and Z Open Editor reject them. Verify with the word-length gate above. (The framework already honors this, e.g. `CUT-HANDL-DIRECTLY-FOLLOWED-BY` drops the `E` to fit.)
+- **User-defined words ≤ 30 characters.** Section, paragraph, and data names must fit the traditional 30-char COBOL limit — GnuCOBOL's default allows longer, but strict/mainframe compilers and Z Open Editor reject them.
 
 ## EBCDIC / portability
 
