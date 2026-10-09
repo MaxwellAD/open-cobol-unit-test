@@ -179,15 +179,20 @@ SKIP : 0
 
 # Getting Started
 
-You'll find some VS Code snippets in the [snippets/](snippets/) folder to get you up and running quickly.
+## Installing Open COBOL Unit Test
+1. Download the release tar file containing the `CUT/` `cobtest` `cobtestrun` and `harness.sh` files
+2. Extract the tar file to a folder of your choosing, I'll use the home area
+3. Set the COBTEST_HOME variable: `export COBTEST_HOME=~/open-cobol-unit-test-0.1.0`
+4. Add the COBTEST_HOME to your PATH: `PATH=$PATH:$COBTEST_HOME`
 
-Use the following command to setup the expected folder for cobtest
+## Setting Up a Project
+Use the following command to setup the expected folder structure for cobtest
 ```bash
 mkdir -p src/main/cobol/sorlib/ src/main/cobol/copylib src/test/cobol/testlib
 ```
+- sorlib/ is used for your business / production logic
+- copylib/ is used for the copybooks required by your sorlib
+- testlib/ is used for your unit test programs
 
-sorlib/ is used for your business / production logic
-
-copylib/ is used to store the copybook required by your sorlib
-
-testlib/ are your unit test programs
+## Snippets
+You'll find some VS Code snippets in the [snippets/](snippets/) folder to get you up and running quickly.
