@@ -1,4 +1,6 @@
 name: Open COBOL Unit Test zapp.yaml
+# SPDX-FileCopyrightText: 2026 MaxwellAD
+# SPDX-License-Identifier: GPL-3.0-or-later
 description: 'This zapp document includes the syslib
  locations to the unit test framework copybooks (CUT/) and
  the project level copylib (in src/main/cobol/copylib).

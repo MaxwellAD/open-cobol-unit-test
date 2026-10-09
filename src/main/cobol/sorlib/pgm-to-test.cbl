@@ -1,5 +1,7 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. DUTPGM.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
        ENVIRONMENT DIVISION. 
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
