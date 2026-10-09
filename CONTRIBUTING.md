@@ -107,4 +107,4 @@ For a bug report, the most useful things to include are the relevant `Replorts/`
 
 This project is licensed under the **GNU General Public License v3** — see `LICENSE` for the full text.
 
-Any contribution you submit for inclusion is licensed under GPL-3 on the same terms, with no additional conditions. There is no separate CLA to sign.
+Any contribution you submit for inclusion is licensed under GPL-3.
