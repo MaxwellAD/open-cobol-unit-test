@@ -183,7 +183,9 @@ SKIP : 0
 1. Download the release tar file containing the `CUT/` `cobtest` `cobtestrun` and `harness.sh` files
 2. Extract the tar file to a folder of your choosing, I'll use the home area
 3. Set the COBTEST_HOME variable: `export COBTEST_HOME=~/open-cobol-unit-test-0.1.0`
-4. Add the COBTEST_HOME to your PATH: `PATH=$PATH:$COBTEST_HOME`
+4. Add the COBTEST_HOME to your PATH: `export PATH=$PATH:$COBTEST_HOME`
+5. Check it's successfully installed by running `cobtest --version`
+   - Which should output `Open COBOL Unit Test 0.1.0` 
 
 ## Setting Up a Project
 Use the following command to setup the expected folder structure for cobtest

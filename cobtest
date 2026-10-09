@@ -1,5 +1,15 @@
 #!/bin/bash
 
+VERSION="0.1.0"
+
+# Check for version
+case "$1" in
+    -v|--version)
+        echo "Open COBOL Unit Test $VERSION"
+        exit 0
+        ;;
+esac
+
 # Where the framework itself lives - the CUT copybooks and harness.sh.
 # COBTEST_HOME is the authority; the install sets it, alongside PATH:
 #     export COBTEST_HOME="$HOME/open-cobol-unit-test"
