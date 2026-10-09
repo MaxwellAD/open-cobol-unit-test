@@ -176,3 +176,18 @@ SKIP : 0
 ```
 
 `cobtest` combines the code coverage, harness, compile and execution into 1 step, it also prints an overview of the test results and any [FAIL]s or [DEBUG] lines to the output
+
+# Getting Started
+
+You'll find some VS Code snippets in the [snippets/](snippets/) folder to get you up and running quickly.
+
+Use the following command to setup the expected folder for cobtest
+```bash
+mkdir -p src/main/cobol/sorlib/ src/main/cobol/copylib src/test/cobol/testlib
+```
+
+sorlib/ is used for your business / production logic
+
+copylib/ is used to store the copybook required by your sorlib
+
+testlib/ are your unit test programs
