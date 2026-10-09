@@ -1,5 +1,10 @@
 # Open COBOL Unit Test
 
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 MaxwellAD
+-->
+
 An open source COBOL Unit Test library
 
 Allows the user to execute COBOL sections and paragraphs in a unit test environment
@@ -9,8 +14,8 @@ The ability to isolate test cases down to the scale of sections and paragraphs e
 - **Faster execution:** Running a unit test should take milliseconds
 - **Immediate feedback:** When integrated into the compile step, developers catch bugs as soon as they appear
 - **Precise isolation:** Bugs that do happen have their exact scenario documented
-- **More deterministic results:** Zero external file, database or API dependancies
-- **Code structure improvements:** Baddly written code and mono-paragraphs are difficult to unit test without refactoring
+- **More deterministic results:** Zero external file, database or API dependencies
+- **Code structure improvements:** Badly written code and mono-paragraphs are difficult to unit test without refactoring
 - **Higher code coverage:** Far easier to get deep into complex logic to test edge cases
 - **Higher quality assurance:** Code based unit tests are cheap, easy and reliable leading to higher QA
 

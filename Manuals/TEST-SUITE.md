@@ -1,5 +1,10 @@
 # TEST-SUITE User Manual
 
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 MaxwellAD
+-->
+
 ## Description
 Assembling a whole test program — the copybooks it is built from, the sections it needs, and how to run it.
 

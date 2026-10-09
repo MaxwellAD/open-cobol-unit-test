@@ -1,5 +1,7 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. LINKPGM.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
       *****************************************************************
       * A CALLED SUBPROGRAM - IT TAKES ITS INPUT AND RETURNS ITS
       * RESULT THROUGH THE LINKAGE SECTION RATHER THAN THROUGH FILES

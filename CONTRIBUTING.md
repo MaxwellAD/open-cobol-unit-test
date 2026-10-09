@@ -1,5 +1,10 @@
 # Contributing to Open COBOL Unit Test
 
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 MaxwellAD
+-->
+
 `README.md` covers what this project is and why it exists. This file is the practical "how to work in the codebase" reference.
 
 ## Prerequisites

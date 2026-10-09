@@ -1,5 +1,10 @@
 # ASSERT-TRACE User Manual
 
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 MaxwellAD
+-->
+
 ## Description
 Validate complex execution flows and working storage constraints
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 MaxwellAD
+
 # Where the framework itself lives - the CUT copybooks and harness.sh.
 # COBTEST_HOME is the authority; the install sets it, alongside PATH:
 #     export COBTEST_HOME="$HOME/open-cobol-unit-test"

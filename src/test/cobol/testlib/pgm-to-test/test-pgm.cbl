@@ -1,5 +1,7 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. TESTCUT.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
        ENVIRONMENT DIVISION.
        COPY CUTENV.
        COPY FILECTL OF PGM-TO-TEST.

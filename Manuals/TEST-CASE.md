@@ -1,5 +1,10 @@
 # TEST-CASE User Manual
 
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 MaxwellAD
+-->
+
 ## Description
 Writing a single test case, and the commands available inside one
 
