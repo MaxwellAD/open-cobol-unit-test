@@ -184,13 +184,18 @@ SKIP : 0
 
 # Getting Started
 
+## Prerequisites
+- [GnuCOBOL](https://gnucobol.sourceforge.io/) - `cobc` must be on your PATH (TODO - add a custom compiler hook to support other compilers)
+- [Open COBOL Code Coverage](https://github.com/MaxwellAD/open-cobol-code-coverage) - clone it and add its folder to your PATH, so that `code-coverage-precompiler.sh` can be found (TODO - make this genuinely optional)
+
 ## Installing Open COBOL Unit Test
-1. Download the release tar file containing the `CUT/` `cobtest` `cobtestrun` and `harness.sh` files
-2. Extract the tar file to a folder of your choosing, I'll use the home area
-3. Set the COBTEST_HOME variable: `export COBTEST_HOME=~/open-cobol-unit-test-0.1.0`
-4. Add the COBTEST_HOME to your PATH: `export PATH=$PATH:$COBTEST_HOME`
-5. Check it's successfully installed by running `cobtest --version`
-   - Which should output `Open COBOL Unit Test 0.1.0` 
+1. Download the release `tar.gz` file
+2. Extract the tar file to a folder of your choosing, I'll use the home area: `tar -xzf open-cobol-unit-test-0.1.0.tar.gz -C ~`
+   - This creates `~/open-cobol-unit-test-0.1.0/`
+3. Add that folder to your PATH: `export PATH="$PATH:$HOME/open-cobol-unit-test-0.1.0"`
+   - To keep the PATH change for new terminal sessions, add the same `export` line to your `~/.bashrc` (or other startup script)
+4. Check it's successfully installed by running `cobtest --version`
+   - Which should output `Open COBOL Unit Test 0.1.0`
 
 ## Setting Up a Project
 Use the following command to setup the expected folder structure for cobtest

@@ -11,3 +11,6 @@ CUT-RPTO
 UTRPTO
 
 target
+
+# Release packages built by package.sh
+package/
