@@ -1,0 +1,22 @@
+{
+  "cobol": {
+    "dataDivision": {
+      "alignValueClauses": true,
+      "indentation": {
+        "indentLength": 4
+      },
+      "alignPictureClauses": true
+    },
+    "procedureDivision": {
+      "indentation": {
+        "indentForAllBlocks": 4
+      }
+    
+      
+    },
+    "commentCase": "none"
+  },
+  "copybook": {
+    "codeCase": "upper"
+  }
+}

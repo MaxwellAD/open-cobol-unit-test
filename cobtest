@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 MaxwellAD
+
+VERSION="0.1.0"
+
+# Check for version
+case "$1" in
+    -v|--version)
+        echo "Open COBOL Unit Test $VERSION"
+        exit 0
+        ;;
+esac
+
+# Where the framework itself lives - the CUT copybooks and harness.sh.
+# COBTEST_HOME is the authority; the install sets it, alongside PATH:
+#     export COBTEST_HOME="$HOME/open-cobol-unit-test"
+#     export PATH="$PATH:$COBTEST_HOME"
+# Unset, fall back to the directory holding this script, so ./cobtest works in
+# a fresh checkout with nothing configured. Only dirname and cd -P are used -
+# readlink -f is a GNU extension and this has to run wherever a shell does,
+# which is why running the scripts through a symlink is not supported: set
+# COBTEST_HOME instead.
+# COBTEST_HOME = COBTEST_HOME or if not set, then assume it's the current dir (useful for a first time install verification if installing from source)
+COBTEST_HOME="${COBTEST_HOME:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
+if [[ ! -f "$COBTEST_HOME/CUT/CUTPROC.cpy" ]]; then
+    printf 'cobtest: no framework copybooks at %s\n' "$COBTEST_HOME/CUT" >&2
+    printf '         set COBTEST_HOME to your open-cobol-unit-test directory\n' >&2
+    exit 1
+fi
+# Make this generally available for use
+export COBTEST_HOME
+
+num_test_files=0
+num_suite_fail=0
+num_suite_pass=0
+
+failed_suites=""
+
+for source in `find src/main/cobol/sorlib/ -name "**.cbl" 2> /dev/null`; do
+    echo "Discovered source file: $source"
+    path=${source%.*}
+
+    test_directory="${path/src\/main\/cobol\/sorlib/src\/test\/cobol\/testlib}"
+    
+    expression=$test_directory"/**.cbl"
+    test_files=`find $expression 2> /dev/null`
+    for test_program in $test_files; do
+        num_test_files=$(($num_test_files+1))
+        echo "    Found test program:" $test_program
+        echo ""
+        
+        if ! "$COBTEST_HOME/cobtestrun" $source $test_program; then
+            #echo "TEST FAILS DETECTED IN" $test_program
+            failed_suites+="${test_program}\n"
+            num_suite_fail=$(($num_suite_fail+1))
+        else
+            num_suite_pass=$(($num_suite_pass+1))
+        fi
+
+    done
+
+    if [[ $test_files == "" ]]; then
+        echo "    No test programs found:"
+    fi
+    echo ""
+    echo ""
+done
+
+printf "\n\n"
+echo "==================================================="
+if [[ $num_suite_fail = 0 ]]; then
+    echo "COBOL Unit Test Complete"
+else
+    echo "COBOL Unit Test Failed"
+fi
+echo "==================================================="
+echo ""
+echo "Detected " $num_test_files " test suites(s)"
+echo ""
+echo "==================================================="
+echo "Failed Suite(s): $num_suite_fail"
+echo "Passed Suite(s): $num_suite_pass"
+echo "==================================================="
+
+
+
+
+if [[ num_suite_fail -gt 0 ]]; then
+    echo ""
+    echo "Failed Suites:"
+    printf $failed_suites
+    
+    exit 1
+fi
