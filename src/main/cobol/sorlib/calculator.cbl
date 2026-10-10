@@ -14,6 +14,8 @@
            
 
        PROCEDURE DIVISION.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
        AA000-MAINLINE.
            PERFORM AB-INIT
            PERFORM AD-ACCEPT-INPUT

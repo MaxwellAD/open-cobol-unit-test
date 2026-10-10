@@ -43,6 +43,8 @@
            05 LK-NET-AMOUNT             PIC 9(9)V99.
 
        PROCEDURE DIVISION USING LK-REQUEST LK-RESPONSE.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
       *****************************************************************
       * THE RETURN TO THE CALLER IS ITS OWN SECTION SO A TEST CAN MOCK
       * IT OUT. IN A TEST RUN THERE IS NO CALLER, SO RETURNING WOULD
