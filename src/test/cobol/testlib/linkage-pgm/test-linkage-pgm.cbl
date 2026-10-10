@@ -1,5 +1,7 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. TEST-LINKPGM.
+      * SPDX-License-Identifier: GPL-3.0-or-later
+      * SPDX-FileCopyrightText: 2026 MaxwellAD
       *****************************************************************
       * TEST SUITE FOR SRC/MAIN/COBOL/SORLIB/LINKAGE-PGM.CBL
       *

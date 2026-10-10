@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 MaxwellAD
+
 # This script is used to package releases of Open COBOL Unit Test
 # ./package.sh <release version>
 # Creates open-cobol-unit-test-<release version>.tar
@@ -5,7 +10,7 @@
 version=${1}
 
 # What gets included
-files_to_package="CUT/* harness.sh cobtest cobtestrun"
+files_to_package="CUT/* harness.sh cobtest cobtestrun LICENSE README.md Manuals/"
 
 # The name of the package including version number
 package_name="open-cobol-unit-test-${version}.tar"

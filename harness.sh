@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 MaxwellAD
+
 # Define your source and target files
 BUSINESS_PGM=$1 # PGM TO TEST
 TEST_PGM=$2 # TEST PGM
