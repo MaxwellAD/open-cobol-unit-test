@@ -1,0 +1,16 @@
+coverage/
+tmp/
+test-pgm-out.cbl
+
+# Compiled test binaries
+testpgm
+test-pgm-out
+
+# Test run output
+CUT-RPTO
+UTRPTO
+
+target
+
+# Release packages built by package.sh
+package/

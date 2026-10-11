@@ -1,0 +1,128 @@
+{
+
+	// SPDX-License-Identifier: GPL-3.0-or-later
+	// SPDX-FileCopyrightText: 2026 MaxwellAD
+
+	// Place your snippets for cobol here. Each snippet is defined under a snippet name and has a prefix, body and 
+	// description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the 
+	// same ids are connected.
+
+	// Individual test cases
+	"TEST-CASE": {
+	"prefix": "TEST-CASE",
+	"body": [
+      "TEST-${1:YOUR-CASE-NAME} SECTION.",
+	  "    *> ${2:A DESCRIPTIVE COMMENT}",
+	  "",
+      "    *> GIVEN",
+	  "    ${3}",
+"",
+      "    *> WHEN",
+	  "    ${4}",
+      "    ",
+      "    *> THEN",
+	  "    ${5}",
+"",
+      "    PERFORM CUT-END-TEST ",
+      "."
+	 	],
+	 	"description": "COBOL UNIT TEST CASE"
+	},
+
+
+	// Defining a new test file
+	"TEST-SUITE": {
+		"prefix": "TEST-SUITE",
+		"body": [
+"       IDENTIFICATION DIVISION. ",
+"       PROGRAM-ID. ${1:YOUR-SUITE-NAME}.",
+"       ENVIRONMENT DIVISION.",
+"       COPY CUTENV.",
+"       DATA DIVISION.",
+"       COPY CUTDATA.",
+"       WORKING-STORAGE SECTION. ",
+"",
+"       COPY STORAGE OF ${2:YOUR-SOURCE-NAME}.",
+"       COPY CUTSTOR.",
+"",
+"       PROCEDURE DIVISION.",
+"",
+"       TEST-${3:MY-FIRST-CASE} SECTION.",
+"           *> ${4:A DESCRIPTIVE COMMENT}",
+"",
+"           *> GIVEN",
+"           ${5}",
+"",
+"           *> WHEN",
+"           ${6}",
+"           ",
+"           *> THEN",
+"           ${7}",
+"",
+"",
+"           PERFORM CUT-END-TEST ",
+"       .",
+"       ",
+"",
+"       END-TEST-SUITE SECTION.",
+"           PERFORM CUT-END-TEST-SUITE",
+"       .",
+"       ",
+"       ",
+"      *****************************************************************",
+"      * RUNS AT THE TOP OF EACH SECTION IN THE SOURCE CODE",
+"      * ADDS THE SPECIFIED FIELDS TO THE TRACE",
+"      *",
+"      *    USE THE FOLLOWING FORMAT TO REGISTER FIELDS",
+"      *    MOVE 'FIELD-A' TO CUT-TEMP-FIELD-NAME ",
+"      *    MOVE FIELD-A TO CUT-TEMP-FIELD-VALUE",
+"      *    PERFORM CUT-REGISTER-FIELD ",
+"      *",
+"      *    ...",
+"      *    ",
+"      *    MOVE 'FIELD-Z' TO CUT-TEMP-FIELD-NAME ",
+"      *    MOVE FIELD-Z TO CUT-TEMP-FIELD-VALUE",
+"      *    PERFORM CUT-REGISTER-FIELD ",
+"      *",
+"      *    EXIT SECTION",
+"      *****************************************************************",
+"       CUT-TRACE-FIELDS SECTION.",
+"               MOVE CUT-RT-SECTION-COUNT TO CUT-TRACE-SECTION-INDEX",
+"               MOVE CUT-RT-SECTION-FIELD-COUNT(CUT-RT-SECTION-COUNT) TO",
+"                                                CUT-TRACE-FIELD-INDEX",
+"",
+"           EXIT SECTION",
+"       .",
+"",
+"      *****************************************************************",
+"      * RUNS BEFORE EACH TEST CASE",
+"      * USE THIS SECTION TO SETUP AND TEARDOWN YOUR TEST DATA AND ",
+"      * RESULTS",
+"      * DO NOT REMOVE THE EXIT SECTION OTHERWISE YOU WILL FALL INTO",
+"      * THE BUSINESS PROGRAM",
+"      *****************************************************************",
+"       BEFORE-EACH SECTION.",
+"           MOVE ZEROS TO WS-RESULT ",
+"           EXIT SECTION  ",
+"       .",
+"",
+"       COPY PROGRAM OF ${2:YOUR-SOURCE-NAME}.",
+"       COPY CUTPROC."
+		],	 	
+		"description": "COBOL UNIT TEST SUITE"
+	},
+
+
+	"ASSERT-TRACE": {
+		"prefix": "ASSERT-TRACE",
+		"body": [
+"STRING '${1|FIRST-SECTION|} '",
+"    DELIMITED BY SIZE", 
+"    INTO CUT-TRACE ",
+"END-STRING",
+"PERFORM CUT-ASSERT-TRACE"
+		]
+	}
+
+}
