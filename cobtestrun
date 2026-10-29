@@ -73,7 +73,12 @@ fi
 # If running without code-coverage-precompiler, skip this step and point harness.sh directly at the program under test
 mkdir -p "$COBTEST_WORK/coverage"
 tmp_coverage_pgm="$COBTEST_WORK/coverage/$(basename "$business_pgm")"
-code-coverage-precompiler.sh $business_pgm "$tmp_coverage_pgm" 1> /dev/null || exit 1
+# Under cobtest, the combine program goes where cobtest will merge coverage
+# across all of the business program's suites once they have run. Run alone,
+# no third argument: it lands next to the instrumented program, and is cleaned
+# up with it.
+code-coverage-precompiler.sh $business_pgm "$tmp_coverage_pgm" \
+    ${COBTEST_COMBINE_DIR:+"$COBTEST_COMBINE_DIR/combine.cbl"} 1> /dev/null || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\nRunning the harness\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
@@ -85,6 +90,12 @@ code-coverage-precompiler.sh $business_pgm "$tmp_coverage_pgm" 1> /dev/null || e
 # Copybook search path: the framework's own CUT members, the work dir holding
 # the generated libraries (COPY STORAGE OF LEDGER resolves to LEDGER/STORAGE
 # beneath it), and src/main/cobol/copylib - the project's copybook library.
+# Then the test fixtures: the suite's own copylib (next to the test program,
+# e.g. src/test/cobol/testlib/pgm-to-test/copylib), then the project-wide
+# src/test/cobol/copylib. The first directory holding a member wins, so a suite
+# can override a project-wide fixture - but never a business copybook, which
+# would have the test compile against a different layout to production.
+# cobc ignores a -I directory that does not exist, so a suite needs no copylib.
 
 # Drop any binary an earlier suite left behind first, so a failed compile can
 # never be followed by a run of the wrong program
@@ -92,7 +103,9 @@ rm -f testpgm
 cobc -x test-pgm-out.cbl -o testpgm \
      -I "$COBTEST_HOME/CUT" \
      -I "$COBTEST_WORK" \
-     -I "src/main/cobol/copylib" || exit 1
+     -I "src/main/cobol/copylib" \
+     -I "$(dirname "$test_pgm")/copylib" \
+     -I "src/test/cobol/copylib" || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\nExecute\n"
 [[ "$VERBOSE" == "true" ]] && printf "===================================================\n"
@@ -104,6 +117,13 @@ report=$(basename "${test_pgm%.*}")
 mkdir -p "$report_dir"
 ./testpgm > "${report_dir}/${report}-coverage-report.txt"; 
 test_return_code=$?
+
+# Tell cobtest which report this suite wrote, so it can combine coverage across
+# all of the business program's suites. Only reports written by THIS run are
+# listed - a stale one left in Reports/ by a deleted suite is never merged.
+if [ -n "$COBTEST_COMBINE_DIR" ]; then
+    printf '%s\n' "${report_dir}/${report}-coverage-report.txt" >> "$COBTEST_COMBINE_DIR/reports"
+fi
 cp CUT-RPTO "${report_dir}/${report}-unit-test-report.txt" || exit 1
 
 [[ "$VERBOSE" == "true" ]] && printf "\n"

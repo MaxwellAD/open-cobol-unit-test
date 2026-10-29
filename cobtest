@@ -39,9 +39,22 @@ num_suite_pass=0
 
 failed_suites=""
 
+# Shared with cobtestrun - see there
+COBTEST_WORK="${COBTEST_WORK:-target}"
+export COBTEST_WORK
+mkdir -p "$COBTEST_WORK"
+
+# Where one business program's suites leave what's needed to combine their
+# coverage: each cobtestrun adds the report it wrote to "reports" (one path per
+# line) and has the precompiler write the combine program there, as combine.cbl.
+# Emptied before each business program.
+COBTEST_COMBINE_DIR="$COBTEST_WORK/combine"
+export COBTEST_COMBINE_DIR
+
 for source in `find src/main/cobol/sorlib/ -name "**.cbl" 2> /dev/null`; do
     echo "Discovered source file: $source"
     path=${source%.*}
+    rm -rf -- "${COBTEST_COMBINE_DIR:?}" && mkdir -p "$COBTEST_COMBINE_DIR"
 
     test_directory="${path/src\/main\/cobol\/sorlib/src\/test\/cobol\/testlib}"
     
@@ -61,6 +74,32 @@ for source in `find src/main/cobol/sorlib/ -name "**.cbl" 2> /dev/null`; do
         fi
 
     done
+
+    # Combine coverage across all of this business program's suites
+    combine_dir="$COBTEST_COMBINE_DIR"
+    if [ -s "$combine_dir/reports" ]; then
+        # Every suite wrote the same combine program - same source, same
+        # fingerprint - so whichever ran last is as good as any
+        combine_src="$combine_dir/combine.cbl"
+
+        # Next to the suites' own reports, named after the business program
+        report_dir=$(dirname "$(head -n 1 "$combine_dir/reports")")
+        combined_report="$report_dir/$(basename "$path")-combined-coverage-report.txt"
+
+        while IFS= read -r report; do
+            cat "$report"
+        done < "$combine_dir/reports" > "$combine_dir/covin.txt"
+
+        if [ -f "$combine_src" ] \
+            && cobc -x "$combine_src" -o "$combine_dir/combine" \
+            && COVIN="$combine_dir/covin.txt" "$combine_dir/combine" > "$combined_report"; then
+            echo "    Combined coverage: $combined_report"
+            grep -E 'STATEMENT COVERAGE|RUNS MERGED' "$combined_report" | sed 's/^ */        /'
+        else
+            echo "    WARNING: could not combine coverage for $source"
+        fi
+    fi
+    rm -rf -- "${COBTEST_COMBINE_DIR:?}"
 
     if [[ $test_files == "" ]]; then
         echo "    No test programs found:"
